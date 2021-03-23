@@ -1,6 +1,6 @@
 # `blurry`
 
-[![MIT License](https://img.shields.io/github/license/octu0/bluury)](https://github.com/octu0/blurry/blob/master/LICENSE)
+[![MIT License](https://img.shields.io/github/license/octu0/blurry)](https://github.com/octu0/blurry/blob/master/LICENSE)
 [![GoDoc](https://godoc.org/github.com/octu0/blurry?status.svg)](https://godoc.org/github.com/octu0/blurry)
 [![Go Report Card](https://goreportcard.com/badge/github.com/octu0/blurry)](https://goreportcard.com/report/github.com/octu0/blurry)
 [![Releases](https://img.shields.io/github/v/release/octu0/blurry)](https://github.com/octu0/blurry/releases)
@@ -78,6 +78,14 @@ img, err := blurry.Sobel(input)
 
 ![example](testdata/sobel.png)
 
+### BlockMozaic
+
+```go
+img, err := blurry.Blockmozaic(input, 10)
+```
+
+![example](testdata/blockmozaic.png)
+
 ## CLI usage
 
 Run it via docker.  
@@ -105,9 +113,10 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.0
+   1.1.0
 
 COMMANDS:
+     blockmozaic
      boxblur
      brightness
      clone
@@ -140,21 +149,23 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 realize benchmark...
 w/ src 320x240
 benchmarking clone...
-clone: 0.0186772ms
+clone: 0.018641ms
 benchmarking grayscale...
-grayscale: 0.118339ms
+grayscale: 0.133983ms
 benchmarking brightness...
-brightness: 0.0647984ms
+brightness: 0.069466ms
 benchmarking gammacorrection...
-gammacorrection: 0.101544ms
+gammacorrection: 0.102628ms
 benchmarking contrast...
-contrast: 0.0911908ms
+contrast: 0.0696434ms
 benchmarking boxblur...
-boxblur: 0.565124ms
+boxblur: 0.540886ms
 benchmarking gaussianblur...
-gaussianblur: 0.313639ms
+gaussianblur: 0.317536ms
 benchmarking sobel...
-sobel: 0.121657ms
+sobel: 0.128876ms
+benchmarking blockmozaic...
+blockmozaic: 0.348568ms
 ```
 
 ### Blur
@@ -250,7 +261,7 @@ installed as the build environment.
 $ make build-generator
 ```
 
-Compile `libblurry_runtime.a` and all kinds `libblurry_*.a` to make a static link.
+Compile `libruntime.a` and all kinds `libblurry_*.a` to make a static link.
 
 ```shell
 $ make generate

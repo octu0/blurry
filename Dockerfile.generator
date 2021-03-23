@@ -1,0 +1,18 @@
+FROM ubuntu:20.04 as halide-runtime
+
+WORKDIR /halide
+
+RUN set -eux && \
+  apt update && \
+  apt install -y wget && \
+  wget https://github.com/halide/Halide/releases/download/v11.0.1/Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
+  tar xzf Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
+  rm Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
+  mv Halide-11.0.1-x86-64-linux Halide-Runtime
+
+RUN set -eux && \
+  apt update && \
+  apt install -y clang g++ binutils libpng-dev libjpeg-dev
+
+COPY docker-entrypoint.generator.sh /usr/local/bin/docker-entrypoint.generator.sh
+ENTRYPOINT [ "docker-entrypoint.generator.sh" ]

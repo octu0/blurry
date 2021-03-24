@@ -38,7 +38,7 @@ var (
 
 func Blockmozaic(img *image.RGBA, block int) (*image.RGBA, error) {
 	width, height := wh(img)
-	out := GetNRGBA(width, height)
+	out := GetRGBA(width, height)
 
 	ret := C.libblockmozaic(
 		(*C.uchar)(&img.Pix[0]),

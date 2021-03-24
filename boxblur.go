@@ -38,7 +38,7 @@ var (
 
 func Boxblur(img *image.RGBA, size int) (*image.RGBA, error) {
 	width, height := wh(img)
-	out := GetNRGBA(width, height)
+	out := GetRGBA(width, height)
 
 	ret := C.libboxblur(
 		(*C.uchar)(&img.Pix[0]),

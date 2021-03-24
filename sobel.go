@@ -39,7 +39,7 @@ var (
 
 func Sobel(img *image.RGBA) (*image.RGBA, error) {
 	width, height := wh(img)
-	out := GetNRGBA(width, height)
+	out := GetRGBA(width, height)
 
 	ret := C.libsobel(
 		(*C.uchar)(&img.Pix[0]),

@@ -28,27 +28,27 @@ int libclone(unsigned char *src, int32_t width, int32_t height, unsigned char *o
 }
 */
 import "C"
-import(
-  "errors"
-  "image"
+import (
+	"errors"
+	"image"
 )
 
-var(
-  ErrClone = errors.New("clone cgo call error")
+var (
+	ErrClone = errors.New("clone cgo call error")
 )
 
 func Clone(img *image.RGBA) (*image.RGBA, error) {
-  width, height := wh(img)
-  out := GetRGBA(width, height)
+	width, height := wh(img)
+	out := GetRGBA(width, height)
 
-  ret := C.libclone(
-    (*C.uchar)(&img.Pix[0]),
-    C.int(width),
-    C.int(height),
-    (*C.uchar)(&out.Pix[0]),
-  )
-  if int(ret) != 0 {
-    return nil, ErrClone
-  }
-  return out, nil
+	ret := C.libclone(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&out.Pix[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrClone
+	}
+	return out, nil
 }

@@ -38,7 +38,7 @@ var (
 
 func Gamma(img *image.RGBA, factor float64) (*image.RGBA, error) {
 	width, height := wh(img)
-	out := GetNRGBA(width, height)
+	out := GetRGBA(width, height)
 
 	ret := C.libgammacorrection(
 		(*C.uchar)(&img.Pix[0]),

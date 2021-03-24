@@ -56,9 +56,7 @@ Func readI32(Func clamped, const char *name) {
 
 Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(
-    input, src_bounds
-  ), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -73,9 +71,7 @@ Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(
-    input, src_bounds
-  ), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -277,7 +273,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   return gaussianblur;
 }
 
-Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -287,6 +283,50 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr r = in(x, y, 0);
   Expr g = in(x, y, 1);
   Expr b = in(x, y, 2);
+  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
+  //gray(x, y) = cast<uint8_t>(value);
+  gray(x, y) = cast<uint8_t>(r);
+
+  Func gy = Func("gy");
+  gy(x, y) = (gray(x, y + 1) - gray(x, y - 1)) / 2;
+
+  Func gx = Func("gx");
+  gx(x, y) = (gray(x + 1, y) - gray(x - 1, y)) / 2;
+
+  Func edge = Func("edge");
+  Expr pow_gy = fast_pow(gy(x, y), 2);
+  Expr pow_gx = fast_pow(gx(x, y), 2);
+  Expr magnitude = pow_gy + pow_gx;
+  edge(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(magnitude)
+  );
+
+  gy.compute_at(edge, x)
+    .parallel(y)
+    .vectorize(x, 3);
+  gx.compute_at(edge, x)
+    .parallel(x)
+    .vectorize(y, 3);
+
+  edge.compute_root()
+    .parallel(ch);
+
+  gray.compute_root();
+
+  return edge;
+}
+
+Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func gray = Func("gray");
+  Expr r = in(x, y, 0);
+  //Expr g = in(x, y, 1);
+  //Expr b = in(x, y, 2);
   //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
   //Expr value = (r + g + b) / 3;
   //gray(x, y) = cast<uint8_t>(value);
@@ -332,14 +372,15 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .vectorize(x, 32);
 
   gy.compute_at(sobel, x)
-    .parallel(y)
+    .vectorize(y, 3)
     .vectorize(x, 3);
   gx.compute_at(sobel, x)
-    .parallel(y)
+    .vectorize(y, 3)
     .vectorize(x, 3);
 
   sobel.compute_root()
     .parallel(ch);
+
   gray.compute_root();
 
   return sobel;
@@ -619,6 +660,26 @@ void generate_gaussianblur(std::vector<Target::Feature> features) {
   }, fn.name());
 }
 
+void generate_edge(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = edge_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  printf("generate %s\n", fn.name().c_str());
+  generate_static_link(features, fn, {
+    src, width, height
+  }, fn.name());
+}
+
 void generate_sobel(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
@@ -669,6 +730,7 @@ void generate(std::vector<Target::Feature> features){
   generate_contrast(features);
   generate_boxblur(features);
   generate_gaussianblur(features);
+  generate_edge(features);
   generate_sobel(features);
   generate_blockmozaic(features);
 }
@@ -692,7 +754,7 @@ int main(int argc, char **argv) {
     features.push_back(Target::AVX2);
     //features.push_back(Target::FMA);
     //features.push_back(Target::FMA4);
-    features.push_back(Target::F16C);
+    //features.push_back(Target::F16C);
     features.push_back(Target::SSE41);
     features.push_back(Target::EmbedBitcode);
     features.push_back(Target::EnableLLVMLoopOpt);
@@ -842,6 +904,26 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  if(strcmp(argv[1], "edge") == 0) {
+    Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+    Param<int32_t> width{"width", buf_src.get()->width()};
+    Param<int32_t> height{"height", buf_src.get()->height()};
+
+    Func fn = edge_fn(
+      wrapFunc(buf_src, "buf_src"), width, height
+    );
+    fn.compile_jit(get_jit_target_from_environment());
+
+    printf("realize %s...\n", fn.name().c_str());
+
+    Buffer<uint8_t> out = fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+
+    printf("save to %s\n", argv[3]);
+    save_image(out, argv[3]);
+    return 0;
+  }
+
   if(strcmp(argv[1], "sobel") == 0) {
     Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
@@ -930,6 +1012,11 @@ int main(int argc, char **argv) {
       Param<float> sigma{"sigma", 5.0f};
       benchmark(gaussianblur_fn(
         wrapFunc(buf_src, "buf_src"), width, height, sigma
+      ), buf_src);
+    }
+    {
+      benchmark(edge_fn(
+        wrapFunc(buf_src, "buf_src"), width, height
       ), buf_src);
     }
     {

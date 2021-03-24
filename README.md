@@ -57,7 +57,7 @@ img, err := blurry.Contrast(input, 0.525)
 ### BoxBlur
 
 ```go
-img, err := blurry.BoxBlur(input, 11)
+img, err := blurry.Boxblur(input, 11)
 ```
 
 ![example](testdata/boxblur.png)
@@ -65,10 +65,20 @@ img, err := blurry.BoxBlur(input, 11)
 ### GaussianBlur
 
 ```go
-img, err := blurry.GaussianBlur(input, 5.0)
+img, err := blurry.Gaussianblur(input, 5.0)
 ```
 
 ![example](testdata/gaussianblur.png)
+
+### Edge
+
+a.k.a. EdgeDetection
+
+```go
+img, err := blurry.Edge(input)
+```
+
+![example](testdata/edge.png)
 
 ### Sobel
 
@@ -138,7 +148,7 @@ GLOBAL OPTIONS:
 
 In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
 more complex operations will be optimized for CPU and become faster.  
-Also, due to the overhead of ffi calls, the execution speed may be reduced by the overhead of multiple calls.
+Also, the execution speed may be reduced by the overhead of multiple calls.
 
 ### Halide JIT benchmarks
 
@@ -149,23 +159,25 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 realize benchmark...
 w/ src 320x240
 benchmarking clone...
-clone: 0.018641ms
+clone: 0.018042ms
 benchmarking grayscale...
-grayscale: 0.133983ms
+grayscale: 0.113819ms
 benchmarking brightness...
-brightness: 0.069466ms
+brightness: 0.0744433ms
 benchmarking gammacorrection...
-gammacorrection: 0.102628ms
+gammacorrection: 0.101849ms
 benchmarking contrast...
-contrast: 0.0696434ms
+contrast: 0.0643325ms
 benchmarking boxblur...
-boxblur: 0.540886ms
+boxblur: 0.75844ms
 benchmarking gaussianblur...
-gaussianblur: 0.317536ms
+gaussianblur: 0.309603ms
+benchmarking edge...
+edge: 0.100736ms
 benchmarking sobel...
-sobel: 0.128876ms
+sobel: 0.125995ms
 benchmarking blockmozaic...
-blockmozaic: 0.348568ms
+blockmozaic: 0.344141ms
 ```
 
 ### Blur
@@ -192,6 +204,8 @@ BenchmarkBlur/blurry/Gaussianblur-8   	    1641	    719481 ns/op	  311454 B/op	 
 
 ### Contrast
 
+/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
+
 ```
 goos: darwin
 goarch: amd64
@@ -199,11 +213,27 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkContrast
 BenchmarkContrast/bild/Contrast
-BenchmarkContrast/bild/Contrast-8                  	    6009	    201189 ns/op	  311696 B/op	       6 allocs/op
-BenchmarkContrast/imaging/AdjustContrast
-BenchmarkContrast/imaging/AdjustContrast-8         	    7573	    161006 ns/op	  313793 B/op	       7 allocs/op
+BenchmarkContrast/bild/Contrast-8         	    6492	    181388 ns/op	  311707 B/op	       6 allocs/op
+BenchmarkContrast/imaging/Contrast
+BenchmarkContrast/imaging/Contrast-8      	    8670	    143229 ns/op	  313794 B/op	       7 allocs/op
 BenchmarkContrast/blurry/Contrast
-BenchmarkContrast/blurry/Contrast-8                	    8166	    147530 ns/op	  311454 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast-8       	   10000	    111556 ns/op	     119 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast/D
+BenchmarkContrast/blurry/Contrast/D-8     	    8809	    134217 ns/op	  311360 B/op	       2 allocs/op
+```
+
+### Edge
+
+```
+goos: darwin
+goarch: amd64
+pkg: github.com/octu0/blurry
+cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+BenchmarkEdge
+BenchmarkEdge/bild/EdgeDetection
+BenchmarkEdge/bild/EdgeDetection-8         	     642	   1885417 ns/op	  631324 B/op	      10 allocs/op
+BenchmarkEdge/blurry/Edge
+BenchmarkEdge/blurry/Edge-8                	    8272	    132898 ns/op	  311478 B/op	       3 allocs/op
 ```
 
 ### Sobel
@@ -238,6 +268,8 @@ BenchmarkGamma/blurry/Gamma-8       	    6918	    174179 ns/op	  311454 B/op	   
 
 ### Grayscale
 
+/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
+
 ```
 goos: darwin
 goarch: amd64
@@ -245,11 +277,13 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkGrayscale
 BenchmarkGrayscale/bild/Grayscale
-BenchmarkGrayscale/bild/Grayscale-8         	    7059	    161325 ns/op	  622811 B/op	       6 allocs/op
+BenchmarkGrayscale/bild/Grayscale-8         	    7040	    168305 ns/op	  622813 B/op	       6 allocs/op
 BenchmarkGrayscale/imaging/Grayscale
-BenchmarkGrayscale/imaging/Grayscale-8      	    8497	    143854 ns/op	  313512 B/op	       6 allocs/op
+BenchmarkGrayscale/imaging/Grayscale-8      	    8408	    145552 ns/op	  313514 B/op	       6 allocs/op
 BenchmarkGrayscale/blurry/Grayscale
-BenchmarkGrayscale/blurry/Grayscale-8       	    6122	    200486 ns/op	  311454 B/op	       2 allocs/op
+BenchmarkGrayscale/blurry/Grayscale-8       	    6405	    190756 ns/op	     136 B/op	       2 allocs/op
+BenchmarkGrayscale/blurry/Grayscale/D
+BenchmarkGrayscale/blurry/Grayscale/D-8     	    5882	    201173 ns/op	  311360 B/op	       2 allocs/op
 ```
 
 # Build

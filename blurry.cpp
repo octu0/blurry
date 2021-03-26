@@ -54,7 +54,7 @@ Func readI32(Func clamped, const char *name) {
   return read;
 }
 
-Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -63,10 +63,10 @@ Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   //
   // RGBA interleave test
   //
-  Func clone = Func("clone");
-  clone(x, y, ch) = cast<uint8_t>(in(x, y, ch));
+  Func cloneimg = Func("cloneimg");
+  cloneimg(x, y, ch) = cast<uint8_t>(in(x, y, ch));
 
-  return clone;
+  return cloneimg;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -515,7 +515,7 @@ void generate_runtime(std::vector<Target::Feature> features) {
   generate_static_link_runtime(features, f, {}, "runtime");
 }
 
-void generate_clone(std::vector<Target::Feature> features) {
+void generate_cloneimg(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
@@ -523,7 +523,7 @@ void generate_clone(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = clone_fn(
+  Func fn = cloneimg_fn(
     src.in(), width, height
   );
 
@@ -723,7 +723,7 @@ void generate_blockmozaic(std::vector<Target::Feature> features) {
 
 void generate(std::vector<Target::Feature> features){
   generate_runtime(features);
-  generate_clone(features);
+  generate_cloneimg(features);
   generate_grayscale(features);
   generate_brightness(features);
   generate_gamma(features);
@@ -764,13 +764,13 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if(strcmp(argv[1], "clone") == 0) {
+  if(strcmp(argv[1], "cloneimg") == 0) {
     Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
     Param<int32_t> width{"width", buf_src.get()->width()};
     Param<int32_t> height{"height", buf_src.get()->height()};
 
-    Func fn = clone_fn(
+    Func fn = cloneimg_fn(
       wrapFunc(buf_src, "buf_src"), width, height
     );
     fn.compile_jit(get_jit_target_from_environment());
@@ -975,7 +975,7 @@ int main(int argc, char **argv) {
 
     printf("w/ src %dx%d\n", width.get(), height.get());
     {
-      benchmark(clone_fn(
+      benchmark(cloneimg_fn(
         wrapFunc(buf_src, "buf_src"), width, height
       ), buf_src);
     }

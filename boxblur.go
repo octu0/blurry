@@ -14,15 +14,18 @@ package blurry
 #endif
 
 int libboxblur(unsigned char *src, int32_t width, int32_t height, int32_t size, unsigned char *out) {
-  halide_buffer_t in_rgba_buf = {0};
-  halide_buffer_t out_rgba_buf = {0};
+  halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
+  if(in_rgba_buf == NULL){
+    return 1;
+  }
+  halide_buffer_t *out_rgba_buf = create_rgba_buffer(out, width, height);
+  if(out_rgba_buf == NULL){
+    return 1;
+  }
 
-  bind_rgba_buf(&in_rgba_buf, src, width, height);
-  bind_rgba_buf(&out_rgba_buf, out, width, height);
-
-  int ret = boxblur(&in_rgba_buf, width, height, size, &out_rgba_buf);
-  free_buf(&in_rgba_buf);
-  free_buf(&out_rgba_buf);
+  int ret = boxblur(in_rgba_buf, width, height, size, out_rgba_buf);
+  free_buf(in_rgba_buf);
+  free_buf(out_rgba_buf);
   return ret;
 }
 */

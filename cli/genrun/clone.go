@@ -11,7 +11,7 @@ func cloneAction(c *cli.Context) error {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "clone", nil); err != nil {
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "cloneimg", nil); err != nil {
 		return err
 	}
 

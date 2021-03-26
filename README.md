@@ -30,6 +30,14 @@ img, err := blurry.Grayscale(input)
 
 ![example](testdata/grayscale.png)
 
+### Invert
+
+```go
+img, err := blurry.Invert(input)
+```
+
+![example](testdata/invert.png)
+
 ### Brightness
 
 ```go
@@ -123,7 +131,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.2.0
+   1.3.0
 
 COMMANDS:
      blockmozaic
@@ -135,6 +143,7 @@ COMMANDS:
      gamma
      gaussianblur
      grayscale
+     invert
      sobel
      help, h       Shows a list of commands or help for one command
 
@@ -160,25 +169,27 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 realize benchmark...
 w/ src 320x240
 benchmarking cloneimg...
-cloneimg: 0.0195515ms
+cloneimg: 0.0185758ms
 benchmarking grayscale...
-grayscale: 0.119545ms
+grayscale: 0.118637ms
+benchmarking invert...
+invert: 0.060455ms
 benchmarking brightness...
-brightness: 0.0781598ms
+brightness: 0.0845308ms
 benchmarking gammacorrection...
-gammacorrection: 0.18429ms
+gammacorrection: 0.125641ms
 benchmarking contrast...
-contrast: 0.139594ms
+contrast: 0.0912185ms
 benchmarking boxblur...
-boxblur: 0.345168ms
+boxblur: 0.333382ms
 benchmarking gaussianblur...
-gaussianblur: 0.351843ms
+gaussianblur: 0.325328ms
 benchmarking edge...
-edge: 0.105334ms
+edge: 0.105413ms
 benchmarking sobel...
-sobel: 0.122694ms
+sobel: 0.157796ms
 benchmarking blockmozaic...
-blockmozaic: 0.376637ms
+blockmozaic: 0.365575ms
 ```
 
 ### Blur

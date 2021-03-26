@@ -96,6 +96,32 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return grayscale;
 }
 
+Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func invert = Func("invert");
+  Expr value = select(
+    ch == 3, in(x, y, ch), // alpha
+    255 - in(x, y, ch)     // r g b
+  );
+  invert(x, y, ch) = cast<uint8_t>(value);
+
+  invert.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  return invert;
+}
+
 Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -557,6 +583,26 @@ void generate_grayscale(std::vector<Target::Feature> features) {
   }, fn.name());
 }
 
+void generate_invert(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = invert_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  printf("generate %s\n", fn.name().c_str());
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
 void generate_brightness(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
@@ -727,6 +773,7 @@ void generate(std::vector<Target::Feature> features){
   generate_runtime(features);
   generate_cloneimg(features);
   generate_grayscale(features);
+  generate_invert(features);
   generate_brightness(features);
   generate_gamma(features);
   generate_contrast(features);
@@ -792,6 +839,25 @@ int main(int argc, char **argv) {
     Param<int32_t> height{"height", buf_src.get()->height()};
 
     Func fn = grayscale_fn(
+      wrapFunc(buf_src, "buf_src"), width, height
+    );
+    fn.compile_jit(get_jit_target_from_environment());
+
+    printf("realize %s...\n", fn.name().c_str());
+
+    Buffer<uint8_t> out = fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+
+    printf("save to %s\n", argv[3]);
+    save_image(out, argv[3]);
+    return 0;
+  }
+  if(strcmp(argv[1], "invert") == 0) {
+    Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+    Param<int32_t> width{"width", buf_src.get()->width()};
+    Param<int32_t> height{"height", buf_src.get()->height()};
+
+    Func fn = invert_fn(
       wrapFunc(buf_src, "buf_src"), width, height
     );
     fn.compile_jit(get_jit_target_from_environment());
@@ -983,6 +1049,11 @@ int main(int argc, char **argv) {
     }
     {
       benchmark(grayscale_fn(
+        wrapFunc(buf_src, "buf_src"), width, height
+      ), buf_src);
+    }
+    {
+      benchmark(invert_fn(
         wrapFunc(buf_src, "buf_src"), width, height
       ), buf_src);
     }

@@ -22,7 +22,7 @@ original image
 
 ![original](testdata/src.png)
 
-### Grascale
+### Grayscale
 
 ```go
 img, err := blurry.Grayscale(input)
@@ -123,7 +123,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.0
+   1.2.0
 
 COMMANDS:
      blockmozaic
@@ -131,6 +131,7 @@ COMMANDS:
      brightness
      clone
      contrast
+     edge
      gamma
      gaussianblur
      grayscale
@@ -295,7 +296,7 @@ installed as the build environment.
 $ make build-generator
 ```
 
-Compile `libruntime.a` and all kinds `libblurry_*.a` to make a static link.
+Compile `libruntime.a` and all kinds `lib*_osx.a` or `lib*_linu.a` to make static link.
 
 ```shell
 $ make generate

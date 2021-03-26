@@ -39,26 +39,42 @@ func BenchmarkBlur(b *testing.B) {
 	})
 	b.Run("blurry/Boxblur", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Boxblur(testImg, 3)
+      img, err := Boxblur(testImg, 3)
+      if err != nil {
+        tb.Fatalf(err.Error())
+      }
+      PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Gaussianblur", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Gaussianblur(testImg, 3.0)
+      img, err := Gaussianblur(testImg, 3.0)
+      if err != nil {
+        tb.Fatalf(err.Error())
+      }
+      PutRGBA(img)
 		}
 	})
-	b.Run("blurry/Boxblur/DisablePool", func(tb *testing.B) {
+	b.Run("blurry/Boxblur/D", func(tb *testing.B) {
 		DisablePool()
 		tb.Cleanup(EnablePool)
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Boxblur(testImg, 3)
+      img, err := Boxblur(testImg, 3)
+      if err != nil {
+        tb.Fatalf(err.Error())
+      }
+      PutRGBA(img)
 		}
 	})
-	b.Run("blurry/Gaussianblur/DisablePool", func(tb *testing.B) {
+	b.Run("blurry/Gaussianblur/D", func(tb *testing.B) {
 		DisablePool()
 		tb.Cleanup(EnablePool)
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Gaussianblur(testImg, 3.0)
+      img, err := Gaussianblur(testImg, 3.0)
+      if err != nil {
+        tb.Fatalf(err.Error())
+      }
+      PutRGBA(img)
 		}
 	})
 }

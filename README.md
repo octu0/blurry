@@ -159,29 +159,31 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 realize benchmark...
 w/ src 320x240
-benchmarking clone...
-clone: 0.018042ms
+benchmarking cloneimg...
+cloneimg: 0.0195515ms
 benchmarking grayscale...
-grayscale: 0.113819ms
+grayscale: 0.119545ms
 benchmarking brightness...
-brightness: 0.0744433ms
+brightness: 0.0781598ms
 benchmarking gammacorrection...
-gammacorrection: 0.101849ms
+gammacorrection: 0.18429ms
 benchmarking contrast...
-contrast: 0.0643325ms
+contrast: 0.139594ms
 benchmarking boxblur...
-boxblur: 0.75844ms
+boxblur: 0.345168ms
 benchmarking gaussianblur...
-gaussianblur: 0.309603ms
+gaussianblur: 0.351843ms
 benchmarking edge...
-edge: 0.100736ms
+edge: 0.105334ms
 benchmarking sobel...
-sobel: 0.125995ms
+sobel: 0.122694ms
 benchmarking blockmozaic...
-blockmozaic: 0.344141ms
+blockmozaic: 0.376637ms
 ```
 
 ### Blur
+
+/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
 
 ```
 goos: darwin
@@ -190,17 +192,21 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     157	   7765644 ns/op	  640337 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     100	  10650581 ns/op	  641047 B/op	      13 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     342	   3477949 ns/op	 1262503 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     267	   4657739 ns/op	 1262500 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     795	   1483984 ns/op	  793692 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     642	   1796090 ns/op	  793706 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     244	   4905316 ns/op	  925934 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     206	   5531965 ns/op	  925935 B/op	  153609 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    1124	   1038390 ns/op	  311455 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    2005	    727645 ns/op	     243 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    1641	    719481 ns/op	  311454 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    1185	   1010146 ns/op	     351 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D
+BenchmarkBlur/blurry/Boxblur/D-8      	    1332	    794245 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    1116	    988921 ns/op	  311362 B/op	       2 allocs/op
 ```
 
 ### Contrast

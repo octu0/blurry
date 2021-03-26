@@ -14,7 +14,7 @@ func boxblurAction(c *cli.Context) error {
 		return err
 	}
 
-	out, err := blurry.Boxblur(in, c.Int("size"))
+	out, err := blurry.Boxblur(in, uint8(c.Int("size")))
 	if err != nil {
 		return err
 	}

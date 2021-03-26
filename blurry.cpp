@@ -180,7 +180,7 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   return contrast;
 }
 
-Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
+Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -193,11 +193,11 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<i
 
   RDom rd_x = RDom(0, box_size, "rdom_x");
   Func blur_x = Func("blur_x");
-  blur_x(x, y, ch) = sum(in(x + rd_x, y, ch)) / box_size;
+  blur_x(x, y, ch) = fast_integer_divide(sum(in(x + rd_x, y, ch)), box_size);
 
   RDom rd_y = RDom(0, box_size, "rdom_y");
   Func blur_y = Func("blur_y");
-  blur_y(x, y, ch) = sum(blur_x(x, y + rd_y, ch)) / box_size;
+  blur_y(x, y, ch) = fast_integer_divide(sum(blur_x(x, y + rd_y, ch)), box_size);
 
   Func boxblur = Func("boxblur");
   boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
@@ -235,12 +235,14 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Expr size = 2 * (radius + 1);
   Expr center = radius;
 
+  Expr half = fast_integer_divide(radius, 2);
+
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd_rad(radius / 2, size, "rd_radius");
+  RDom rd_rad(half, size, "rd_radius");
 
   Func kernel = Func("kernel");
   kernel(x) = fast_exp(-(x * x) / sig2 / sigR);
@@ -623,7 +625,7 @@ void generate_boxblur(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<int32_t> size{"size", 11};
+  Param<uint8_t> size{"size", 11};
 
   init_input_rgba(src);
 
@@ -868,7 +870,7 @@ int main(int argc, char **argv) {
 
     Param<int32_t> width{"width", buf_src.get()->width()};
     Param<int32_t> height{"height", buf_src.get()->height()};
-    Param<int32_t> size{"size", std::stoi(argv[3])};
+    Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
 
     Func fn = boxblur_fn(
       wrapFunc(buf_src, "buf_src"), width, height, size
@@ -1003,7 +1005,7 @@ int main(int argc, char **argv) {
       ), buf_src);
     }
     {
-      Param<int32_t> size{"size", 10};
+      Param<uint8_t> size{"size", 10};
       benchmark(boxblur_fn(
         wrapFunc(buf_src, "buf_src"), width, height, size
       ), buf_src);

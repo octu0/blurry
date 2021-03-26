@@ -13,7 +13,7 @@ package blurry
 #include "libboxblur_linux.h"
 #endif
 
-int libboxblur(unsigned char *src, int32_t width, int32_t height, int32_t size, unsigned char *out) {
+int libboxblur(unsigned char *src, int32_t width, int32_t height, uint8_t size, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
     return 1;
@@ -39,7 +39,7 @@ var (
 	ErrBoxblur = errors.New("boxblur cgo call error")
 )
 
-func Boxblur(img *image.RGBA, size int) (*image.RGBA, error) {
+func Boxblur(img *image.RGBA, size uint8) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
@@ -47,7 +47,7 @@ func Boxblur(img *image.RGBA, size int) (*image.RGBA, error) {
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),
-		C.int(size),
+		C.uchar(size),
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {

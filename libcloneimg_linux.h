@@ -1,5 +1,5 @@
-#ifndef HALIDE__libclone_linux_h
-#define HALIDE__libclone_linux_h
+#ifndef HALIDE__libcloneimg_linux_h
+#define HALIDE__libcloneimg_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int clone(struct halide_buffer_t *_p0_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_clone_buffer);
+int cloneimg(struct halide_buffer_t *_p0_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_cloneimg_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int clone_argv(void **args);
+int cloneimg_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *clone_metadata();
+const struct halide_filter_metadata_t *cloneimg_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

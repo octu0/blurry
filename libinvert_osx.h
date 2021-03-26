@@ -1,5 +1,5 @@
-#ifndef HALIDE__libclone_osx_h
-#define HALIDE__libclone_osx_h
+#ifndef HALIDE__libinvert_osx_h
+#define HALIDE__libinvert_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int clone(struct halide_buffer_t *_p0_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_clone_buffer);
+int invert(struct halide_buffer_t *_p2_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_invert_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int clone_argv(void **args);
+int invert_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *clone_metadata();
+const struct halide_filter_metadata_t *invert_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

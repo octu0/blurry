@@ -54,7 +54,7 @@ Func readI32(Func clamped, const char *name) {
   return read;
 }
 
-Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -63,10 +63,10 @@ Func clone_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   //
   // RGBA interleave test
   //
-  Func clone = Func("clone");
-  clone(x, y, ch) = cast<uint8_t>(in(x, y, ch));
+  Func cloneimg = Func("cloneimg");
+  cloneimg(x, y, ch) = cast<uint8_t>(in(x, y, ch));
 
-  return clone;
+  return cloneimg;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -94,6 +94,32 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     .vectorize(xi, 32);
 
   return grayscale;
+}
+
+Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func invert = Func("invert");
+  Expr value = select(
+    ch == 3, in(x, y, ch), // alpha
+    255 - in(x, y, ch)     // r g b
+  );
+  invert(x, y, ch) = cast<uint8_t>(value);
+
+  invert.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  return invert;
 }
 
 Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
@@ -180,7 +206,7 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   return contrast;
 }
 
-Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
+Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -193,11 +219,11 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<i
 
   RDom rd_x = RDom(0, box_size, "rdom_x");
   Func blur_x = Func("blur_x");
-  blur_x(x, y, ch) = sum(in(x + rd_x, y, ch)) / box_size;
+  blur_x(x, y, ch) = fast_integer_divide(sum(in(x + rd_x, y, ch)), box_size);
 
   RDom rd_y = RDom(0, box_size, "rdom_y");
   Func blur_y = Func("blur_y");
-  blur_y(x, y, ch) = sum(blur_x(x, y + rd_y, ch)) / box_size;
+  blur_y(x, y, ch) = fast_integer_divide(sum(blur_x(x, y + rd_y, ch)), box_size);
 
   Func boxblur = Func("boxblur");
   boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
@@ -235,12 +261,14 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Expr size = 2 * (radius + 1);
   Expr center = radius;
 
+  Expr half = fast_integer_divide(radius, 2);
+
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd_rad(radius / 2, size, "rd_radius");
+  RDom rd_rad(half, size, "rd_radius");
 
   Func kernel = Func("kernel");
   kernel(x) = fast_exp(-(x * x) / sig2 / sigR);
@@ -515,7 +543,7 @@ void generate_runtime(std::vector<Target::Feature> features) {
   generate_static_link_runtime(features, f, {}, "runtime");
 }
 
-void generate_clone(std::vector<Target::Feature> features) {
+void generate_cloneimg(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
@@ -523,7 +551,7 @@ void generate_clone(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = clone_fn(
+  Func fn = cloneimg_fn(
     src.in(), width, height
   );
 
@@ -544,6 +572,26 @@ void generate_grayscale(std::vector<Target::Feature> features) {
   init_input_rgba(src);
 
   Func fn = grayscale_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  printf("generate %s\n", fn.name().c_str());
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+void generate_invert(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = invert_fn(
     src.in(), width, height
   );
 
@@ -623,7 +671,7 @@ void generate_boxblur(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<int32_t> size{"size", 11};
+  Param<uint8_t> size{"size", 11};
 
   init_input_rgba(src);
 
@@ -723,8 +771,9 @@ void generate_blockmozaic(std::vector<Target::Feature> features) {
 
 void generate(std::vector<Target::Feature> features){
   generate_runtime(features);
-  generate_clone(features);
+  generate_cloneimg(features);
   generate_grayscale(features);
+  generate_invert(features);
   generate_brightness(features);
   generate_gamma(features);
   generate_contrast(features);
@@ -764,13 +813,13 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if(strcmp(argv[1], "clone") == 0) {
+  if(strcmp(argv[1], "cloneimg") == 0) {
     Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
     Param<int32_t> width{"width", buf_src.get()->width()};
     Param<int32_t> height{"height", buf_src.get()->height()};
 
-    Func fn = clone_fn(
+    Func fn = cloneimg_fn(
       wrapFunc(buf_src, "buf_src"), width, height
     );
     fn.compile_jit(get_jit_target_from_environment());
@@ -790,6 +839,25 @@ int main(int argc, char **argv) {
     Param<int32_t> height{"height", buf_src.get()->height()};
 
     Func fn = grayscale_fn(
+      wrapFunc(buf_src, "buf_src"), width, height
+    );
+    fn.compile_jit(get_jit_target_from_environment());
+
+    printf("realize %s...\n", fn.name().c_str());
+
+    Buffer<uint8_t> out = fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+
+    printf("save to %s\n", argv[3]);
+    save_image(out, argv[3]);
+    return 0;
+  }
+  if(strcmp(argv[1], "invert") == 0) {
+    Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+    Param<int32_t> width{"width", buf_src.get()->width()};
+    Param<int32_t> height{"height", buf_src.get()->height()};
+
+    Func fn = invert_fn(
       wrapFunc(buf_src, "buf_src"), width, height
     );
     fn.compile_jit(get_jit_target_from_environment());
@@ -868,7 +936,7 @@ int main(int argc, char **argv) {
 
     Param<int32_t> width{"width", buf_src.get()->width()};
     Param<int32_t> height{"height", buf_src.get()->height()};
-    Param<int32_t> size{"size", std::stoi(argv[3])};
+    Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
 
     Func fn = boxblur_fn(
       wrapFunc(buf_src, "buf_src"), width, height, size
@@ -975,12 +1043,17 @@ int main(int argc, char **argv) {
 
     printf("w/ src %dx%d\n", width.get(), height.get());
     {
-      benchmark(clone_fn(
+      benchmark(cloneimg_fn(
         wrapFunc(buf_src, "buf_src"), width, height
       ), buf_src);
     }
     {
       benchmark(grayscale_fn(
+        wrapFunc(buf_src, "buf_src"), width, height
+      ), buf_src);
+    }
+    {
+      benchmark(invert_fn(
         wrapFunc(buf_src, "buf_src"), width, height
       ), buf_src);
     }
@@ -1003,7 +1076,7 @@ int main(int argc, char **argv) {
       ), buf_src);
     }
     {
-      Param<int32_t> size{"size", 10};
+      Param<uint8_t> size{"size", 10};
       benchmark(boxblur_fn(
         wrapFunc(buf_src, "buf_src"), width, height, size
       ), buf_src);

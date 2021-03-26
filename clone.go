@@ -2,28 +2,31 @@ package blurry
 
 /*
 #cgo CFLAGS: -I.
-#cgo darwin LDFLAGS: -L. -lruntime_osx -lclone_osx -ldl -lm
-#cgo linux  LDFLAGS: -L. -lruntime_linux -lclone_linux -ldl -lm
+#cgo darwin LDFLAGS: -L. -lruntime_osx -lcloneimg_osx -ldl -lm
+#cgo linux  LDFLAGS: -L. -lruntime_linux -lcloneimg_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 
 #include "bridge.h"
 #ifdef __APPLE__
-#include "libclone_osx.h"
+#include "libcloneimg_osx.h"
 #elif __linux__
-#include "libclone_linux.h"
+#include "libcloneimg_linux.h"
 #endif
 
-int libclone(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
-  halide_buffer_t in_rgba_buf = {0};
-  halide_buffer_t out_rgba_buf = {0};
+int libcloneimg(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
+  halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
+  if(in_rgba_buf == NULL){
+    return 1;
+  }
+  halide_buffer_t *out_rgba_buf = create_rgba_buffer(out, width, height);
+  if(out_rgba_buf == NULL){
+    return 1;
+  }
 
-  bind_rgba_buf(&in_rgba_buf, src, width, height);
-  bind_rgba_buf(&out_rgba_buf, out, width, height);
-
-  int ret = clone(&in_rgba_buf, width, height, &out_rgba_buf);
-  free_buf(&in_rgba_buf);
-  free_buf(&out_rgba_buf);
+  int ret = cloneimg(in_rgba_buf, width, height, out_rgba_buf);
+  free_buf(in_rgba_buf);
+  free_buf(out_rgba_buf);
   return ret;
 }
 */
@@ -41,7 +44,7 @@ func Clone(img *image.RGBA) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
-	ret := C.libclone(
+	ret := C.libcloneimg(
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),

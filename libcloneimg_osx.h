@@ -1,5 +1,5 @@
-#ifndef HALIDE__libboxblur_linux_h
-#define HALIDE__libboxblur_linux_h
+#ifndef HALIDE__libcloneimg_osx_h
+#define HALIDE__libcloneimg_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int boxblur(struct halide_buffer_t *_p6_buffer, int32_t _width, int32_t _height, uint8_t _size, struct halide_buffer_t *_boxblur_buffer);
+int cloneimg(struct halide_buffer_t *_p0_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_cloneimg_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int boxblur_argv(void **args);
+int cloneimg_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *boxblur_metadata();
+const struct halide_filter_metadata_t *cloneimg_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

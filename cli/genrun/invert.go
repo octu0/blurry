@@ -4,14 +4,14 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-func cloneAction(c *cli.Context) error {
+func invertAction(c *cli.Context) error {
 	runtimePath := c.String("runtime")
 	generateOutFilePath, err := generate(runtimePath, c.String("file"))
 	if err != nil {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "cloneimg", nil); err != nil {
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "invert", nil); err != nil {
 		return err
 	}
 
@@ -20,8 +20,8 @@ func cloneAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "clone",
-		Action: cloneAction,
+		Name:   "invert",
+		Action: invertAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

@@ -268,7 +268,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd_rad(half, size, "rd_radius");
+  RDom rd_rad = RDom(half, size, "rd_radius");
 
   Func kernel = Func("kernel");
   kernel(x) = fast_exp(-(x * x) / sig2 / sigR);
@@ -372,7 +372,7 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   kernel_x(0, 1) = -2; kernel_x(1, 1) = 0; kernel_x(2, 1) = 2;
   kernel_x(0, 2) = -1; kernel_x(1, 2) = 0; kernel_x(2, 2) = 1;
 
-  RDom rd_kernel(0,3, 0,3, "rd_kernel");
+  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
   Func gy = Func("grad_y");
   Expr gy_in = gray(x + rd_kernel.x, y + rd_kernel.y);
   Expr gy_val = kernel_y(rd_kernel.x, rd_kernel.y);

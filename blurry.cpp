@@ -1135,8 +1135,8 @@ void generate(){
   std::vector<Target::Feature> features;
   features.push_back(Target::AVX);
   features.push_back(Target::AVX2);
-  features.push_back(Target::FMA);
-  features.push_back(Target::FMA4);
+  //features.push_back(Target::FMA);
+  //features.push_back(Target::FMA4);
   features.push_back(Target::F16C);
   features.push_back(Target::SSE41);
   features.push_back(Target::EmbedBitcode);

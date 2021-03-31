@@ -11,6 +11,11 @@ using namespace Halide::Tools;
 
 const uint8_t GRAY_R = 76, GRAY_G = 152, GRAY_B = 28;
 
+const int16_t ROTATE0   = 0;   // No rotation
+const int16_t ROTATE90  = 90;  // Rotate 90 degrees clockwise
+const int16_t ROTATE180 = 180; // Rotate 180 degrees
+const int16_t ROTATE270 = 270; // Rotate 270 degrees clockwise
+
 Func wrapFunc(Buffer<uint8_t> buf, const char* name) {
   Var x("x"), y("y"), ch("channel");
 
@@ -54,6 +59,43 @@ Func readI32(Func clamped, const char *name) {
   return read;
 }
 
+Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Var x("x"), y("y"), ch("channel");
+  Func read = Func(name);
+  read(x, y, ch) = clamped(y, (height - 1) - x, ch);
+  return read;
+}
+
+Func rotate180(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Var x("x"), y("y"), ch("channel");
+  Func read = Func(name);
+  read(x, y, ch) = clamped((width - 1) - x, (height - 1) - y, ch);
+  return read;
+}
+
+Func rotate270(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Var x("x"), y("y"), ch("channel");
+  Func read = Func(name);
+  read(x, y, ch) = clamped((width - 1) - y, x, ch);
+  return read;
+}
+
+Func rotation(Param<int16_t> mode, Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  if(mode.get() == ROTATE0) {
+    return read(clamped, name);
+  }
+  if(mode.get() == ROTATE90) {
+    return rotate90(clamped, width, height, name);
+  }
+  if(mode.get() == ROTATE180) {
+    return rotate180(clamped, width, height, name);
+  }
+  if(mode.get() == ROTATE270) {
+    return rotate270(clamped, width, height, name);
+  }
+  return read(clamped, "unsupported rotation");
+}
+
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -67,6 +109,19 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   cloneimg(x, y, ch) = cast<uint8_t>(in(x, y, ch));
 
   return cloneimg;
+}
+
+Func rotate_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int16_t> mode) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func clamped = BoundaryConditions::constant_exterior(input, 0, src_bounds);
+  Func in = rotation(mode, clamped, width, height, "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func rotate = Func("rotate");
+  rotate(x, y, ch) = cast<uint8_t>(in(x, y, ch));
+
+  return rotate;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -599,12 +654,16 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   return 0;
 }
 
-Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {
+Buffer<uint8_t> jit_realize_uint8_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
   printf("realize %s...\n", fn.name().c_str());
   
-  return fn.realize({src.get()->width(), src.get()->height(), 3});
+  return fn.realize({width, height, 3});
+}
+
+Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {
+  return jit_realize_uint8_bounds(fn, src.get()->width(), src.get()->height());
 }
 
 // {{{ cloneimg
@@ -648,6 +707,58 @@ int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
   ), buf_src);
 }
 // }}} cloneimg
+
+// {{{ rotate
+void generate_rotate(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int16_t> rotation{"rotation", ROTATE90};
+
+  init_input_rgba(src);
+
+  Func fn = rotate_fn(
+    src.in(), width, height, rotation
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height, rotation
+  }, fn.name());
+}
+
+int jit_rotate(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int16_t> rotation{"rotation", (int16_t) std::stoi(argv[3])};
+
+  Func fn = rotate_fn(
+    wrapFunc(buf_src, "buf_src"), width, height, rotation
+  );
+
+  Buffer<uint8_t> out;
+  if(rotation.get() == ROTATE0 || rotation.get() == ROTATE180) {
+    out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+  } else {
+    out = jit_realize_uint8_bounds(fn, height.get(), width.get());
+  }
+
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
+  return 0;
+}
+
+int benchmark_rotate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int16_t> rotation{"rotation", ROTATE180};
+  return jit_benchmark(rotate_fn(
+    wrapFunc(buf_src, "buf_src"), width, height, rotation
+  ), buf_src);
+}
+// }}} rotate
 
 // {{{ grayscale
 void generate_grayscale(std::vector<Target::Feature> features) {
@@ -1145,6 +1256,7 @@ void generate(){
 
   generate_runtime(features);
   generate_cloneimg(features);
+  generate_rotate(features);
   generate_grayscale(features);
   generate_invert(features);
   generate_brightness(features);
@@ -1167,6 +1279,7 @@ void benchmark(char **argv) {
 
   printf("w/ src %dx%d\n", width.get(), height.get());
   benchmark_cloneimg(buf_src, width, height);
+  benchmark_rotate(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
   benchmark_brightness(buf_src, width, height);
@@ -1192,6 +1305,9 @@ int main(int argc, char **argv) {
 
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
+  } 
+  if(strcmp(argv[1], "rotate") == 0) {
+    return jit_rotate(argv);
   } 
   if(strcmp(argv[1], "grayscale") == 0) {
     return jit_grayscale(argv);

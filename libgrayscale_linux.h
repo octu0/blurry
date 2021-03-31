@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int grayscale(struct halide_buffer_t *_p1_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_grayscale_buffer);
+int grayscale(struct halide_buffer_t *_p2_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_grayscale_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int grayscale_argv(void **args);

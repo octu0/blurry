@@ -1,5 +1,5 @@
-#ifndef HALIDE__libedge_osx_h
-#define HALIDE__libedge_osx_h
+#ifndef HALIDE__librotate_linux_h
+#define HALIDE__librotate_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int edge(struct halide_buffer_t *_p9_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_edge_buffer);
+int rotate(struct halide_buffer_t *_p1_buffer, int32_t _width, int32_t _height, int16_t _rotation, struct halide_buffer_t *_rotate_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int edge_argv(void **args);
+int rotate_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *edge_metadata();
+const struct halide_filter_metadata_t *rotate_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

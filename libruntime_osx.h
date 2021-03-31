@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int runtime(struct halide_buffer_t *_nop_buffer);
+int runtime(struct halide_buffer_t *_noop_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int runtime_argv(void **args);

@@ -21,6 +21,7 @@ int libsobel(unsigned char *src, int32_t width, int32_t height, unsigned char *o
   }
   halide_buffer_t *out_rgba_buf = create_rgba_buffer(out, width, height);
   if(out_rgba_buf == NULL){
+    free_buf(in_rgba_buf);
     return 1;
   }
 

@@ -214,21 +214,21 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     100	  10650581 ns/op	  641047 B/op	      13 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     146	   8315664 ns/op	  640290 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     267	   4657739 ns/op	 1262500 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     325	   3635977 ns/op	 1262544 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     642	   1796090 ns/op	  793706 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     760	   1545757 ns/op	  793698 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     206	   5531965 ns/op	  925935 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     240	   4956251 ns/op	  925933 B/op	  153609 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    2005	    727645 ns/op	     243 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    2107	    570486 ns/op	      88 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    1185	   1010146 ns/op	     351 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    1650	    726642 ns/op	     277 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    1332	    794245 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    1921	    613347 ns/op	  311360 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    1116	    988921 ns/op	  311362 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    1524	    821776 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ### Contrast

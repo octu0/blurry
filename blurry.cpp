@@ -458,6 +458,48 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   return blockmozaic;
 }
 
+Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func kernel = Func("kernel");
+  kernel(x, y) = 0;
+  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = 0;
+  kernel(0, 1) = -1; kernel(1, 1) =  0; kernel(2, 1) = 1;
+  kernel(0, 2) =  0; kernel(1, 2) =  1; kernel(2, 2) = 1;
+
+  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
+  Func gradient = Func("gradient");
+  Expr in_val = in(x + rd_kernel.x, y + rd_kernel.y, ch);
+  Expr k_val  = kernel(rd_kernel.x, rd_kernel.y);
+  Expr val = in_val * k_val;
+  gradient(x, y, ch) += cast<uint8_t>(val);
+
+  Func emboss = Func("emboss");
+  emboss(x, y, ch) = select(
+    ch == 3, 255,
+    clamp(gradient(x, y, ch) + 128, 0, 255)
+  );
+
+  gradient.compute_root()
+    .vectorize(x, 32);
+
+  emboss.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+
+  return emboss;
+}
+
 void generate_static_link(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
   printf("generate %s\n", fn.name().c_str());
 
@@ -899,7 +941,7 @@ int jit_gaussianblur(char **argv) {
   Param<int32_t> height{"height", buf_src.get()->height()};
   Param<float> sigma{"sigma", std::stof(argv[3])};
 
-  Buffer<uint8_t> out = jit_realize_uint8(fn, gaussianblur_fn(
+  Buffer<uint8_t> out = jit_realize_uint8(gaussianblur_fn(
     wrapFunc(buf_src, "buf_src"), width, height, sigma
   ), buf_src);
 
@@ -1045,6 +1087,48 @@ int benchmark_blockmozaic(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<i
 }
 // }}} blockmozaic
 
+// {{{ emboss
+void generate_emboss(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = emboss_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_emboss(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> out = jit_realize_uint8(emboss_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(emboss_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+// }}} emboss
+
 void generate(){
   printf("generate...\n");
 
@@ -1071,6 +1155,7 @@ void generate(){
   generate_edge(features);
   generate_sobel(features);
   generate_blockmozaic(features);
+  generate_emboss(features);
 }
 
 void benchmark(char **argv) {
@@ -1084,15 +1169,15 @@ void benchmark(char **argv) {
   benchmark_cloneimg(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
-  benchmark_brightness(buff_src, width, height);
-  benchmark_gammacorrection(buff_src, width, height);
-  benchmark_contrast(buff_src, width, height);
-  benchmark_boxblur(buff_src, width, height);
-  benchmark_gaussianblur(buff_src, width, height);
-  benchmark_edge(buff_src, width, height);
-  benchmark_sobel(buff_src, width, height);
-  benchmark_blockmozaic(buff_src, width, height);
-  return 0;
+  benchmark_brightness(buf_src, width, height);
+  benchmark_gammacorrection(buf_src, width, height);
+  benchmark_contrast(buf_src, width, height);
+  benchmark_boxblur(buf_src, width, height);
+  benchmark_gaussianblur(buf_src, width, height);
+  benchmark_edge(buf_src, width, height);
+  benchmark_sobel(buf_src, width, height);
+  benchmark_blockmozaic(buf_src, width, height);
+  benchmark_emboss(buf_src, width, height);
 }
 
 int main(int argc, char **argv) {

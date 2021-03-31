@@ -78,6 +78,14 @@ img, err := blurry.Gaussianblur(input, 5.0)
 
 ![example](testdata/gaussianblur.png)
 
+### Emboss
+
+```go
+img, err := blurry.Emboss(input)
+```
+
+![example](testdata/emboss.png)
+
 ### Edge
 
 a.k.a. EdgeDetection
@@ -131,20 +139,21 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.3.0
+   1.4.0
 
 COMMANDS:
-     blockmozaic
-     boxblur
-     brightness
-     clone
-     contrast
-     edge
-     gamma
-     gaussianblur
-     grayscale
-     invert
-     sobel
+     blockmozaic   
+     boxblur       
+     brightness    
+     clone         
+     contrast      
+     edge          
+     emboss        
+     gamma         
+     gaussianblur  
+     grayscale     
+     invert        
+     sobel         
      help, h       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -166,30 +175,32 @@ This is the result of using halide's [benchamrk](https://github.com/halide/Halid
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
-realize benchmark...
+benchmark...
 w/ src 320x240
 benchmarking cloneimg...
-cloneimg: 0.0185758ms
+cloneimg: 0.0193794ms
 benchmarking grayscale...
-grayscale: 0.118637ms
+grayscale: 0.118924ms
 benchmarking invert...
-invert: 0.060455ms
+invert: 0.0657808ms
 benchmarking brightness...
-brightness: 0.0845308ms
+brightness: 0.0699945ms
 benchmarking gammacorrection...
-gammacorrection: 0.125641ms
+gammacorrection: 0.0989931ms
 benchmarking contrast...
-contrast: 0.0912185ms
+contrast: 0.0908352ms
 benchmarking boxblur...
-boxblur: 0.333382ms
+boxblur: 0.333706ms
 benchmarking gaussianblur...
-gaussianblur: 0.325328ms
+gaussianblur: 0.31604ms
 benchmarking edge...
-edge: 0.105413ms
+edge: 0.106277ms
 benchmarking sobel...
-sobel: 0.157796ms
+sobel: 0.123232ms
 benchmarking blockmozaic...
-blockmozaic: 0.365575ms
+blockmozaic: 0.338325ms
+benchmarking emboss...
+emboss: 0.273577ms
 ```
 
 ### Blur

@@ -43,11 +43,12 @@ import (
 )
 
 type RotationMode int16
-const(
-  Rotate0   RotationMode = 0   // No rotation
-  Rotate90  RotationMode = 90  // Rotate 90 degrees clockwise
-  Rotate180 RotationMode = 180 // Rotate 180 degrees
-  Rotate270 RotationMode = 270 // Rotate 270 degrees clockwise
+
+const (
+	Rotate0   RotationMode = 0   // No rotation
+	Rotate90  RotationMode = 90  // Rotate 90 degrees clockwise
+	Rotate180 RotationMode = 180 // Rotate 180 degrees
+	Rotate270 RotationMode = 270 // Rotate 270 degrees clockwise
 )
 
 var (
@@ -56,15 +57,15 @@ var (
 
 func Rotate(img *image.RGBA, mode RotationMode) (*image.RGBA, error) {
 	width, height := wh(img)
-  var out *image.RGBA
-  switch mode {
-  case Rotate0, Rotate180:
-	  out = GetRGBA(width, height)
-  case Rotate90, Rotate270:
-	  out = GetRGBA(height, width)
-  default:
-	  out = GetRGBA(width, height)
-  }
+	var out *image.RGBA
+	switch mode {
+	case Rotate0, Rotate180:
+		out = GetRGBA(width, height)
+	case Rotate90, Rotate270:
+		out = GetRGBA(height, width)
+	default:
+		out = GetRGBA(width, height)
+	}
 
 	ret := C.librotate(
 		(*C.uchar)(&img.Pix[0]),

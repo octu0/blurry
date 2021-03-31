@@ -112,6 +112,20 @@ img, err := blurry.Blockmozaic(input, 10)
 
 ![example](testdata/blockmozaic.png)
 
+### Rotate
+
+rotation 0/90/180/270 clockwise
+
+```go
+img, err := blurry.Rotate(input, blurry.Rotate90)
+```
+
+| `blurry.RotationMode` | Result   |
+| :-------------------: | :------: |
+| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
+| `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
+| `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
+
 ## CLI usage
 
 Run it via docker.  
@@ -139,7 +153,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.4.0
+   1.5.0
 
 COMMANDS:
      blockmozaic   
@@ -153,6 +167,7 @@ COMMANDS:
      gaussianblur  
      grayscale     
      invert        
+     rotate        
      sobel         
      help, h       Shows a list of commands or help for one command
 

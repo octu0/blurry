@@ -224,23 +224,23 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.01778ms
-BenchmarkJIT/rotate              : 0.02033ms
-BenchmarkJIT/grayscale           : 0.11328ms
-BenchmarkJIT/invert              : 0.08340ms
-BenchmarkJIT/brightness          : 0.08455ms
-BenchmarkJIT/gammacorrection     : 0.12865ms
-BenchmarkJIT/contrast            : 0.09949ms
-BenchmarkJIT/boxblur             : 0.32689ms
-BenchmarkJIT/gaussianblur        : 0.31575ms
-BenchmarkJIT/edge                : 0.10537ms
-BenchmarkJIT/sobel               : 0.12847ms
-BenchmarkJIT/emboss              : 0.25908ms
-BenchmarkJIT/laplacian           : 0.23458ms
-BenchmarkJIT/highpass            : 0.32065ms
-BenchmarkJIT/gradient            : 0.25294ms
-BenchmarkJIT/gaussian            : 0.31567ms
-BenchmarkJIT/blockmozaic         : 0.33579ms
+BenchmarkJIT/cloneimg            : 0.01770ms
+BenchmarkJIT/rotate              : 0.02045ms
+BenchmarkJIT/grayscale           : 0.11156ms
+BenchmarkJIT/invert              : 0.06351ms
+BenchmarkJIT/brightness          : 0.06539ms
+BenchmarkJIT/gammacorrection     : 0.13358ms
+BenchmarkJIT/contrast            : 0.08683ms
+BenchmarkJIT/boxblur             : 0.32303ms
+BenchmarkJIT/gaussianblur        : 0.31415ms
+BenchmarkJIT/edge                : 0.10656ms
+BenchmarkJIT/sobel               : 0.12836ms
+BenchmarkJIT/emboss              : 0.15628ms
+BenchmarkJIT/laplacian           : 0.16627ms
+BenchmarkJIT/highpass            : 0.17836ms
+BenchmarkJIT/gradient            : 0.15612ms
+BenchmarkJIT/gaussian            : 0.18105ms
+BenchmarkJIT/blockmozaic         : 0.34116ms
 ```
 
 ## AOT benchmarks
@@ -315,15 +315,11 @@ BenchmarkEdge/blurry/Edge-8                	    8272	    132898 ns/op	  311478 B
 ### Sobel
 
 ```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     207	   6021277 ns/op	 2196771 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     202	   5693435 ns/op	 2196801 B/op	      32 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	     994	   1210391 ns/op	  311454 B/op	       2 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    4532	    235969 ns/op	  311478 B/op	       3 allocs/op
 ```
 
 ### Gamma

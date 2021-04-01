@@ -115,7 +115,7 @@ Func filter2d_gray(
   RDom rd_kernel,
   const char *name
 ) {
-  Func in = readI32(BoundaryConditions::repeat_edge(input, bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -410,7 +410,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -454,7 +454,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -521,9 +521,15 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   return sobel;
 }
 
-Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  return in;
+}
+
+Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");

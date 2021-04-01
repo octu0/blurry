@@ -108,6 +108,46 @@ Func convolve(Func in, Func kernel, RDom rd_kernel) {
   return convolve;
 }
 
+Func filter2d_gray(
+  Func input,
+  Region bounds,
+  Func kernel,
+  RDom rd_kernel,
+  const char *name
+) {
+  Func in = readI32(BoundaryConditions::repeat_edge(input, bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func gray = Func("gray");
+  Expr r = in(x, y, 0);
+  gray(x, y, ch) = r;
+
+  Func conv = convolve(gray, kernel, rd_kernel);
+
+  Func gradient = Func(name);
+  gradient(x, y, ch) = select(
+    ch == 3, 255,
+    conv(x, y, ch) & 128
+  );
+
+  // schedule
+  conv.compute_root()
+    .vectorize(x, 32);
+
+  gradient.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  gray.compute_root();
+  return gradient;
+}
+
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -520,16 +560,8 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 }
 
 Func laplacian_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
-
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  gray(x, y, ch) = r;
+  Var x("x"), y("y");
+  Region bounds = {{0, width},{0, height},{0, 4}};
 
   Func kernel = Func("kernel");
   kernel(x, y) = 0;
@@ -538,39 +570,27 @@ Func laplacian_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   kernel(0, 2) = 0; kernel(1, 2) =  1; kernel(2, 2) = 0;
 
   RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  Func conv = convolve(gray, kernel, rd_kernel);
+  return filter2d_gray(input, bounds, kernel, rd_kernel, "laplacian");
+}
 
-  Func laplacian = Func("laplacian");
-  laplacian(x, y, ch) = select(
-    ch == 3, 255,
-    conv(x, y, ch) & 128
-  );
+Func highpass_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y");
+  Region bounds = {{0, width},{0, height},{0, 4}};
 
-  conv.compute_root()
-    .vectorize(x, 32);
+  Func kernel = Func("kernel");
+  kernel(x, y) = 0;
+  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = -1;
+  kernel(0, 1) = -1; kernel(1, 1) =  8; kernel(2, 1) = -1;
+  kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
 
-  laplacian.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
-  gray.compute_root();
-  return laplacian;
+  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
+  return filter2d_gray(input, bounds, kernel, rd_kernel, "highpass");
 }
 
 // gradient filter
 Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
-
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  gray(x, y, ch) = r;
+  Var x("x"), y("y");
+  Region bounds = {{0, width},{0, height},{0, 4}};
 
   Func kernel = Func("kernel");
   kernel(x, y) = 0;
@@ -579,25 +599,7 @@ Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
 
   RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  Func conv = convolve(gray, kernel, rd_kernel);
-
-  Func gradient = Func("gradient");
-  gradient(x, y, ch) = select(
-    ch == 3, 255,
-    conv(x, y, ch) & 128
-  );
-
-  conv.compute_root()
-    .vectorize(x, 32);
-
-  gradient.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
-  gray.compute_root();
-  return gradient;
+  return filter2d_gray(input, bounds, kernel, rd_kernel, "gradient");
 }
 
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size){
@@ -1325,6 +1327,48 @@ int benchmark_laplacian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 }
 // }}} laplacian
 
+// {{{ highpass
+void generate_highpass(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = highpass_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_highpass(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> out = jit_realize_uint8(highpass_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_highpass(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(highpass_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+// }}} highpass
+
 // {{{ gradient
 void generate_gradient(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
@@ -1440,6 +1484,7 @@ void generate(){
   generate_sobel(features);
   generate_emboss(features);
   generate_laplacian(features);
+  generate_highpass(features);
   generate_gradient(features);
   generate_blockmozaic(features);
 }
@@ -1465,6 +1510,7 @@ void benchmark(char **argv) {
   benchmark_sobel(buf_src, width, height);
   benchmark_emboss(buf_src, width, height);
   benchmark_laplacian(buf_src, width, height);
+  benchmark_highpass(buf_src, width, height);
   benchmark_gradient(buf_src, width, height);
   benchmark_blockmozaic(buf_src, width, height);
 }
@@ -1517,6 +1563,9 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "laplacian") == 0) {
     return jit_laplacian(argv);
+  }
+  if(strcmp(argv[1], "highpass") == 0) {
+    return jit_highpass(argv);
   }
   if(strcmp(argv[1], "gradient") == 0) {
     return jit_gradient(argv);

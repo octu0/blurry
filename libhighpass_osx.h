@@ -1,5 +1,5 @@
-#ifndef HALIDE__libgradient_osx_h
-#define HALIDE__libgradient_osx_h
+#ifndef HALIDE__libhighpass_osx_h
+#define HALIDE__libhighpass_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gradient(struct halide_buffer_t *_p14_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_gradient_buffer);
+int highpass(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_highpass_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int gradient_argv(void **args);
+int highpass_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *gradient_metadata();
+const struct halide_filter_metadata_t *highpass_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

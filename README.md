@@ -100,6 +100,15 @@ img, err := blurry.Emboss(input)
 
 ![example](testdata/emboss.png)
 
+### HighPass
+
+```go
+img, err := blurry.Highpass(input)
+```
+
+![example](testdata/highpass.png)
+
+
 ### Laplacian
 
 ```go
@@ -170,7 +179,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.6.0
+   1.7.0
 
 COMMANDS:
      blockmozaic   
@@ -182,7 +191,9 @@ COMMANDS:
      emboss        
      gamma         
      gaussianblur  
+     gradient      
      grayscale     
+     highpass      
      invert        
      laplacian     
      rotate        
@@ -206,21 +217,22 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.0186074ms
-BenchmarkJIT/rotate              : 0.0261134ms
-BenchmarkJIT/grayscale           : 0.12071ms
-BenchmarkJIT/invert              : 0.0632071ms
-BenchmarkJIT/brightness          : 0.0659965ms
-BenchmarkJIT/gammacorrection     : 0.134852ms
-BenchmarkJIT/contrast            : 0.0873302ms
-BenchmarkJIT/boxblur             : 0.328432ms
-BenchmarkJIT/gaussianblur        : 0.316872ms
-BenchmarkJIT/edge                : 0.107446ms
-BenchmarkJIT/sobel               : 0.124487ms
-BenchmarkJIT/emboss              : 0.255588ms
-BenchmarkJIT/laplacian           : 0.236932ms
-BenchmarkJIT/gradient            : 0.257473ms
-BenchmarkJIT/blockmozaic         : 0.344535ms
+BenchmarkJIT/cloneimg            : 0.0186607ms
+BenchmarkJIT/rotate              : 0.0213021ms
+BenchmarkJIT/grayscale           : 0.141906ms
+BenchmarkJIT/invert              : 0.0643032ms
+BenchmarkJIT/brightness          : 0.0665863ms
+BenchmarkJIT/gammacorrection     : 0.100437ms
+BenchmarkJIT/contrast            : 0.0651493ms
+BenchmarkJIT/boxblur             : 0.327178ms
+BenchmarkJIT/gaussianblur        : 0.32832ms
+BenchmarkJIT/edge                : 0.104111ms
+BenchmarkJIT/sobel               : 0.182396ms
+BenchmarkJIT/emboss              : 0.259481ms
+BenchmarkJIT/laplacian           : 0.243408ms
+BenchmarkJIT/highpass            : 0.321942ms
+BenchmarkJIT/gradient            : 0.254911ms
+BenchmarkJIT/blockmozaic         : 0.349871ms
 ```
 
 ## AOT benchmarks

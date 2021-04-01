@@ -637,7 +637,7 @@ Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
   Expr sigma = 5.0f;
   RDom gauss_rd = RDom(-2, 5, "gaussian_rdom");
-  Func gauss = gaussian(in, sigma, gauss_rd, "gaussian5x5");
+  Func gauss = gaussian(in, sigma, gauss_rd, "canny");
 
   Func ks_x = Func("kernel_sobel_x");
   ks_x(x, y) = 0;

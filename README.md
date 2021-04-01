@@ -196,22 +196,24 @@ VERSION:
    1.7.0
 
 COMMANDS:
-     blockmozaic   
-     boxblur       
-     brightness    
-     clone         
-     contrast      
-     edge          
-     emboss        
-     gamma         
-     gaussianblur  
-     gradient      
-     grayscale     
-     highpass      
-     invert        
-     laplacian     
-     rotate        
-     sobel         
+     blockmozaic
+     boxblur
+     brightness
+     clone
+     contrast
+     dilation
+     edge
+     emboss
+     erosion
+     gamma
+     gaussianblur
+     gradient
+     grayscale
+     highpass
+     invert
+     laplacian
+     rotate
+     sobel
      help, h       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -231,22 +233,25 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.01770ms
-BenchmarkJIT/rotate              : 0.02045ms
-BenchmarkJIT/grayscale           : 0.11156ms
-BenchmarkJIT/invert              : 0.06351ms
-BenchmarkJIT/brightness          : 0.06539ms
-BenchmarkJIT/gammacorrection     : 0.13358ms
-BenchmarkJIT/contrast            : 0.08683ms
-BenchmarkJIT/boxblur             : 0.32303ms
-BenchmarkJIT/gaussianblur        : 0.31415ms
-BenchmarkJIT/edge                : 0.10656ms
-BenchmarkJIT/sobel               : 0.12836ms
-BenchmarkJIT/emboss              : 0.15628ms
-BenchmarkJIT/laplacian           : 0.16627ms
-BenchmarkJIT/highpass            : 0.17836ms
-BenchmarkJIT/gradient            : 0.15612ms
-BenchmarkJIT/blockmozaic         : 0.34116ms
+BenchmarkJIT/cloneimg            : 0.01805ms
+BenchmarkJIT/rotate              : 0.02173ms
+BenchmarkJIT/erosion             : 0.06836ms
+BenchmarkJIT/dilation            : 0.06849ms
+BenchmarkJIT/grayscale           : 0.11893ms
+BenchmarkJIT/invert              : 0.06620ms
+BenchmarkJIT/brightness          : 0.08915ms
+BenchmarkJIT/gammacorrection     : 0.10024ms
+BenchmarkJIT/contrast            : 0.09237ms
+BenchmarkJIT/boxblur             : 0.33524ms
+BenchmarkJIT/gaussianblur        : 0.31813ms
+BenchmarkJIT/edge                : 0.10531ms
+BenchmarkJIT/sobel               : 0.12117ms
+BenchmarkJIT/canny               : 0.34783ms
+BenchmarkJIT/emboss              : 0.15647ms
+BenchmarkJIT/laplacian           : 0.16669ms
+BenchmarkJIT/highpass            : 0.18053ms
+BenchmarkJIT/gradient            : 0.17972ms
+BenchmarkJIT/blockmozaic         : 0.34307ms
 ```
 
 ## AOT benchmarks

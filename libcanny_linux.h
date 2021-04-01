@@ -1,5 +1,5 @@
-#ifndef HALIDE__libsobel3x3_osx_h
-#define HALIDE__libsobel3x3_osx_h
+#ifndef HALIDE__libcanny_linux_h
+#define HALIDE__libcanny_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int sobel3x3(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel3x3_buffer);
+int canny(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_canny_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int sobel3x3_argv(void **args);
+int canny_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *sobel3x3_metadata();
+const struct halide_filter_metadata_t *canny_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

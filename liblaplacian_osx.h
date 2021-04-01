@@ -1,5 +1,5 @@
-#ifndef HALIDE__libblockmozaic_osx_h
-#define HALIDE__libblockmozaic_osx_h
+#ifndef HALIDE__liblaplacian_osx_h
+#define HALIDE__liblaplacian_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int blockmozaic(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, int32_t _block, struct halide_buffer_t *_blockmozaic_buffer);
+int laplacian(struct halide_buffer_t *_p12_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_laplacian_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int blockmozaic_argv(void **args);
+int laplacian_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *blockmozaic_metadata();
+const struct halide_filter_metadata_t *laplacian_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

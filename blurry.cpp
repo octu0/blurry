@@ -96,6 +96,18 @@ Func rotation(Param<int16_t> mode, Func clamped, Param<int32_t> width, Param<int
   return read(clamped, "unsupported rotation");
 }
 
+Func convolve(Func in, Func kernel, RDom rd_kernel) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func convolve = Func("convolve");
+  Expr in_val = in(x + rd_kernel.x, y + rd_kernel.y, ch);
+  Expr k_val  = kernel(rd_kernel.x, rd_kernel.y);
+  Expr val = in_val * k_val;
+  convolve(x, y, ch) += cast<uint8_t>(val);
+
+  return convolve;
+}
+
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -364,8 +376,8 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Func gray = Func("gray");
   Expr r = in(x, y, 0);
-  Expr g = in(x, y, 1);
-  Expr b = in(x, y, 2);
+  //Expr g = in(x, y, 1);
+  //Expr b = in(x, y, 2);
   //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
   //gray(x, y) = cast<uint8_t>(value);
   gray(x, y) = cast<uint8_t>(r);
@@ -469,6 +481,87 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   return sobel;
 }
 
+Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func kernel = Func("kernel");
+  kernel(x, y) = 0;
+  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = 0;
+  kernel(0, 1) = -1; kernel(1, 1) =  0; kernel(2, 1) = 1;
+  kernel(0, 2) =  0; kernel(1, 2) =  1; kernel(2, 2) = 1;
+
+  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
+  Func gradient = convolve(in, kernel, rd_kernel);
+
+  Func emboss = Func("emboss");
+  emboss(x, y, ch) = select(
+    ch == 3, 255,
+    clamp(gradient(x, y, ch) + 128, 0, 255)
+  );
+
+  gradient.compute_root()
+    .vectorize(x, 32);
+
+  emboss.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+
+  return emboss;
+}
+
+Func laplacian_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func gray = Func("gray");
+  Expr r = in(x, y, 0);
+  //Expr g = in(x, y, 1);
+  //Expr b = in(x, y, 2);
+  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
+  gray(x, y, ch) = r;
+
+  Func kernel = Func("kernel");
+  kernel(x, y) = 0;
+  kernel(0, 0) = 0; kernel(1, 0) =  1; kernel(2, 0) = 0;
+  kernel(0, 1) = 1; kernel(1, 1) = -4; kernel(2, 1) = 1;
+  kernel(0, 2) = 0; kernel(1, 2) =  1; kernel(2, 2) = 0;
+
+  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
+  Func gradient = convolve(gray, kernel, rd_kernel);
+
+  Func laplacian = Func("laplacian");
+  laplacian(x, y, ch) = select(
+    ch == 3, 255,
+    gradient(x, y, ch) & 128
+  );
+
+  gradient.compute_root()
+    .vectorize(x, 32);
+
+  laplacian.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  gray.compute_root();
+  return laplacian;
+}
+
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -511,48 +604,6 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   in.compute_root();
 
   return blockmozaic;
-}
-
-Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
-
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = 0;
-  kernel(0, 1) = -1; kernel(1, 1) =  0; kernel(2, 1) = 1;
-  kernel(0, 2) =  0; kernel(1, 2) =  1; kernel(2, 2) = 1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  Func gradient = Func("gradient");
-  Expr in_val = in(x + rd_kernel.x, y + rd_kernel.y, ch);
-  Expr k_val  = kernel(rd_kernel.x, rd_kernel.y);
-  Expr val = in_val * k_val;
-  gradient(x, y, ch) += cast<uint8_t>(val);
-
-  Func emboss = Func("emboss");
-  emboss(x, y, ch) = select(
-    ch == 3, 255,
-    clamp(gradient(x, y, ch) + 128, 0, 255)
-  );
-
-  gradient.compute_root()
-    .vectorize(x, 32);
-
-  emboss.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
-  in.compute_root();
-
-  return emboss;
 }
 
 void generate_static_link(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
@@ -646,11 +697,10 @@ void generate_runtime(std::vector<Target::Feature> features) {
 int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   fn.compile_jit(get_jit_target_from_environment());
 
-  printf("benchmarking %s...\n", fn.name().c_str());
   double result = benchmark(10, 10, [&]() {
     fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
   });
-  printf("%s: %gms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-20s: %gms\n", fn.name().c_str(), result * 1e3);
   return 0;
 }
 
@@ -1153,6 +1203,90 @@ int benchmark_sobel(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t
 }
 // }}} sobel
 
+// {{{ emboss
+void generate_emboss(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = emboss_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_emboss(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> out = jit_realize_uint8(emboss_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(emboss_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+// }}} emboss
+
+// {{{ laplacian
+void generate_laplacian(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = laplacian_fn(
+    src.in(), width, height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_laplacian(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> out = jit_realize_uint8(laplacian_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_laplacian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(laplacian_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+// }}} laplacian
+
 // {{{ blockmozaic
 void generate_blockmozaic(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
@@ -1198,48 +1332,6 @@ int benchmark_blockmozaic(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<i
 }
 // }}} blockmozaic
 
-// {{{ emboss
-void generate_emboss(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = emboss_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_emboss(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(emboss_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(emboss_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} emboss
-
 void generate(){
   printf("generate...\n");
 
@@ -1266,8 +1358,9 @@ void generate(){
   generate_gaussianblur(features);
   generate_edge(features);
   generate_sobel(features);
-  generate_blockmozaic(features);
   generate_emboss(features);
+  generate_laplacian(features);
+  generate_blockmozaic(features);
 }
 
 void benchmark(char **argv) {
@@ -1277,7 +1370,7 @@ void benchmark(char **argv) {
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
 
-  printf("w/ src %dx%d\n", width.get(), height.get());
+  printf("src %dx%d\n", width.get(), height.get());
   benchmark_cloneimg(buf_src, width, height);
   benchmark_rotate(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
@@ -1289,8 +1382,9 @@ void benchmark(char **argv) {
   benchmark_gaussianblur(buf_src, width, height);
   benchmark_edge(buf_src, width, height);
   benchmark_sobel(buf_src, width, height);
-  benchmark_blockmozaic(buf_src, width, height);
   benchmark_emboss(buf_src, width, height);
+  benchmark_laplacian(buf_src, width, height);
+  benchmark_blockmozaic(buf_src, width, height);
 }
 
 int main(int argc, char **argv) {
@@ -1336,11 +1430,14 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "sobel") == 0) {
     return jit_sobel(argv);
   }
-  if(strcmp(argv[1], "blockmozaic") == 0) {
-    return jit_blockmozaic(argv);
-  }
   if(strcmp(argv[1], "emboss") == 0) {
     return jit_emboss(argv);
+  }
+  if(strcmp(argv[1], "laplacian") == 0) {
+    return jit_laplacian(argv);
+  }
+  if(strcmp(argv[1], "blockmozaic") == 0) {
+    return jit_blockmozaic(argv);
   }
 
   printf("unknown command: %s\n", argv[1]);

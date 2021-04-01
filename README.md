@@ -22,6 +22,20 @@ original image
 
 ![original](testdata/src.png)
 
+### Rotate
+
+rotation 0/90/180/270 clockwise
+
+```go
+img, err := blurry.Rotate(input, blurry.Rotate90)
+```
+
+| `blurry.RotationMode` | Result   |
+| :-------------------: | :------: |
+| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
+| `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
+| `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
+
 ### Grayscale
 
 ```go
@@ -86,6 +100,14 @@ img, err := blurry.Emboss(input)
 
 ![example](testdata/emboss.png)
 
+### Laplacian
+
+```go
+img, err := blurry.Laplacian(input)
+```
+
+![example](testdata/laplacian.png)
+
 ### Edge
 
 a.k.a. EdgeDetection
@@ -112,19 +134,6 @@ img, err := blurry.Blockmozaic(input, 10)
 
 ![example](testdata/blockmozaic.png)
 
-### Rotate
-
-rotation 0/90/180/270 clockwise
-
-```go
-img, err := blurry.Rotate(input, blurry.Rotate90)
-```
-
-| `blurry.RotationMode` | Result   |
-| :-------------------: | :------: |
-| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
-| `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
-| `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
 
 ## CLI usage
 
@@ -153,7 +162,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.5.0
+   1.6.0
 
 COMMANDS:
      blockmozaic   
@@ -167,6 +176,7 @@ COMMANDS:
      gaussianblur  
      grayscale     
      invert        
+     laplacian     
      rotate        
      sobel         
      help, h       Shows a list of commands or help for one command
@@ -175,8 +185,7 @@ GLOBAL OPTIONS:
    --debug, -d    debug mode
    --verbose, -V  verbose. more message
    --help, -h     show help
-   --version, -v  print the version
-```
+   --version, -v  print the version```
 
 ## Benchmarks
 
@@ -191,31 +200,21 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 benchmark...
-w/ src 320x240
-benchmarking cloneimg...
-cloneimg: 0.0193794ms
-benchmarking grayscale...
-grayscale: 0.118924ms
-benchmarking invert...
-invert: 0.0657808ms
-benchmarking brightness...
-brightness: 0.0699945ms
-benchmarking gammacorrection...
-gammacorrection: 0.0989931ms
-benchmarking contrast...
-contrast: 0.0908352ms
-benchmarking boxblur...
-boxblur: 0.333706ms
-benchmarking gaussianblur...
-gaussianblur: 0.31604ms
-benchmarking edge...
-edge: 0.106277ms
-benchmarking sobel...
-sobel: 0.123232ms
-benchmarking blockmozaic...
-blockmozaic: 0.338325ms
-benchmarking emboss...
-emboss: 0.273577ms
+src 320x240
+BenchmarkJIT/cloneimg            : 0.0186017ms
+BenchmarkJIT/rotate              : 0.0226774ms
+BenchmarkJIT/grayscale           : 0.117167ms
+BenchmarkJIT/invert              : 0.0679342ms
+BenchmarkJIT/brightness          : 0.0876817ms
+BenchmarkJIT/gammacorrection     : 0.124812ms
+BenchmarkJIT/contrast            : 0.0915082ms
+BenchmarkJIT/boxblur             : 0.331223ms
+BenchmarkJIT/gaussianblur        : 0.314107ms
+BenchmarkJIT/edge                : 0.10545ms
+BenchmarkJIT/sobel               : 0.128125ms
+BenchmarkJIT/emboss              : 0.256903ms
+BenchmarkJIT/laplacian           : 0.237021ms
+BenchmarkJIT/blockmozaic         : 0.345473ms
 ```
 
 ### Blur

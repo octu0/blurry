@@ -185,7 +185,8 @@ GLOBAL OPTIONS:
    --debug, -d    debug mode
    --verbose, -V  verbose. more message
    --help, -h     show help
-   --version, -v  print the version```
+   --version, -v  print the version
+```
 
 ## Benchmarks
 

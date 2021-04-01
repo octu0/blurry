@@ -1,5 +1,5 @@
-#ifndef HALIDE__libgrayscale_linux_h
-#define HALIDE__libgrayscale_linux_h
+#ifndef HALIDE__liberosion_linux_h
+#define HALIDE__liberosion_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int grayscale(struct halide_buffer_t *_p4_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_grayscale_buffer);
+int erosion(struct halide_buffer_t *_p2_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_erosion_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int grayscale_argv(void **args);
+int erosion_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *grayscale_metadata();
+const struct halide_filter_metadata_t *erosion_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

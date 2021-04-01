@@ -116,14 +116,6 @@ img, err := blurry.Laplacian(input)
 
 ![example](testdata/laplacian.png)
 
-### Gaussian
-
-```go
-img, err := blurry.Gaussian(input)
-```
-
-![example](testdata/gaussian.png)
-
 ### Gradient
 
 ```go
@@ -158,6 +150,21 @@ img, err := blurry.Blockmozaic(input, 10)
 
 ![example](testdata/blockmozaic.png)
 
+### Erode
+
+```go
+img, err := blurry.Erosion(input)
+```
+
+![example](testdata/erosion.png)
+
+### Dilate
+
+```go
+img, err := blurry.Dilation(input)
+```
+
+![example](testdata/dilation.png)
 
 ## CLI usage
 
@@ -239,7 +246,6 @@ BenchmarkJIT/emboss              : 0.15628ms
 BenchmarkJIT/laplacian           : 0.16627ms
 BenchmarkJIT/highpass            : 0.17836ms
 BenchmarkJIT/gradient            : 0.15612ms
-BenchmarkJIT/gaussian            : 0.18105ms
 BenchmarkJIT/blockmozaic         : 0.34116ms
 ```
 

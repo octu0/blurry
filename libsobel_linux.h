@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int sobel(struct halide_buffer_t *_p10_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel_buffer);
+int sobel(struct halide_buffer_t *_p12_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int sobel_argv(void **args);

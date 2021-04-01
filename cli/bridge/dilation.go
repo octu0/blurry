@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func gaussianAction(c *cli.Context) error {
+func dilationAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Gaussian(in)
+	out, err := blurry.Dilation(in)
 	if err != nil {
 		return err
 	}
@@ -29,8 +29,8 @@ func gaussianAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "gaussian",
-		Action: gaussianAction,
+		Name:   "dilation",
+		Action: dilationAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

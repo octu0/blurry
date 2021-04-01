@@ -2,19 +2,19 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}
-#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -lgaussian_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -lgaussian_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -ldilation_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -ldilation_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 
 #include "bridge.h"
 #ifdef __APPLE__
-#include "libgaussian_osx.h"
+#include "libdilation_osx.h"
 #elif __linux__
-#include "libgaussian_linux.h"
+#include "libdilation_linux.h"
 #endif
 
-int libgaussian(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
+int libdilation(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
     return 1;
@@ -25,7 +25,7 @@ int libgaussian(unsigned char *src, int32_t width, int32_t height, unsigned char
     return 1;
   }
 
-  int ret = gaussian(in_rgba_buf, width, height, out_rgba_buf);
+  int ret = dilation(in_rgba_buf, width, height, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;
@@ -38,21 +38,21 @@ import (
 )
 
 var (
-	ErrGaussian = errors.New("gaussian cgo call error")
+	ErrDilation = errors.New("dilation cgo call error")
 )
 
-func Gaussian(img *image.RGBA) (*image.RGBA, error) {
+func Dilation(img *image.RGBA) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
-	ret := C.libgaussian(
+	ret := C.libdilation(
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {
-		return nil, ErrGaussian
+		return nil, ErrDilation
 	}
 	return out, nil
 }

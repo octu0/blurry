@@ -1,5 +1,5 @@
-#ifndef HALIDE__libgaussian_osx_h
-#define HALIDE__libgaussian_osx_h
+#ifndef HALIDE__libsobel3x3_osx_h
+#define HALIDE__libsobel3x3_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gaussian(struct halide_buffer_t *_p15_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_gaussian_buffer);
+int sobel3x3(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel3x3_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int gaussian_argv(void **args);
+int sobel3x3_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *gaussian_metadata();
+const struct halide_filter_metadata_t *sobel3x3_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

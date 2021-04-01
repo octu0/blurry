@@ -4,14 +4,14 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-func gradientAction(c *cli.Context) error {
+func gaussianAction(c *cli.Context) error {
 	runtimePath := c.String("runtime")
 	generateOutFilePath, err := generate(runtimePath, c.String("file"))
 	if err != nil {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "gradient", nil); err != nil {
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "gaussian", nil); err != nil {
 		return err
 	}
 
@@ -20,8 +20,8 @@ func gradientAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "gradient",
-		Action: gradientAction,
+		Name:   "gaussian",
+		Action: gaussianAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

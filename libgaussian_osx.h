@@ -1,5 +1,5 @@
-#ifndef HALIDE__libblockmozaic_linux_h
-#define HALIDE__libblockmozaic_linux_h
+#ifndef HALIDE__libgaussian_osx_h
+#define HALIDE__libgaussian_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int blockmozaic(struct halide_buffer_t *_p16_buffer, int32_t _width, int32_t _height, int32_t _block, struct halide_buffer_t *_blockmozaic_buffer);
+int gaussian(struct halide_buffer_t *_p15_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_gaussian_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int blockmozaic_argv(void **args);
+int gaussian_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *blockmozaic_metadata();
+const struct halide_filter_metadata_t *gaussian_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

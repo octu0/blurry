@@ -108,7 +108,6 @@ img, err := blurry.Highpass(input)
 
 ![example](testdata/highpass.png)
 
-
 ### Laplacian
 
 ```go
@@ -116,6 +115,14 @@ img, err := blurry.Laplacian(input)
 ```
 
 ![example](testdata/laplacian.png)
+
+### Gaussian
+
+```go
+img, err := blurry.Gaussian(input)
+```
+
+![example](testdata/gaussian.png)
 
 ### Gradient
 
@@ -217,22 +224,23 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.0186607ms
-BenchmarkJIT/rotate              : 0.0213021ms
-BenchmarkJIT/grayscale           : 0.141906ms
-BenchmarkJIT/invert              : 0.0643032ms
-BenchmarkJIT/brightness          : 0.0665863ms
-BenchmarkJIT/gammacorrection     : 0.100437ms
-BenchmarkJIT/contrast            : 0.0651493ms
-BenchmarkJIT/boxblur             : 0.327178ms
-BenchmarkJIT/gaussianblur        : 0.32832ms
-BenchmarkJIT/edge                : 0.104111ms
-BenchmarkJIT/sobel               : 0.182396ms
-BenchmarkJIT/emboss              : 0.259481ms
-BenchmarkJIT/laplacian           : 0.243408ms
-BenchmarkJIT/highpass            : 0.321942ms
-BenchmarkJIT/gradient            : 0.254911ms
-BenchmarkJIT/blockmozaic         : 0.349871ms
+BenchmarkJIT/cloneimg            : 0.01778ms
+BenchmarkJIT/rotate              : 0.02033ms
+BenchmarkJIT/grayscale           : 0.11328ms
+BenchmarkJIT/invert              : 0.08340ms
+BenchmarkJIT/brightness          : 0.08455ms
+BenchmarkJIT/gammacorrection     : 0.12865ms
+BenchmarkJIT/contrast            : 0.09949ms
+BenchmarkJIT/boxblur             : 0.32689ms
+BenchmarkJIT/gaussianblur        : 0.31575ms
+BenchmarkJIT/edge                : 0.10537ms
+BenchmarkJIT/sobel               : 0.12847ms
+BenchmarkJIT/emboss              : 0.25908ms
+BenchmarkJIT/laplacian           : 0.23458ms
+BenchmarkJIT/highpass            : 0.32065ms
+BenchmarkJIT/gradient            : 0.25294ms
+BenchmarkJIT/gaussian            : 0.31567ms
+BenchmarkJIT/blockmozaic         : 0.33579ms
 ```
 
 ## AOT benchmarks

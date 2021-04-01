@@ -108,6 +108,14 @@ img, err := blurry.Laplacian(input)
 
 ![example](testdata/laplacian.png)
 
+### Gradient
+
+```go
+img, err := blurry.Gradient(input)
+```
+
+![example](testdata/gradient.png)
+
 ### Edge
 
 a.k.a. EdgeDetection
@@ -198,20 +206,21 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.0186017ms
-BenchmarkJIT/rotate              : 0.0226774ms
-BenchmarkJIT/grayscale           : 0.117167ms
-BenchmarkJIT/invert              : 0.0679342ms
-BenchmarkJIT/brightness          : 0.0876817ms
-BenchmarkJIT/gammacorrection     : 0.124812ms
-BenchmarkJIT/contrast            : 0.0915082ms
-BenchmarkJIT/boxblur             : 0.331223ms
-BenchmarkJIT/gaussianblur        : 0.314107ms
-BenchmarkJIT/edge                : 0.10545ms
-BenchmarkJIT/sobel               : 0.128125ms
-BenchmarkJIT/emboss              : 0.256903ms
-BenchmarkJIT/laplacian           : 0.237021ms
-BenchmarkJIT/blockmozaic         : 0.345473ms
+BenchmarkJIT/cloneimg            : 0.0186074ms
+BenchmarkJIT/rotate              : 0.0261134ms
+BenchmarkJIT/grayscale           : 0.12071ms
+BenchmarkJIT/invert              : 0.0632071ms
+BenchmarkJIT/brightness          : 0.0659965ms
+BenchmarkJIT/gammacorrection     : 0.134852ms
+BenchmarkJIT/contrast            : 0.0873302ms
+BenchmarkJIT/boxblur             : 0.328432ms
+BenchmarkJIT/gaussianblur        : 0.316872ms
+BenchmarkJIT/edge                : 0.107446ms
+BenchmarkJIT/sobel               : 0.124487ms
+BenchmarkJIT/emboss              : 0.255588ms
+BenchmarkJIT/laplacian           : 0.236932ms
+BenchmarkJIT/gradient            : 0.257473ms
+BenchmarkJIT/blockmozaic         : 0.344535ms
 ```
 
 ## AOT benchmarks

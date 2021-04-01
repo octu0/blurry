@@ -188,13 +188,9 @@ GLOBAL OPTIONS:
    --version, -v  print the version
 ```
 
-## Benchmarks
+# Benchmarks
 
-In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
-more complex operations will be optimized for CPU and become faster.  
-Also, the execution speed may be reduced by the overhead of multiple calls.
-
-### Halide JIT benchmarks
+## Halide JIT benchmarks
 
 This is the result of using halide's [benchamrk](https://github.com/halide/Halide/blob/master/tools/halide_benchmark.h).  
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
@@ -217,6 +213,13 @@ BenchmarkJIT/emboss              : 0.256903ms
 BenchmarkJIT/laplacian           : 0.237021ms
 BenchmarkJIT/blockmozaic         : 0.345473ms
 ```
+
+## AOT benchmarks
+
+Calling a library compiled by AOT(ahead-of-time) via cgo.  
+In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
+more complex operations will be optimized for CPU and become faster.  
+Also, the execution speed may be reduced by the overhead of multiple calls.
 
 ### Blur
 

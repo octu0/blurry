@@ -17,12 +17,12 @@ COPY --from=goget /go/pkg/  /go/pkg/
 
 WORKDIR /build
 
-ADD . /go/src/github.com/octu0/blurry/
-
 RUN set -eux && \
     apt-get clean && \
     apt-get update -y && \
     apt-get install -y gcc libc-dev libc++-dev g++ clang wget libtinfo5 libclang-dev
+
+ADD . /go/src/github.com/octu0/blurry/
 
 RUN set -eux && \
     cd /go/src/github.com/octu0/blurry && \

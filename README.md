@@ -22,6 +22,20 @@ original image
 
 ![original](testdata/src.png)
 
+### Rotate
+
+rotation 0/90/180/270 clockwise
+
+```go
+img, err := blurry.Rotate(input, blurry.Rotate90)
+```
+
+| `blurry.RotationMode` | Result   |
+| :-------------------: | :------: |
+| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
+| `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
+| `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
+
 ### Grayscale
 
 ```go
@@ -86,6 +100,30 @@ img, err := blurry.Emboss(input)
 
 ![example](testdata/emboss.png)
 
+### HighPass
+
+```go
+img, err := blurry.Highpass(input)
+```
+
+![example](testdata/highpass.png)
+
+### Laplacian
+
+```go
+img, err := blurry.Laplacian(input)
+```
+
+![example](testdata/laplacian.png)
+
+### Gradient
+
+```go
+img, err := blurry.Gradient(input)
+```
+
+![example](testdata/gradient.png)
+
 ### Edge
 
 a.k.a. EdgeDetection
@@ -112,19 +150,21 @@ img, err := blurry.Blockmozaic(input, 10)
 
 ![example](testdata/blockmozaic.png)
 
-### Rotate
-
-rotation 0/90/180/270 clockwise
+### Erode
 
 ```go
-img, err := blurry.Rotate(input, blurry.Rotate90)
+img, err := blurry.Erosion(input)
 ```
 
-| `blurry.RotationMode` | Result   |
-| :-------------------: | :------: |
-| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
-| `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
-| `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
+![example](testdata/erosion.png)
+
+### Dilate
+
+```go
+img, err := blurry.Dilation(input)
+```
+
+![example](testdata/dilation.png)
 
 ## CLI usage
 
@@ -153,22 +193,27 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.5.0
+   1.7.0
 
 COMMANDS:
-     blockmozaic   
-     boxblur       
-     brightness    
-     clone         
-     contrast      
-     edge          
-     emboss        
-     gamma         
-     gaussianblur  
-     grayscale     
-     invert        
-     rotate        
-     sobel         
+     blockmozaic
+     boxblur
+     brightness
+     clone
+     contrast
+     dilation
+     edge
+     emboss
+     erosion
+     gamma
+     gaussianblur
+     gradient
+     grayscale
+     highpass
+     invert
+     laplacian
+     rotate
+     sobel
      help, h       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -178,45 +223,43 @@ GLOBAL OPTIONS:
    --version, -v  print the version
 ```
 
-## Benchmarks
+# Benchmarks
 
-In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
-more complex operations will be optimized for CPU and become faster.  
-Also, the execution speed may be reduced by the overhead of multiple calls.
-
-### Halide JIT benchmarks
+## Halide JIT benchmarks
 
 This is the result of using halide's [benchamrk](https://github.com/halide/Halide/blob/master/tools/halide_benchmark.h).  
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 benchmark...
-w/ src 320x240
-benchmarking cloneimg...
-cloneimg: 0.0193794ms
-benchmarking grayscale...
-grayscale: 0.118924ms
-benchmarking invert...
-invert: 0.0657808ms
-benchmarking brightness...
-brightness: 0.0699945ms
-benchmarking gammacorrection...
-gammacorrection: 0.0989931ms
-benchmarking contrast...
-contrast: 0.0908352ms
-benchmarking boxblur...
-boxblur: 0.333706ms
-benchmarking gaussianblur...
-gaussianblur: 0.31604ms
-benchmarking edge...
-edge: 0.106277ms
-benchmarking sobel...
-sobel: 0.123232ms
-benchmarking blockmozaic...
-blockmozaic: 0.338325ms
-benchmarking emboss...
-emboss: 0.273577ms
+src 320x240
+BenchmarkJIT/cloneimg            : 0.01805ms
+BenchmarkJIT/rotate              : 0.02173ms
+BenchmarkJIT/erosion             : 0.06836ms
+BenchmarkJIT/dilation            : 0.06849ms
+BenchmarkJIT/grayscale           : 0.11893ms
+BenchmarkJIT/invert              : 0.06620ms
+BenchmarkJIT/brightness          : 0.08915ms
+BenchmarkJIT/gammacorrection     : 0.10024ms
+BenchmarkJIT/contrast            : 0.09237ms
+BenchmarkJIT/boxblur             : 0.33524ms
+BenchmarkJIT/gaussianblur        : 0.31813ms
+BenchmarkJIT/edge                : 0.10531ms
+BenchmarkJIT/sobel               : 0.12117ms
+BenchmarkJIT/canny               : 0.34783ms
+BenchmarkJIT/emboss              : 0.15647ms
+BenchmarkJIT/laplacian           : 0.16669ms
+BenchmarkJIT/highpass            : 0.18053ms
+BenchmarkJIT/gradient            : 0.17972ms
+BenchmarkJIT/blockmozaic         : 0.34307ms
 ```
+
+## AOT benchmarks
+
+Calling a library compiled by AOT(ahead-of-time) via cgo.  
+In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
+more complex operations will be optimized for CPU and become faster.  
+Also, the execution speed may be reduced by the overhead of multiple calls.
 
 ### Blur
 
@@ -283,15 +326,11 @@ BenchmarkEdge/blurry/Edge-8                	    8272	    132898 ns/op	  311478 B
 ### Sobel
 
 ```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     207	   6021277 ns/op	 2196771 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     202	   5693435 ns/op	 2196801 B/op	      32 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	     994	   1210391 ns/op	  311454 B/op	       2 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    4532	    235969 ns/op	  311478 B/op	       3 allocs/op
 ```
 
 ### Gamma

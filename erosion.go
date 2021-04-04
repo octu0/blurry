@@ -14,7 +14,7 @@ package blurry
 #include "liberosion_linux.h"
 #endif
 
-int liberosion(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
+int liberosion(unsigned char *src, int32_t width, int32_t height, int32_t size, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
     return 1;
@@ -25,7 +25,7 @@ int liberosion(unsigned char *src, int32_t width, int32_t height, unsigned char 
     return 1;
   }
 
-  int ret = erosion(in_rgba_buf, width, height, out_rgba_buf);
+  int ret = erosion(in_rgba_buf, width, height, size, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;
@@ -41,7 +41,7 @@ var (
 	ErrErosion = errors.New("erosion cgo call error")
 )
 
-func Erosion(img *image.RGBA) (*image.RGBA, error) {
+func Erosion(img *image.RGBA, size int) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
@@ -49,6 +49,7 @@ func Erosion(img *image.RGBA) (*image.RGBA, error) {
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),
+    C.int(size),
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {

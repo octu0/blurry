@@ -153,7 +153,7 @@ img, err := blurry.Blockmozaic(input, 10)
 ### Erode
 
 ```go
-img, err := blurry.Erosion(input)
+img, err := blurry.Erosion(input, 5)
 ```
 
 ![example](testdata/erosion.png)
@@ -161,7 +161,7 @@ img, err := blurry.Erosion(input)
 ### Dilate
 
 ```go
-img, err := blurry.Dilation(input)
+img, err := blurry.Dilation(input, 8)
 ```
 
 ![example](testdata/dilation.png)

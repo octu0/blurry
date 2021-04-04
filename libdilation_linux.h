@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int dilation(struct halide_buffer_t *_p3_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_dilation_buffer);
+int dilation(struct halide_buffer_t *_p3_buffer, int32_t _width, int32_t _height, uint8_t _size, struct halide_buffer_t *_dilation_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int dilation_argv(void **args);

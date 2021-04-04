@@ -14,7 +14,7 @@ func dilationAction(c *cli.Context) error {
 		return err
 	}
 
-	out, err := blurry.Dilation(in)
+	out, err := blurry.Dilation(in, c.Int("size"))
 	if err != nil {
 		return err
 	}
@@ -36,6 +36,11 @@ func init() {
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
+			},
+			cli.IntFlag{
+				Name:  "s,size",
+				Usage: "box size",
+				Value: 8,
 			},
 		},
 	})

@@ -221,7 +221,7 @@ Func rotate_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<in
   return rotate;
 }
 
-Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -230,7 +230,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd = RDom(-1,3, -1,3, "erode");
+  RDom rd = RDom(0,size, 0,size, "erode");
   Func erosion = Func("erosion");
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(cast<uint8_t>(value));
@@ -245,7 +245,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return erosion;
 }
 
-Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -254,7 +254,7 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd = RDom(-1,3, -1,3, "dilate");
+  RDom rd = RDom(0,size, 0,size, "dilate");
   Func dilation = Func("dilation");
   Expr value = in(x + rd.x, y + rd.y, ch);
   dilation(x, y, ch) = maximum(cast<uint8_t>(value));
@@ -997,17 +997,18 @@ void generate_erosion(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
+  Param<uint8_t> size{"size", 8};
 
   init_input_rgba(src);
 
   Func fn = erosion_fn(
-    src.in(), width, height
+    src.in(), width, height, size
   );
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
-    src, width, height,
+    src, width, height, size,
   }, fn.name());
 }
 
@@ -1016,19 +1017,21 @@ int jit_erosion(char **argv) {
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
 
   Buffer<uint8_t> out = jit_realize_uint8(erosion_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);
     
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
   return 0;
 }
 
 int benchmark_erosion(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<uint8_t> size{"size", 5};
   return jit_benchmark(erosion_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);
 }
 // }}} erosion
@@ -1039,17 +1042,18 @@ void generate_dilation(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
+  Param<uint8_t> size{"size", 8};
 
   init_input_rgba(src);
 
   Func fn = dilation_fn(
-    src.in(), width, height
+    src.in(), width, height, size
   );
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
-    src, width, height,
+    src, width, height, size,
   }, fn.name());
 }
 
@@ -1058,19 +1062,21 @@ int jit_dilation(char **argv) {
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
 
   Buffer<uint8_t> out = jit_realize_uint8(dilation_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);
     
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
   return 0;
 }
 
 int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<uint8_t> size{"size", 8};
   return jit_benchmark(dilation_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);
 }
 // }}} dilation

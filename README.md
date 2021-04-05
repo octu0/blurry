@@ -16,7 +16,7 @@ implements optimized processor for amd64 CPUs on Linux/macos
 $ go get github.com/octu0/blurry
 ```
 
-## Filter Examples
+## Examples
 
 original image
 
@@ -146,11 +146,13 @@ img, err := blurry.Sobel(input)
 
 a.k.a. Canny Edge Detection
 
-```
+```go
 img, err := blurry.Canny(input, 250, 100, 5.0)
 ```
 
-![example](testdata/canny.png)
+| `max:250 min:100`                | `max:400 min:10`                             |
+| :------------------------------: | :------------------------------------------: |
+| ![example](testdata/canny.png)   | ![example2](testdata/canny_max400_min10.png) |
 
 ### BlockMozaic
 
@@ -242,27 +244,25 @@ This is the result of using halide's [benchamrk](https://github.com/halide/Halid
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
-benchmark...
-src 320x240
-BenchmarkJIT/cloneimg            : 0.01850ms
-BenchmarkJIT/rotate              : 0.02266ms
-BenchmarkJIT/erosion             : 0.12404ms
-BenchmarkJIT/dilation            : 0.29676ms
-BenchmarkJIT/grayscale           : 0.13477ms
-BenchmarkJIT/invert              : 0.08136ms
-BenchmarkJIT/brightness          : 0.08465ms
-BenchmarkJIT/gammacorrection     : 0.18964ms
-BenchmarkJIT/contrast            : 0.08336ms
-BenchmarkJIT/boxblur             : 0.31301ms
-BenchmarkJIT/gaussianblur        : 0.31381ms
-BenchmarkJIT/edge                : 0.10583ms
-BenchmarkJIT/sobel               : 0.12101ms
-BenchmarkJIT/canny               : 0.56946ms
-BenchmarkJIT/emboss              : 0.15700ms
-BenchmarkJIT/laplacian           : 0.13453ms
-BenchmarkJIT/highpass            : 0.12871ms
-BenchmarkJIT/gradient            : 0.11905ms
-BenchmarkJIT/blockmozaic         : 0.34641ms
+BenchmarkJIT/cloneimg            : 0.01789ms
+BenchmarkJIT/rotate              : 0.02166ms
+BenchmarkJIT/erosion             : 0.09592ms
+BenchmarkJIT/dilation            : 0.10214ms
+BenchmarkJIT/grayscale           : 0.08097ms
+BenchmarkJIT/invert              : 0.08137ms
+BenchmarkJIT/brightness          : 0.08593ms
+BenchmarkJIT/gammacorrection     : 0.14285ms
+BenchmarkJIT/contrast            : 0.10875ms
+BenchmarkJIT/boxblur             : 0.26611ms
+BenchmarkJIT/gaussianblur        : 0.16275ms
+BenchmarkJIT/edge                : 0.10624ms
+BenchmarkJIT/sobel               : 0.12074ms
+BenchmarkJIT/canny               : 0.56570ms
+BenchmarkJIT/emboss              : 0.15852ms
+BenchmarkJIT/laplacian           : 0.11623ms
+BenchmarkJIT/highpass            : 0.12754ms
+BenchmarkJIT/gradient            : 0.12195ms
+BenchmarkJIT/blockmozaic         : 0.35053ms
 ```
 
 ## AOT benchmarks

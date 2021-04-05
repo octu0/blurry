@@ -745,6 +745,8 @@ Func canny_fn(
 
   canny.compute_root();
 
+  gauss.compute_root();
+
   gray.compute_root();
   return canny;
 }

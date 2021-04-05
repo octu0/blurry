@@ -52,7 +52,7 @@ func Gaussianblur(img *image.RGBA, sigma float64) (*image.RGBA, error) {
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {
-		return nil, ErrContrast
+		return nil, ErrGaussianblur
 	}
 	return out, nil
 }

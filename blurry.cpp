@@ -16,6 +16,7 @@ const int16_t ROTATE90  = 90;  // Rotate 90 degrees clockwise
 const int16_t ROTATE180 = 180; // Rotate 180 degrees
 const int16_t ROTATE270 = 270; // Rotate 270 degrees clockwise
 
+const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 
@@ -272,7 +273,6 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   dilation(x, y, ch) = maximum(cast<uint8_t>(value));
 
   dilation.compute_root()
-    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -633,7 +633,7 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 Func canny_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> threshold_max, Param<int32_t> threshold_min,
-  Param<float> sigma
+  Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
@@ -647,7 +647,7 @@ Func canny_fn(
   gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
 
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
-  Func gauss = gaussian(gray, sigma, gauss_rd, "gaussian5x5");
+  Func gauss = gaussian(gray, CANNY_SIGMA, gauss_rd, "gaussian5x5");
 
   Func ks_x = Func("kernel_sobel_x");
   ks_x(x, y) = 0;
@@ -710,7 +710,17 @@ Func canny_fn(
   hy(x, y) = th_val;
 
   Func canny = Func("canny");
-  Expr hysteresis = hy(x, y);
+  Expr hysteresis = 0;
+
+  if(dilate_size.get() < 1) {
+    // defaults no dilation
+    hysteresis = hy(x, y);
+  } else {
+    RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "canny_dilate");
+    Expr dilate_val = hy(x + rd_dilate.x, y + rd_dilate.y);
+    hysteresis = maximum(dilate_val);
+  }
+
   canny(x, y, ch) = select(
     ch == 3, 255,
     cast<uint8_t>(hysteresis)
@@ -737,13 +747,14 @@ Func canny_fn(
   sobel.compute_root();
 
   hy.compute_root()
-    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
 
   canny.compute_root();
+
+  gauss.compute_root();
 
   gray.compute_root();
   return canny;
@@ -1569,14 +1580,14 @@ void generate_canny(std::vector<Target::Feature> features) {
   Param<int32_t> height{"height", 1080};
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<float> sigma{"sigma", 5.0};
+  Param<int32_t> dilate{"dilate", 0};
 
   init_input_rgba(src);
 
   Func fn = canny_fn(
     src.in(), width, height,
     threshold_max, threshold_min,
-    sigma
+    dilate
   );
 
   init_output_rgba(fn.output_buffer());
@@ -1584,7 +1595,7 @@ void generate_canny(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     threshold_max, threshold_min,
-    sigma
+    dilate
   }, fn.name());
 }
 
@@ -1595,12 +1606,12 @@ int jit_canny(char **argv) {
   Param<int32_t> height{"height", buf_src.get()->height()};
   Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
   Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
-  Param<float> sigma{"sigma", std::stof(argv[5])};
+  Param<int32_t> dilate{"dilate", std::stoi(argv[5])};
 
   Buffer<uint8_t> out = jit_realize_uint8(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min,
-    sigma
+    dilate
   ), buf_src);
 
   printf("save to %s\n", argv[6]);
@@ -1611,11 +1622,11 @@ int jit_canny(char **argv) {
 int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<float> sigma{"sigma", 5.0};
+  Param<int32_t> dilate{"dilate", 0};
   return jit_benchmark(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min,
-    sigma
+    dilate
   ), buf_src);
 }
 // }}} canny

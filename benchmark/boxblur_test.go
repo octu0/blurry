@@ -38,6 +38,11 @@ func BenchmarkBlur(b *testing.B) {
 			_ = stackblur.Process(testImg, uint32(width), uint32(height), 3, ch[i])
 		}
 	})
+  b.Run("libyuv/ARGBBlur", func(tb *testing.B) {
+		for i := 0; i < tb.N; i += 1 {
+      _,_ = ARGBBlur(testImg, 5)
+    }
+  })
 	b.Run("blurry/Boxblur", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
       img, err := blurry.Boxblur(testImg, 3)

@@ -13,6 +13,11 @@ func BenchmarkSobel(b *testing.B) {
 			_ = effect.Sobel(testImg)
 		}
 	})
+  b.Run("libyuv/ARGBSobel", func(tb *testing.B) {
+		for i := 0; i < tb.N; i += 1 {
+      _, _ = ARGBSobel(testImg)
+    }
+  })
 	b.Run("blurry/Sobel", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_, _ = blurry.Sobel(testImg)

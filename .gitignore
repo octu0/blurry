@@ -3,3 +3,6 @@
 
 *.out
 /Halide-Runtime
+
+benchmark/include/libyuv/*
+benchmark/lib/libyuv/*

@@ -215,7 +215,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.8.1
+   1.9.0
 
 COMMANDS:
      blockmozaic
@@ -255,24 +255,24 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 BenchmarkJIT/cloneimg            : 0.01789ms
-BenchmarkJIT/rotate              : 0.02166ms
-BenchmarkJIT/erosion             : 0.09592ms
-BenchmarkJIT/dilation            : 0.10214ms
-BenchmarkJIT/grayscale           : 0.08097ms
-BenchmarkJIT/invert              : 0.08137ms
-BenchmarkJIT/brightness          : 0.08593ms
-BenchmarkJIT/gammacorrection     : 0.14285ms
-BenchmarkJIT/contrast            : 0.10875ms
-BenchmarkJIT/boxblur             : 0.26611ms
-BenchmarkJIT/gaussianblur        : 0.16275ms
-BenchmarkJIT/edge                : 0.10624ms
-BenchmarkJIT/sobel               : 0.12074ms
-BenchmarkJIT/canny               : 0.56570ms
-BenchmarkJIT/emboss              : 0.15852ms
-BenchmarkJIT/laplacian           : 0.11623ms
-BenchmarkJIT/highpass            : 0.12754ms
-BenchmarkJIT/gradient            : 0.12195ms
-BenchmarkJIT/blockmozaic         : 0.35053ms
+BenchmarkJIT/rotate              : 0.02196ms
+BenchmarkJIT/erosion             : 0.09277ms
+BenchmarkJIT/dilation            : 0.09338ms
+BenchmarkJIT/grayscale           : 0.08818ms
+BenchmarkJIT/invert              : 0.08367ms
+BenchmarkJIT/brightness          : 0.08638ms
+BenchmarkJIT/gammacorrection     : 0.12301ms
+BenchmarkJIT/contrast            : 0.09208ms
+BenchmarkJIT/boxblur             : 0.28232ms
+BenchmarkJIT/gaussianblur        : 0.16047ms
+BenchmarkJIT/edge                : 0.11086ms
+BenchmarkJIT/sobel               : 0.12106ms
+BenchmarkJIT/canny               : 0.57237ms
+BenchmarkJIT/emboss              : 0.15734ms
+BenchmarkJIT/laplacian           : 0.12020ms
+BenchmarkJIT/highpass            : 0.13095ms
+BenchmarkJIT/gradient            : 0.12333ms
+BenchmarkJIT/blockmozaic         : 0.34678ms
 ```
 
 ## AOT benchmarks

@@ -42,11 +42,11 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     217	   5857475 ns/op	 2196784 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     207	   5842003 ns/op	 2196788 B/op	      32 allocs/op
 BenchmarkSobel/libyuv/ARGBSobel
-BenchmarkSobel/libyuv/ARGBSobel-8   	   17116	     70198 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkSobel/libyuv/ARGBSobel-8   	   17289	     68911 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    5370	    220501 ns/op	  311479 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    5522	    220248 ns/op	  311479 B/op	       3 allocs/op
 ```
 
 ## Contrast
@@ -60,13 +60,13 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkContrast
 BenchmarkContrast/bild/Contrast
-BenchmarkContrast/bild/Contrast-8         	    6492	    181388 ns/op	  311707 B/op	       6 allocs/op
+BenchmarkContrast/bild/Contrast-8         	    6205	    174861 ns/op	  311706 B/op	       6 allocs/op
 BenchmarkContrast/imaging/Contrast
-BenchmarkContrast/imaging/Contrast-8      	    8670	    143229 ns/op	  313794 B/op	       7 allocs/op
+BenchmarkContrast/imaging/Contrast-8      	    8984	    137873 ns/op	  313796 B/op	       7 allocs/op
 BenchmarkContrast/blurry/Contrast
-BenchmarkContrast/blurry/Contrast-8       	   10000	    111556 ns/op	     119 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast-8       	   10000	    105816 ns/op	     119 B/op	       2 allocs/op
 BenchmarkContrast/blurry/Contrast/D
-BenchmarkContrast/blurry/Contrast/D-8     	    8809	    134217 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast/D-8     	    9189	    129194 ns/op	  311360 B/op	       2 allocs/op
 ```
 
 ## Gamma

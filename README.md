@@ -243,25 +243,25 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.01805ms
-BenchmarkJIT/rotate              : 0.02173ms
-BenchmarkJIT/erosion             : 0.06836ms
-BenchmarkJIT/dilation            : 0.06849ms
-BenchmarkJIT/grayscale           : 0.11893ms
-BenchmarkJIT/invert              : 0.06620ms
-BenchmarkJIT/brightness          : 0.08915ms
-BenchmarkJIT/gammacorrection     : 0.10024ms
-BenchmarkJIT/contrast            : 0.09237ms
-BenchmarkJIT/boxblur             : 0.33524ms
-BenchmarkJIT/gaussianblur        : 0.31813ms
-BenchmarkJIT/edge                : 0.10531ms
-BenchmarkJIT/sobel               : 0.12117ms
-BenchmarkJIT/canny               : 0.34783ms
-BenchmarkJIT/emboss              : 0.15647ms
-BenchmarkJIT/laplacian           : 0.16669ms
-BenchmarkJIT/highpass            : 0.18053ms
-BenchmarkJIT/gradient            : 0.17972ms
-BenchmarkJIT/blockmozaic         : 0.34307ms
+BenchmarkJIT/cloneimg            : 0.01850ms
+BenchmarkJIT/rotate              : 0.02266ms
+BenchmarkJIT/erosion             : 0.12404ms
+BenchmarkJIT/dilation            : 0.29676ms
+BenchmarkJIT/grayscale           : 0.13477ms
+BenchmarkJIT/invert              : 0.08136ms
+BenchmarkJIT/brightness          : 0.08465ms
+BenchmarkJIT/gammacorrection     : 0.18964ms
+BenchmarkJIT/contrast            : 0.08336ms
+BenchmarkJIT/boxblur             : 0.31301ms
+BenchmarkJIT/gaussianblur        : 0.31381ms
+BenchmarkJIT/edge                : 0.10583ms
+BenchmarkJIT/sobel               : 0.12101ms
+BenchmarkJIT/canny               : 0.56946ms
+BenchmarkJIT/emboss              : 0.15700ms
+BenchmarkJIT/laplacian           : 0.13453ms
+BenchmarkJIT/highpass            : 0.12871ms
+BenchmarkJIT/gradient            : 0.11905ms
+BenchmarkJIT/blockmozaic         : 0.34641ms
 ```
 
 ## AOT benchmarks
@@ -308,9 +308,9 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkEdge
 BenchmarkEdge/bild/EdgeDetection
-BenchmarkEdge/bild/EdgeDetection-8         	     642	   1885417 ns/op	  631324 B/op	      10 allocs/op
+BenchmarkEdge/bild/EdgeDetection-8         	     679	   1794476 ns/op	  631299 B/op	      10 allocs/op
 BenchmarkEdge/blurry/Edge
-BenchmarkEdge/blurry/Edge-8                	    8272	    132898 ns/op	  311478 B/op	       3 allocs/op
+BenchmarkEdge/blurry/Edge-8                	    9400	    129556 ns/op	  311479 B/op	       3 allocs/op
 ```
 
 ### Sobel
@@ -320,7 +320,7 @@ BenchmarkSobel
 BenchmarkSobel/bild/Sobel
 BenchmarkSobel/bild/Sobel-8         	     202	   5693435 ns/op	 2196801 B/op	      32 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    4532	    235969 ns/op	  311478 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    5522	    220248 ns/op	  311479 B/op	       3 allocs/op
 ```
 
 ### Other Benchmarks

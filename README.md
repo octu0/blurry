@@ -205,7 +205,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.8.0
+   1.8.1
 
 COMMANDS:
      blockmozaic
@@ -283,21 +283,23 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     146	   8315664 ns/op	  640290 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     150	   7792666 ns/op	  640322 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     325	   3635977 ns/op	 1262544 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     338	   3317723 ns/op	 1262513 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     760	   1545757 ns/op	  793698 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     801	   1482781 ns/op	  793696 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     240	   4956251 ns/op	  925933 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     242	   4989647 ns/op	  925932 B/op	  153609 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1843	    638517 ns/op	10182723 B/op	       3 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    2107	    570486 ns/op	      88 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    3666	    355664 ns/op	     173 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    1650	    726642 ns/op	     277 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    5731	    216902 ns/op	     142 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    1921	    613347 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    3114	    367782 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    1524	    821776 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    5107	    235022 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ### Edge

@@ -111,6 +111,18 @@ Func convolve(Func in, Func kernel, RDom rd_kernel) {
   return convolve;
 }
 
+Func convolve_xy(Func in, Func kernel, RDom rd_kernel) {
+  Var x("x"), y("y");
+
+  Func convolve = Func("convolve_xy");
+  Expr in_val = in(x + rd_kernel.x, y + rd_kernel.y);
+  Expr k_val  = kernel(rd_kernel.x, rd_kernel.y);
+  Expr val = in_val * k_val;
+  convolve(x, y) += cast<uint8_t>(val);
+
+  return convolve;
+}
+
 Func filter2d_gray(
   Func input,
   Region bounds,
@@ -127,9 +139,9 @@ Func filter2d_gray(
 
   Func gray = Func("gray");
   Expr r = in(x, y, 0);
-  gray(x, y, ch) = r;
+  gray(x, y) = r;
 
-  Func conv = convolve(gray, kernel, rd_kernel);
+  Func conv = convolve_xy(gray, kernel, rd_kernel);
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
@@ -151,7 +163,7 @@ Func filter2d_gray(
   return gradient;
 }
 
-Func gaussKernel(Expr sigma) {
+Func gauss_kernel(Expr sigma) {
   Var x("x"), y("y"), ch("ch");
 
   Expr sig2 = 2 * sigma * sigma;
@@ -165,12 +177,12 @@ Func gaussKernel(Expr sigma) {
 }
 
 Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
-  Var x("x"), y("y"), ch("ch");
+  Var x("x"), y("y");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func kernel = gaussKernel(sigma);
+  Func kernel = gauss_kernel(sigma);
 
   Func sum_kernel = Func("sum_kernel");
   Expr kernel_val = kernel(rd);
@@ -178,9 +190,9 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
 
   Func gaussian = Func(name);
   Expr center_val = sum_kernel(0);
-  Expr in_val = in(x + rd.x, y, ch);
+  Expr in_val = in(x + rd.x, y);
   Expr val = in_val * kernel(rd);
-  gaussian(x, y, ch) += cast<uint8_t>(val / center_val);
+  gaussian(x, y) += cast<uint8_t>(val / center_val);
 
   gaussian.compute_root()
     .async()
@@ -449,18 +461,6 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
 }
 
 Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
-  /* wip
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Expr radius = cast<int16_t>(ceil(sigma * 3));
-  Expr half = fast_integer_divide(radius, 2);
-  Expr size = 2 * (radius + 1);
-  RDom rd_rad = RDom(half, size, "rd_radius");
-
-  in.compute_root();
-  return gaussian(in, sigma, rd_rad, "gaussianblur");
-  */
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -632,34 +632,81 @@ Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
 
   Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  gray(x, y, ch) = r;
+  gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
 
   Expr sigma = 5.0f;
-  RDom gauss_rd = RDom(-2, 5, "gaussian_rdom");
-  Func gauss = gaussian(in, sigma, gauss_rd, "canny");
+  RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
+  Func gauss = gaussian(gray, sigma, gauss_rd, "gaussian5x5");
 
   Func ks_x = Func("kernel_sobel_x");
   ks_x(x, y) = 0;
-  ks_x(0, 0) = -1; ks_x(1, 0) = 0; ks_x(2, 0) = 1;
-  ks_x(0, 1) = -2; ks_x(1, 1) = 0; ks_x(2, 1) = 2;
-  ks_x(0, 2) = -1; ks_x(1, 2) = 0; ks_x(2, 2) = 1;
+  ks_x(-1, -1) = -1; ks_x(0, -1) = 0; ks_x(1, -1) = 1;
+  ks_x(-1,  0) = -2; ks_x(0,  0) = 0; ks_x(1,  0) = 2;
+  ks_x(-1,  1) = -1; ks_x(0,  1) = 0; ks_x(1,  1) = 1;
 
   Func ks_y = Func("kernel_sobel_y");
   ks_y(x, y) = 0;
-  ks_y(0, 0) = -1; ks_y(1, 0) = -2; ks_y(2, 0) = -1;
-  ks_y(0, 1) =  0; ks_y(1, 1) =  0; ks_y(2, 1) =  0;
-  ks_y(0, 2) =  1; ks_y(1, 2) =  2; ks_y(2, 2) =  1;
+  ks_y(-1, -1) = -1; ks_y(0, -1) = -2; ks_y(1, -1) = -1;
+  ks_y(-1,  0) =  0; ks_y(0,  0) =  0; ks_y(1,  0) =  0;
+  ks_y(-1,  1) =  1; ks_y(0,  1) =  2; ks_y(1,  1) =  1;
 
-  Func gx = convolve(gray, ks_x, RDom(0,3, 0,3, "rd_kernel_sobel_x"));
-  Func gy = convolve(gray, ks_y, RDom(0,3, 0,3, "rd_kernel_sobel_y"));
+  Func gx = convolve_xy(gauss, ks_x, RDom(-1,3, -1,3, "rd_kernel_sobel_x"));
+  Func gy = convolve_xy(gauss, ks_y, RDom(-1,3, -1,3, "rd_kernel_sobel_y"));
 
-  // wip
-  //Expr angle = arctan2(gy, gx) * 180 / pi;
-  //Expr g = magnitude(gx, gy);
-  //g = nonmax_supression(g, angle);
-  //Func h = hysteresis(g);
-  return gauss;
+  Func sobel = Func("sobel");
+  Expr pow_gy = fast_pow(gy(x, y), 2);
+  Expr pow_gx = fast_pow(gx(x, y), 2);
+  Expr magnitude = ceil(sqrt(pow_gy + pow_gx));
+  sobel(x, y) = cast<uint8_t>(magnitude);
+
+  Func nms = Func("nonmax_supression");
+  Expr angle = (atan2(gy(x, y), gx(x, y)) * 180) / pi;
+  Expr approx = select(
+    angle >=  -22.5f && angle <  22.5f,    0,
+    angle >=  157.5f && angle <  180.0f,   0,
+    angle >=  180.0f && angle < -157.5f,   0,
+    angle >=   22.5f && angle <   67.5f,  45,
+    angle >= -157.5f && angle < -112.5f,  45,
+    angle >=   67.5f && angle <  112.5f,  90,
+    angle >= -112.5f && angle <  -67.5f,  90,
+    angle >=  112.5f && angle <  157.5f, 135,
+    angle >=  -67.5f && angle <  -22.5f, 135,
+    0
+  );
+  nms(x, y) = select(
+    approx ==  0 && sobel(x, y) < sobel(x + 1, y), 0,
+    approx ==  0 && sobel(x, y) < sobel(x - 1, y), 0,
+    approx == 45 && sobel(x, y) < sobel(x + 1, y - 1), 0,
+    approx == 45 && sobel(x, y) < sobel(x - 1, y + 1), 0,
+    approx == 90 && sobel(x, y) < sobel(x, y + 1), 0,
+    approx == 90 && sobel(x, y) < sobel(x, y - 1), 0,
+    sobel(x, y) < sobel(x + 1, y + 1), 0,
+    sobel(x, y) < sobel(x - 1, y - 1), 0,
+    sobel(x, y)
+  );
+
+  Expr threshold_max = 9;
+  Expr threshold_min = 5;
+  RDom rd_nb = RDom(-1, 3, -1, 3, "rd_neighbors");
+
+  Func hy = Func("hysteresis");
+  Expr value = nms(x, y);
+  Expr nb_val = maximum(nms(x + rd_nb.x, y + rd_nb.y));
+  Expr th_val = select(
+    value  < threshold_min, 0,
+    value  > threshold_max, 255,
+    nb_val > threshold_max, 255,
+    value
+  );
+  hy(x, y) = th_val;
+
+  Func canny = Func("canny");
+  Expr hysteresis = hy(x, y);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis)
+  );
+  return canny;
 }
 
 Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){

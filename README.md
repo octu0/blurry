@@ -7,8 +7,8 @@
 
 **fast**, high peformance image processing libary.
 
-`blurry` provides image filtering with [halide-lang](https://halide-lang.org/) backend.  
-implements optimized processing for amd64 CPUs on Linux/macos
+`blurry` provides image processing algorithms with [halide-lang](https://halide-lang.org/) backend.  
+implements optimized processor for amd64 CPUs on Linux/macos
 
 ## Installation
 
@@ -203,12 +203,13 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.7.0
+   1.8.0
 
 COMMANDS:
      blockmozaic
      boxblur
      brightness
+     canny
      clone
      contrast
      dilation

@@ -16,7 +16,7 @@ implements optimized processor for amd64 CPUs on Linux/macos
 $ go get github.com/octu0/blurry
 ```
 
-## Filter Examples
+## Examples
 
 original image
 
@@ -146,11 +146,13 @@ img, err := blurry.Sobel(input)
 
 a.k.a. Canny Edge Detection
 
-```
+```go
 img, err := blurry.Canny(input, 250, 100, 5.0)
 ```
 
-![example](testdata/canny.png)
+| `max:250 min:100`                | `max:400 min:10`                             |
+| :------------------------------: | :------------------------------------------: |
+| ![example](testdata/canny.png)   | ![example2](testdata/canny_max400_min10.png) |
 
 ### BlockMozaic
 
@@ -203,7 +205,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.8.0
+   1.8.1
 
 COMMANDS:
      blockmozaic
@@ -242,27 +244,25 @@ This is the result of using halide's [benchamrk](https://github.com/halide/Halid
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
-benchmark...
-src 320x240
-BenchmarkJIT/cloneimg            : 0.01850ms
-BenchmarkJIT/rotate              : 0.02266ms
-BenchmarkJIT/erosion             : 0.12404ms
-BenchmarkJIT/dilation            : 0.29676ms
-BenchmarkJIT/grayscale           : 0.13477ms
-BenchmarkJIT/invert              : 0.08136ms
-BenchmarkJIT/brightness          : 0.08465ms
-BenchmarkJIT/gammacorrection     : 0.18964ms
-BenchmarkJIT/contrast            : 0.08336ms
-BenchmarkJIT/boxblur             : 0.31301ms
-BenchmarkJIT/gaussianblur        : 0.31381ms
-BenchmarkJIT/edge                : 0.10583ms
-BenchmarkJIT/sobel               : 0.12101ms
-BenchmarkJIT/canny               : 0.56946ms
-BenchmarkJIT/emboss              : 0.15700ms
-BenchmarkJIT/laplacian           : 0.13453ms
-BenchmarkJIT/highpass            : 0.12871ms
-BenchmarkJIT/gradient            : 0.11905ms
-BenchmarkJIT/blockmozaic         : 0.34641ms
+BenchmarkJIT/cloneimg            : 0.01789ms
+BenchmarkJIT/rotate              : 0.02166ms
+BenchmarkJIT/erosion             : 0.09592ms
+BenchmarkJIT/dilation            : 0.10214ms
+BenchmarkJIT/grayscale           : 0.08097ms
+BenchmarkJIT/invert              : 0.08137ms
+BenchmarkJIT/brightness          : 0.08593ms
+BenchmarkJIT/gammacorrection     : 0.14285ms
+BenchmarkJIT/contrast            : 0.10875ms
+BenchmarkJIT/boxblur             : 0.26611ms
+BenchmarkJIT/gaussianblur        : 0.16275ms
+BenchmarkJIT/edge                : 0.10624ms
+BenchmarkJIT/sobel               : 0.12074ms
+BenchmarkJIT/canny               : 0.56570ms
+BenchmarkJIT/emboss              : 0.15852ms
+BenchmarkJIT/laplacian           : 0.11623ms
+BenchmarkJIT/highpass            : 0.12754ms
+BenchmarkJIT/gradient            : 0.12195ms
+BenchmarkJIT/blockmozaic         : 0.35053ms
 ```
 
 ## AOT benchmarks
@@ -283,21 +283,23 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     146	   8315664 ns/op	  640290 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     150	   7792666 ns/op	  640322 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     325	   3635977 ns/op	 1262544 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     338	   3317723 ns/op	 1262513 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     760	   1545757 ns/op	  793698 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     801	   1482781 ns/op	  793696 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     240	   4956251 ns/op	  925933 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     242	   4989647 ns/op	  925932 B/op	  153609 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1843	    638517 ns/op	10182723 B/op	       3 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    2107	    570486 ns/op	      88 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    3666	    355664 ns/op	     173 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    1650	    726642 ns/op	     277 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    5731	    216902 ns/op	     142 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    1921	    613347 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    3114	    367782 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    1524	    821776 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    5107	    235022 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ### Edge

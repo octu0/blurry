@@ -253,6 +253,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
     .parallel(ti)
     .vectorize(xi, 32);
 
+  in.compute_root();
   return erosion;
 }
 
@@ -271,12 +272,14 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   dilation(x, y, ch) = maximum(cast<uint8_t>(value));
 
   dilation.compute_root()
+    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
     .parallel(ti)
     .vectorize(xi, 32);
 
+  in.compute_root();
   return dilation;
 }
 
@@ -303,6 +306,8 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     .parallel(ch)
     .parallel(ti)
     .vectorize(xi, 32);
+
+  in.compute_root();
 
   return grayscale;
 }
@@ -439,23 +444,22 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Func boxblur = Func("boxblur");
   boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
 
-  blur_x
-    .compute_at(blur_y, y)
-    .parallel(x)
+  blur_x.compute_root()
+    .parallel(y, 8)
     .vectorize(x, 32);
-  blur_y
-    .compute_at(boxblur, ti)
-    .parallel(y)
-    .vectorize(y, 32);
+  blur_y.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 32);
 
   boxblur.compute_root()
     .async()
-    .unroll(ch, 3)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ch)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
+  in.compute_root();
   return boxblur;
 }
 
@@ -495,20 +499,22 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
-    .async()
+    .parallel(x)
     .vectorize(x, 32);
 
   sum_kernel.compute_root()
-    .async()
+    .parallel(x)
     .vectorize(x, 32);
 
   gaussianblur.compute_root()
     .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
+    .parallel(ch)
     .parallel(ti)
     .vectorize(xi, 32);
 
+  in.compute_root();
   return gaussianblur;
 }
 
@@ -552,7 +558,6 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .parallel(ch);
 
   gray.compute_root();
-
   return edge;
 }
 
@@ -1156,7 +1161,7 @@ int jit_dilation(char **argv) {
 }
 
 int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 8};
+  Param<uint8_t> size{"size", 5};
   return jit_benchmark(dilation_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);

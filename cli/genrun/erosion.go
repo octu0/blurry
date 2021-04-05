@@ -11,7 +11,10 @@ func erosionAction(c *cli.Context) error {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "erosion", nil); err != nil {
+	args := []string{
+		c.String("size"),
+	}
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "erosion", args); err != nil {
 		return err
 	}
 
@@ -37,6 +40,11 @@ func init() {
 				Name:  "f,file",
 				Usage: "/path/to/blurry.cpp path",
 				Value: "./blurry.cpp",
+			},
+			cli.StringFlag{
+				Name:  "s, size",
+				Usage: "box size",
+				Value: "5",
 			},
 		},
 	})

@@ -1,4 +1,4 @@
-package blurry
+package benchmark
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/anthonynsimon/bild/blur"
 	"github.com/disintegration/imaging"
 	"github.com/esimov/stackblur-go"
+  "github.com/octu0/blurry"
 )
 
 func BenchmarkBlur(b *testing.B) {
@@ -25,8 +26,8 @@ func BenchmarkBlur(b *testing.B) {
 		}
 	})
 	b.Run("stackblur-go", func(tb *testing.B) {
-		width, height := wh(testImg)
-
+    b := testImg.Bounds()
+		width, height := b.Max.X, b.Max.Y
 		ch := make([]chan struct{}, tb.N)
 		for i := 0; i < len(ch); i += 1 {
 			ch[i] = make(chan struct{}, 1)
@@ -37,44 +38,49 @@ func BenchmarkBlur(b *testing.B) {
 			_ = stackblur.Process(testImg, uint32(width), uint32(height), 3, ch[i])
 		}
 	})
+  b.Run("libyuv/ARGBBlur", func(tb *testing.B) {
+		for i := 0; i < tb.N; i += 1 {
+      _,_ = ARGBBlur(testImg, 5)
+    }
+  })
 	b.Run("blurry/Boxblur", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Boxblur(testImg, 3)
+      img, err := blurry.Boxblur(testImg, 3)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Gaussianblur", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Gaussianblur(testImg, 3.0)
+      img, err := blurry.Gaussianblur(testImg, 3.0)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Boxblur/D", func(tb *testing.B) {
-		DisablePool()
-		tb.Cleanup(EnablePool)
+		blurry.DisablePool()
+		tb.Cleanup(blurry.EnablePool)
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Boxblur(testImg, 3)
+      img, err := blurry.Boxblur(testImg, 3)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Gaussianblur/D", func(tb *testing.B) {
-		DisablePool()
-		tb.Cleanup(EnablePool)
+		blurry.DisablePool()
+		tb.Cleanup(blurry.EnablePool)
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Gaussianblur(testImg, 3.0)
+      img, err := blurry.Gaussianblur(testImg, 3.0)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 }

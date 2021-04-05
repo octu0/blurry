@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func dilationAction(c *cli.Context) error {
+func cannyAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Dilation(in, c.Int("size"))
+	out, err := blurry.Canny(in, c.Int("max"), c.Int("min"), c.Float64("sigma"))
 	if err != nil {
 		return err
 	}
@@ -29,8 +29,8 @@ func dilationAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "dilation",
-		Action: dilationAction,
+		Name:   "canny",
+		Action: cannyAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
@@ -38,9 +38,19 @@ func init() {
 				Value: "./testdata/src.png",
 			},
 			cli.IntFlag{
-				Name:  "s,size",
-				Usage: "box size",
-				Value: 8,
+				Name:  "max",
+				Usage: "threshold max(highly reliable contours)",
+				Value: 250,
+			},
+			cli.IntFlag{
+				Name:  "min",
+				Usage: "threshold min(maybe noise, to be eliminate)",
+				Value: 100,
+			},
+			cli.Float64Flag{
+				Name:  "s,sigma",
+				Usage: "sigma",
+				Value: 5.0,
 			},
 		},
 	})

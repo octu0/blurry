@@ -1,9 +1,10 @@
-package blurry
+package benchmark
 
 import (
 	"testing"
 
 	"github.com/anthonynsimon/bild/effect"
+  "github.com/octu0/blurry"
 )
 
 func BenchmarkSobel(b *testing.B) {
@@ -12,9 +13,14 @@ func BenchmarkSobel(b *testing.B) {
 			_ = effect.Sobel(testImg)
 		}
 	})
+  b.Run("libyuv/ARGBSobel", func(tb *testing.B) {
+		for i := 0; i < tb.N; i += 1 {
+      _, _ = ARGBSobel(testImg)
+    }
+  })
 	b.Run("blurry/Sobel", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Sobel(testImg)
+			_, _ = blurry.Sobel(testImg)
 		}
 	})
 }

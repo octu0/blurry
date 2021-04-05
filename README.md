@@ -7,8 +7,8 @@
 
 **fast**, high peformance image processing libary.
 
-`blurry` provides image filtering with [halide-lang](https://halide-lang.org/) backend.  
-implements optimized processing for amd64 CPUs on Linux/macos
+`blurry` provides image processing algorithms with [halide-lang](https://halide-lang.org/) backend.  
+implements optimized processor for amd64 CPUs on Linux/macos
 
 ## Installation
 
@@ -126,7 +126,7 @@ img, err := blurry.Gradient(input)
 
 ### Edge
 
-a.k.a. EdgeDetection
+a.k.a. Edge Detection
 
 ```go
 img, err := blurry.Edge(input)
@@ -142,6 +142,16 @@ img, err := blurry.Sobel(input)
 
 ![example](testdata/sobel.png)
 
+### Canny
+
+a.k.a. Canny Edge Detection
+
+```
+img, err := blurry.Canny(input, 250, 100, 5.0)
+```
+
+![example](testdata/canny.png)
+
 ### BlockMozaic
 
 ```go
@@ -153,7 +163,7 @@ img, err := blurry.Blockmozaic(input, 10)
 ### Erode
 
 ```go
-img, err := blurry.Erosion(input)
+img, err := blurry.Erosion(input, 5)
 ```
 
 ![example](testdata/erosion.png)
@@ -161,7 +171,7 @@ img, err := blurry.Erosion(input)
 ### Dilate
 
 ```go
-img, err := blurry.Dilation(input)
+img, err := blurry.Dilation(input, 8)
 ```
 
 ![example](testdata/dilation.png)
@@ -193,12 +203,13 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.7.0
+   1.8.0
 
 COMMANDS:
      blockmozaic
      boxblur
      brightness
+     canny
      clone
      contrast
      dilation
@@ -233,25 +244,25 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 ```
 benchmark...
 src 320x240
-BenchmarkJIT/cloneimg            : 0.01805ms
-BenchmarkJIT/rotate              : 0.02173ms
-BenchmarkJIT/erosion             : 0.06836ms
-BenchmarkJIT/dilation            : 0.06849ms
-BenchmarkJIT/grayscale           : 0.11893ms
-BenchmarkJIT/invert              : 0.06620ms
-BenchmarkJIT/brightness          : 0.08915ms
-BenchmarkJIT/gammacorrection     : 0.10024ms
-BenchmarkJIT/contrast            : 0.09237ms
-BenchmarkJIT/boxblur             : 0.33524ms
-BenchmarkJIT/gaussianblur        : 0.31813ms
-BenchmarkJIT/edge                : 0.10531ms
-BenchmarkJIT/sobel               : 0.12117ms
-BenchmarkJIT/canny               : 0.34783ms
-BenchmarkJIT/emboss              : 0.15647ms
-BenchmarkJIT/laplacian           : 0.16669ms
-BenchmarkJIT/highpass            : 0.18053ms
-BenchmarkJIT/gradient            : 0.17972ms
-BenchmarkJIT/blockmozaic         : 0.34307ms
+BenchmarkJIT/cloneimg            : 0.01850ms
+BenchmarkJIT/rotate              : 0.02266ms
+BenchmarkJIT/erosion             : 0.12404ms
+BenchmarkJIT/dilation            : 0.29676ms
+BenchmarkJIT/grayscale           : 0.13477ms
+BenchmarkJIT/invert              : 0.08136ms
+BenchmarkJIT/brightness          : 0.08465ms
+BenchmarkJIT/gammacorrection     : 0.18964ms
+BenchmarkJIT/contrast            : 0.08336ms
+BenchmarkJIT/boxblur             : 0.31301ms
+BenchmarkJIT/gaussianblur        : 0.31381ms
+BenchmarkJIT/edge                : 0.10583ms
+BenchmarkJIT/sobel               : 0.12101ms
+BenchmarkJIT/canny               : 0.56946ms
+BenchmarkJIT/emboss              : 0.15700ms
+BenchmarkJIT/laplacian           : 0.13453ms
+BenchmarkJIT/highpass            : 0.12871ms
+BenchmarkJIT/gradient            : 0.11905ms
+BenchmarkJIT/blockmozaic         : 0.34641ms
 ```
 
 ## AOT benchmarks
@@ -263,7 +274,7 @@ Also, the execution speed may be reduced by the overhead of multiple calls.
 
 ### Blur
 
-/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
+/D is [DisablePool](https://pkg.go.dev/github.com/octu0/blurry#DisablePool), i.e. the benchmark when BufferPool is off.
 
 ```
 goos: darwin
@@ -289,26 +300,6 @@ BenchmarkBlur/blurry/Gaussianblur/D
 BenchmarkBlur/blurry/Gaussianblur/D-8 	    1524	    821776 ns/op	  311361 B/op	       2 allocs/op
 ```
 
-### Contrast
-
-/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
-
-```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-BenchmarkContrast
-BenchmarkContrast/bild/Contrast
-BenchmarkContrast/bild/Contrast-8         	    6492	    181388 ns/op	  311707 B/op	       6 allocs/op
-BenchmarkContrast/imaging/Contrast
-BenchmarkContrast/imaging/Contrast-8      	    8670	    143229 ns/op	  313794 B/op	       7 allocs/op
-BenchmarkContrast/blurry/Contrast
-BenchmarkContrast/blurry/Contrast-8       	   10000	    111556 ns/op	     119 B/op	       2 allocs/op
-BenchmarkContrast/blurry/Contrast/D
-BenchmarkContrast/blurry/Contrast/D-8     	    8809	    134217 ns/op	  311360 B/op	       2 allocs/op
-```
-
 ### Edge
 
 ```
@@ -318,9 +309,9 @@ pkg: github.com/octu0/blurry
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkEdge
 BenchmarkEdge/bild/EdgeDetection
-BenchmarkEdge/bild/EdgeDetection-8         	     642	   1885417 ns/op	  631324 B/op	      10 allocs/op
+BenchmarkEdge/bild/EdgeDetection-8         	     679	   1794476 ns/op	  631299 B/op	      10 allocs/op
 BenchmarkEdge/blurry/Edge
-BenchmarkEdge/blurry/Edge-8                	    8272	    132898 ns/op	  311478 B/op	       3 allocs/op
+BenchmarkEdge/blurry/Edge-8                	    9400	    129556 ns/op	  311479 B/op	       3 allocs/op
 ```
 
 ### Sobel
@@ -330,44 +321,12 @@ BenchmarkSobel
 BenchmarkSobel/bild/Sobel
 BenchmarkSobel/bild/Sobel-8         	     202	   5693435 ns/op	 2196801 B/op	      32 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    4532	    235969 ns/op	  311478 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    5522	    220248 ns/op	  311479 B/op	       3 allocs/op
 ```
 
-### Gamma
+### Other Benchmarks
 
-```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-BenchmarkGamma
-BenchmarkGamma/bild/Gamma
-BenchmarkGamma/bild/Gamma-8         	    6016	    196563 ns/op	  311707 B/op	       6 allocs/op
-BenchmarkGamma/imaging/Gamma
-BenchmarkGamma/imaging/Gamma-8      	    7688	    158088 ns/op	  313793 B/op	       7 allocs/op
-BenchmarkGamma/blurry/Gamma
-BenchmarkGamma/blurry/Gamma-8       	    6918	    174179 ns/op	  311454 B/op	       2 allocs/op
-```
-
-### Grayscale
-
-/D is `DisablePool`, i.e. the benchmark when BufferPool is off.
-
-```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-BenchmarkGrayscale
-BenchmarkGrayscale/bild/Grayscale
-BenchmarkGrayscale/bild/Grayscale-8         	    7040	    168305 ns/op	  622813 B/op	       6 allocs/op
-BenchmarkGrayscale/imaging/Grayscale
-BenchmarkGrayscale/imaging/Grayscale-8      	    8408	    145552 ns/op	  313514 B/op	       6 allocs/op
-BenchmarkGrayscale/blurry/Grayscale
-BenchmarkGrayscale/blurry/Grayscale-8       	    6405	    190756 ns/op	     136 B/op	       2 allocs/op
-BenchmarkGrayscale/blurry/Grayscale/D
-BenchmarkGrayscale/blurry/Grayscale/D-8     	    5882	    201173 ns/op	  311360 B/op	       2 allocs/op
-```
+See [benchmark](https://github.com/octu0/blurry/tree/master/benchmark) for benchmarks of other methods and performance comparison with [libyuv](https://chromium.googlesource.com/libyuv/libyuv/).
 
 # Build
 

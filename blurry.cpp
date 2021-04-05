@@ -117,8 +117,7 @@ Func convolve_xy(Func in, Func kernel, RDom rd_kernel) {
   Func convolve = Func("convolve_xy");
   Expr in_val = in(x + rd_kernel.x, y + rd_kernel.y);
   Expr k_val  = kernel(rd_kernel.x, rd_kernel.y);
-  Expr val = in_val * k_val;
-  convolve(x, y) += cast<uint8_t>(val);
+  convolve(x, y) += in_val * k_val;
 
   return convolve;
 }
@@ -146,7 +145,7 @@ Func filter2d_gray(
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
     ch == 3, 255,
-    conv(x, y, ch) & 128
+    conv(x, y) & 128
   );
 
   // schedule
@@ -612,29 +611,36 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .vectorize(x, 32);
 
   gy.compute_at(sobel, x)
-    .vectorize(y, 3)
+    .parallel(y, 16)
     .vectorize(x, 3);
   gx.compute_at(sobel, x)
-    .vectorize(y, 3)
+    .parallel(y, 16)
     .vectorize(x, 3);
 
   sobel.compute_root()
-    .parallel(ch);
+    .parallel(ch)
+    .parallel(y, 8);
 
   gray.compute_root();
   return sobel;
 }
 
-Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func canny_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> threshold_max, Param<int32_t> threshold_min,
+  Param<float> sigma
+) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   Func gray = Func("gray");
   gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
 
-  Expr sigma = 5.0f;
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
   Func gauss = gaussian(gray, sigma, gauss_rd, "gaussian5x5");
 
@@ -654,10 +660,10 @@ Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func gy = convolve_xy(gauss, ks_y, RDom(-1,3, -1,3, "rd_kernel_sobel_y"));
 
   Func sobel = Func("sobel");
-  Expr pow_gy = fast_pow(gy(x, y), 2);
-  Expr pow_gx = fast_pow(gx(x, y), 2);
+  Expr pow_gy = fast_pow(abs(gy(x, y)), 2);
+  Expr pow_gx = fast_pow(abs(gx(x, y)), 2);
   Expr magnitude = ceil(sqrt(pow_gy + pow_gx));
-  sobel(x, y) = cast<uint8_t>(magnitude);
+  sobel(x, y) = magnitude;
 
   Func nms = Func("nonmax_supression");
   Expr angle = (atan2(gy(x, y), gx(x, y)) * 180) / pi;
@@ -685,8 +691,6 @@ Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     sobel(x, y)
   );
 
-  Expr threshold_max = 9;
-  Expr threshold_min = 5;
   RDom rd_nb = RDom(-1, 3, -1, 3, "rd_neighbors");
 
   Func hy = Func("hysteresis");
@@ -706,6 +710,37 @@ Func canny_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     ch == 3, 255,
     cast<uint8_t>(hysteresis)
   );
+
+  ks_x.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
+  ks_y.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
+
+  gy.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
+  gx.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
+
+  nms.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 8);
+
+  sobel.compute_root();
+
+  hy.compute_root()
+    .async()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  canny.compute_root();
+
+  gray.compute_root();
   return canny;
 }
 
@@ -1527,17 +1562,24 @@ void generate_canny(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<float> sigma{"sigma", 5.0};
 
   init_input_rgba(src);
 
   Func fn = canny_fn(
-    src.in(), width, height
+    src.in(), width, height,
+    threshold_max, threshold_min,
+    sigma
   );
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
-    src, width, height
+    src, width, height,
+    threshold_max, threshold_min,
+    sigma
   }, fn.name());
 }
 
@@ -1546,19 +1588,29 @@ int jit_canny(char **argv) {
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
+  Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
+  Param<float> sigma{"sigma", std::stof(argv[5])};
 
   Buffer<uint8_t> out = jit_realize_uint8(canny_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    sigma
   ), buf_src);
 
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
+  printf("save to %s\n", argv[6]);
+  save_image(out, argv[6]);
   return 0;
 }
 
 int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<float> sigma{"sigma", 5.0};
   return jit_benchmark(canny_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    sigma
   ), buf_src);
 }
 // }}} canny

@@ -126,7 +126,7 @@ img, err := blurry.Gradient(input)
 
 ### Edge
 
-a.k.a. EdgeDetection
+a.k.a. Edge Detection
 
 ```go
 img, err := blurry.Edge(input)
@@ -141,6 +141,16 @@ img, err := blurry.Sobel(input)
 ```
 
 ![example](testdata/sobel.png)
+
+### Canny
+
+a.k.a. Canny Edge Detection
+
+```
+img, err := blurry.Canny(input, 250, 100, 5.0)
+```
+
+![example](testdata/canny.png)
 
 ### BlockMozaic
 

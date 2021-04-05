@@ -1,10 +1,11 @@
-package blurry
+package benchmark
 
 import (
 	"testing"
 
 	"github.com/anthonynsimon/bild/effect"
 	"github.com/disintegration/imaging"
+  "github.com/octu0/blurry"
 )
 
 func BenchmarkGrayscale(b *testing.B) {
@@ -20,24 +21,24 @@ func BenchmarkGrayscale(b *testing.B) {
 	})
 	b.Run("blurry/Grayscale", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Grayscale(testImg)
+      img, err := blurry.Grayscale(testImg)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Grayscale/D", func(tb *testing.B) {
-		DisablePool()
-		tb.Cleanup(EnablePool)
+		blurry.DisablePool()
+		tb.Cleanup(blurry.EnablePool)
 
 		tb.ResetTimer()
 		for i := 0; i < tb.N; i += 1 {
-      img, err := Grayscale(testImg)
+      img, err := blurry.Grayscale(testImg)
       if err != nil {
         tb.Fatalf(err.Error())
       }
-      PutRGBA(img)
+      blurry.PutRGBA(img)
 		}
 	})
 }

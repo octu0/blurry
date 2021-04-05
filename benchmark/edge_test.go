@@ -1,9 +1,10 @@
-package blurry
+package benchmark
 
 import (
 	"testing"
 
 	"github.com/anthonynsimon/bild/effect"
+  "github.com/octu0/blurry"
 )
 
 func BenchmarkEdge(b *testing.B) {
@@ -14,7 +15,7 @@ func BenchmarkEdge(b *testing.B) {
 	})
 	b.Run("blurry/Edge", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Edge(testImg)
+			_, _ = blurry.Edge(testImg)
 		}
 	})
 }

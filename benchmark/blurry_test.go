@@ -1,4 +1,4 @@
-package blurry
+package benchmark
 
 import (
 	"bytes"

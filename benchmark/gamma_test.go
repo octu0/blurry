@@ -1,10 +1,11 @@
-package blurry
+package benchmark
 
 import (
 	"testing"
 
 	"github.com/anthonynsimon/bild/adjust"
 	"github.com/disintegration/imaging"
+  "github.com/octu0/blurry"
 )
 
 func BenchmarkGamma(b *testing.B) {
@@ -20,7 +21,7 @@ func BenchmarkGamma(b *testing.B) {
 	})
 	b.Run("blurry/Gamma", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-			_, _ = Gamma(testImg, 2.5)
+			_, _ = blurry.Gamma(testImg, 2.5)
 		}
 	})
 }

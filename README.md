@@ -147,12 +147,22 @@ img, err := blurry.Sobel(input)
 a.k.a. Canny Edge Detection
 
 ```go
-img, err := blurry.Canny(input, 250, 100, 5.0)
+img, err := blurry.Canny(input, 250, 100)
 ```
 
 | `max:250 min:100`                | `max:400 min:10`                             |
 | :------------------------------: | :------------------------------------------: |
 | ![example](testdata/canny.png)   | ![example2](testdata/canny_max400_min10.png) |
+
+Canny with Dilate
+
+```go
+img, err := blurry.CannyWithDilate(input, 250, 100, 3)
+```
+
+| `max:250 min:100 dilate:3`                           | `max:250 min:150 dilate:4`                            |
+| :--------------------------------------------------: | :---------------------------------------------------: |
+| ![example](testdata/canny_max250_min100_dilate3.png) | ![example2](testdata/canny_max250_min150_dilate4.png) |
 
 ### BlockMozaic
 

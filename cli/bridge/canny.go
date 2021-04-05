@@ -14,7 +14,7 @@ func cannyAction(c *cli.Context) error {
 		return err
 	}
 
-	out, err := blurry.Canny(in, c.Int("max"), c.Int("min"), c.Float64("sigma"))
+	out, err := blurry.CannyWithDilate(in, c.Int("max"), c.Int("min"), c.Int("dilate"))
 	if err != nil {
 		return err
 	}
@@ -47,10 +47,10 @@ func init() {
 				Usage: "threshold min(maybe noise, to be eliminate)",
 				Value: 100,
 			},
-			cli.Float64Flag{
-				Name:  "s,sigma",
-				Usage: "sigma",
-				Value: 5.0,
+			cli.IntFlag{
+				Name:  "d,dilate",
+				Usage: "dilate value(0 is no dilation)",
+				Value: 0,
 			},
 		},
 	})

@@ -14,7 +14,7 @@ func cannyAction(c *cli.Context) error {
 	args := []string{
 		c.String("max"),
 		c.String("min"),
-		c.String("sigma"),
+		c.String("dilate"),
 	}
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "canny", args); err != nil {
 		return err
@@ -54,9 +54,9 @@ func init() {
 				Value: "100",
 			},
 			cli.StringFlag{
-				Name:  "s, sigma",
-				Usage: "sigma",
-				Value: "5.0",
+				Name:  "d,dilate",
+				Usage: "dilate value(0 is no dilation)",
+				Value: "0",
 			},
 		},
 	})

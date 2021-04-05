@@ -16,7 +16,7 @@ package blurry
 int libcanny(
   unsigned char *src, int32_t width, int32_t height,
   int32_t threshold_max, int32_t threshold_min,
-  float sigma,
+  int32_t dilate_size,
   unsigned char *out
 ) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
@@ -29,7 +29,7 @@ int libcanny(
     return 1;
   }
 
-  int ret = canny(in_rgba_buf, width, height, threshold_max, threshold_min, sigma, out_rgba_buf);
+  int ret = canny(in_rgba_buf, width, height, threshold_max, threshold_min, dilate_size, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;
@@ -45,7 +45,11 @@ var (
 	ErrCanny = errors.New("canny cgo call error")
 )
 
-func Canny(img *image.RGBA, thresholdMax, thresholdMin int, sigma float64) (*image.RGBA, error) {
+func Canny(img *image.RGBA, thresholdMax, thresholdMin int) (*image.RGBA, error) {
+	return CannyWithDilate(img, thresholdMax, thresholdMin, -1)
+}
+
+func CannyWithDilate(img *image.RGBA, thresholdMax, thresholdMin int, dilateSize int) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
@@ -55,7 +59,7 @@ func Canny(img *image.RGBA, thresholdMax, thresholdMin int, sigma float64) (*ima
 		C.int(height),
 		C.int(thresholdMax),
 		C.int(thresholdMin),
-		C.float(sigma),
+		C.int(dilateSize),
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {

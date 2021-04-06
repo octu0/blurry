@@ -28,6 +28,12 @@ func generate(runtimePath, blurryPath string) (string, error) {
 	}
 	runtimePath = realRuntimePath
 
+  blurryFileName := filepath.Base(blurryPath)
+  blurryDirName  := filepath.Dir(blurryPath)
+  blurryExt      := filepath.Ext(blurryFileName)
+  blurryGenName  := strings.Replace(blurryFileName, blurryExt, "_gen" + blurryExt, strings.LastIndex(blurryFileName, blurryExt))
+  blurryGenPath  := filepath.Join(blurryDirName, blurryGenName)
+
 	mktemp, err := exec.Command("mktemp", "/tmp/outXXXX").Output()
 	if err != nil {
 		return "", err
@@ -57,6 +63,7 @@ func generate(runtimePath, blurryPath string) (string, error) {
 		"-std=c++11",
 		"-o", generateOutFilePath,
 		blurryPath,
+    blurryGenPath,
 	}
 	log.Printf("info: generate %v", genArgs)
 

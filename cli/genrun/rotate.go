@@ -12,7 +12,7 @@ func rotateAction(c *cli.Context) error {
 	}
 
 	args := []string{
-		c.String("rotation"),
+		c.String("rotate"),
 	}
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "rotate", runArgs(args)); err != nil {
 		return err

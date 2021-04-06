@@ -10,6 +10,7 @@ clang++ -g \
   -I/halide/Halide-Runtime/include -I/halide/Halide-Runtime/share/Halide/tools \
   -L/halide/Halide-Runtime/lib -lHalide `libpng-config --cflags --ldflags` -ljpeg -lpthread -ldl -std=c++11 \
   /app/blurry.cpp \
+  /app/blurry_gen.cpp \
   -o blurry.out
 
 # generate

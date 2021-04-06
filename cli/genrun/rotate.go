@@ -11,7 +11,7 @@ func rotateAction(c *cli.Context) error {
 		return err
 	}
 
-  cmd := "rotate" + c.String("rotate")
+	cmd := "rotate" + c.String("rotate")
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, nil); err != nil {
 		return err
 	}

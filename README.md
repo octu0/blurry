@@ -247,7 +247,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.10.0
+   1.11.0
 
 COMMANDS:
      blockmozaic

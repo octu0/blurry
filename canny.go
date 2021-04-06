@@ -106,7 +106,7 @@ func MorphologyCannyWithDilate(
 	img *image.RGBA,
 	thresholdMax, thresholdMin int,
 	mode CannyMorphologyMode,
-  morphSize int,
+	morphSize int,
 	dilateSize int,
 ) (*image.RGBA, error) {
 	width, height := wh(img)

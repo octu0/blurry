@@ -14,9 +14,9 @@ func cannyAction(c *cli.Context) error {
 		return err
 	}
 
-  mode := blurry.CannyMorphologyMode(c.Int("mode"))
-  size := c.Int("size")
-  dilate := c.Int("dilate")
+	mode := blurry.CannyMorphologyMode(c.Int("mode"))
+	size := c.Int("size")
+	dilate := c.Int("dilate")
 	out, err := blurry.MorphologyCannyWithDilate(in, c.Int("max"), c.Int("min"), mode, size, dilate)
 	if err != nil {
 		return err

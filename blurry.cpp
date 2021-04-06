@@ -260,7 +260,7 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
 
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -268,45 +268,60 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   // RGBA interleave test
   //
   Func cloneimg = Func("cloneimg");
-  cloneimg(x, y, ch) = cast<uint8_t>(in(x, y, ch));
+  cloneimg(x, y, ch) = in(x, y, ch);
 
   return cloneimg;
 }
 
-Func rotate_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int16_t> mode) {
+Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func r90 = rotate90(in, width, height, "rotate90");
-  Func r180 = rotate180(in, width, height, "rotate180");
-  Func r270 = rotate270(in, width, height, "rotate270");
+  // same cloneimg
+  Func rotate = Func("rotate0");
+  rotate(x, y, ch) = in(x, y, ch);
 
-  Func rotate = Func("rotate");
-  Expr value = select(
-    mode == ROTATE90,  r90(x, y, ch),
-    mode == ROTATE180, r180(x, y, ch),
-    mode == ROTATE270, r270(x, y, ch),
-    in(x, y, ch)
-  );
-  rotate(x, y, ch) = value;
+  return rotate;
+}
 
-  rotate.compute_root()
-    .vectorize(x, 32);
-  r90.compute_root()
-    .vectorize(x, 32);
-  r180.compute_root()
-    .vectorize(x, 32);
-  r270.compute_root()
-    .vectorize(x, 32);
-  in.compute_root();
+Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Func rotate = Func("rotate90");
+  rotate(x, y, ch) = in(y, (height - 1) - x, ch);
+
+  return rotate;
+}
+
+Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Func rotate = Func("rotate180");
+  rotate(x, y, ch) = in((width - 1) - x, (height - 1) - y, ch);
+
+  return rotate;
+}
+
+Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Func rotate = Func("rotate270");
+  rotate(x, y, ch) = in((width - 1) - y, x, ch);
+
   return rotate;
 }
 
 Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -316,7 +331,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   RDom rd = RDom(0,size, 0,size, "erode");
   Func erosion = Func("erosion");
   Expr value = in(x + rd.x, y + rd.y, ch);
-  erosion(x, y, ch) = minimum(cast<uint8_t>(value));
+  erosion(x, y, ch) = minimum(value);
 
   erosion.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -331,7 +346,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
 
 Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -341,7 +356,7 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   RDom rd = RDom(0,size, 0,size, "dilate");
   Func dilation = Func("dilation");
   Expr value = in(x + rd.x, y + rd.y, ch);
-  dilation(x, y, ch) = maximum(cast<uint8_t>(value));
+  dilation(x, y, ch) = maximum(value);
 
   dilation.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

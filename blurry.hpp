@@ -20,7 +20,13 @@ Func wrapFunc(Buffer<uint8_t> buf, const char* name);
 
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
-Func rotate_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int16_t> mode);
+Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
 

@@ -154,58 +154,147 @@ int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 }
 // }}} cloneimg
 
-// {{{ rotate
-void generate_rotate(std::vector<Target::Feature> features) {
+// {{{ rotate0
+void generate_rotate0(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<int16_t> rotation{"rotation", ROTATE90};
 
   init_input_rgba(src);
 
-  Func fn = rotate_fn(
-    src.in(), width, height, rotation
-  );
+  Func fn = rotate0_fn(src.in(), width, height);
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
-    src, width, height, rotation
+    src, width, height
   }, fn.name());
 }
 
-int jit_rotate(char **argv) {
+int jit_rotate0(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<int16_t> rotation{"rotation", (int16_t) std::stoi(argv[3])};
 
-  Func fn = rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    rotation
-  );
+  Func fn = rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
 
-  Buffer<uint8_t> out;
-  if(rotation.get() == ROTATE0 || rotation.get() == ROTATE180) {
-    out = jit_realize_uint8_bounds(fn, width.get(), height.get());
-  } else {
-    out = jit_realize_uint8_bounds(fn, height.get(), width.get());
-  }
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
   return 0;
 }
 
-int benchmark_rotate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<int16_t> rotation{"rotation", ROTATE180};
-  return jit_benchmark(rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, rotation
-  ), buf_src);
+int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
 }
-// }}} rotate
+// }}} rotate0
+
+// {{{ rotate180
+void generate_rotate180(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate180_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate180(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate180(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate180
+
+// {{{ rotate90
+void generate_rotate90(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate90_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate90(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, height.get(), width.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate90(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate90
+
+// {{{ rotate270
+void generate_rotate270(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate270_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate270(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate90
 
 // {{{ erosion
 void generate_erosion(std::vector<Target::Feature> features) {
@@ -1040,7 +1129,10 @@ void generate(){
 
   generate_runtime(features);
   generate_cloneimg(features);
-  generate_rotate(features);
+  generate_rotate0(features);
+  generate_rotate90(features);
+  generate_rotate180(features);
+  generate_rotate270(features);
   generate_erosion(features);
   generate_dilation(features);
   generate_morphology(features);
@@ -1070,7 +1162,10 @@ void benchmark(char **argv) {
 
   printf("src %dx%d\n", width.get(), height.get());
   benchmark_cloneimg(buf_src, width, height);
-  benchmark_rotate(buf_src, width, height);
+  benchmark_rotate0(buf_src, width, height);
+  benchmark_rotate90(buf_src, width, height);
+  benchmark_rotate180(buf_src, width, height);
+  benchmark_rotate270(buf_src, width, height);
   benchmark_erosion(buf_src, width, height);
   benchmark_dilation(buf_src, width, height);
   benchmark_morphology(buf_src, width, height);
@@ -1104,8 +1199,17 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
   } 
-  if(strcmp(argv[1], "rotate") == 0) {
-    return jit_rotate(argv);
+  if(strcmp(argv[1], "rotate0") == 0) {
+    return jit_rotate0(argv);
+  } 
+  if(strcmp(argv[1], "rotate90") == 0) {
+    return jit_rotate90(argv);
+  } 
+  if(strcmp(argv[1], "rotate180") == 0) {
+    return jit_rotate180(argv);
+  } 
+  if(strcmp(argv[1], "rotate270") == 0) {
+    return jit_rotate270(argv);
   } 
   if(strcmp(argv[1], "erosion") == 0) {
     return jit_erosion(argv);

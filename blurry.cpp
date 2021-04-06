@@ -810,14 +810,10 @@ Func canny_fn(
   hy(x, y) = th_val;
 
   Func canny = Func("canny");
-  Expr hysteresis = 0;
-
-  if(dilate_size.get() < 1) {
-    // defaults no dilation
-    hysteresis = hy(x, y);
-  } else {
-    hysteresis = dilate(hy, RDom(0, dilate_size, 0, dilate_size, "canny_dilate"));
-  }
+  Expr hysteresis = select(
+    dilate_size < 1, hy(x, y),
+    dilate(hy, RDom(0, dilate_size, 0, dilate_size, "canny_dilate"))
+  );
 
   canny(x, y, ch) = select(
     ch == 3, 255,

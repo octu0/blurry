@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int canny(struct halide_buffer_t *_p19_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, uint8_t _morphology_mode, int32_t _morphology_size, int32_t _dilate, struct halide_buffer_t *_canny_buffer);
+int canny(struct halide_buffer_t *_p19_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, struct halide_buffer_t *_canny_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int canny_argv(void **args);

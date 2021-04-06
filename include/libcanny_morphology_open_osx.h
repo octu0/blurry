@@ -1,5 +1,5 @@
-#ifndef HALIDE__libcanny_linux_h
-#define HALIDE__libcanny_linux_h
+#ifndef HALIDE__libcanny_morphology_open_osx_h
+#define HALIDE__libcanny_morphology_open_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int canny(struct halide_buffer_t *_p19_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, struct halide_buffer_t *_canny_buffer);
+int canny_morphology_open(struct halide_buffer_t *_p21_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _morphology_size, int32_t _dilate, struct halide_buffer_t *_canny_morphology_open_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int canny_argv(void **args);
+int canny_morphology_open_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *canny_metadata();
+const struct halide_filter_metadata_t *canny_morphology_open_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

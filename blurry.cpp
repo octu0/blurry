@@ -952,7 +952,10 @@ Func canny_morphology_open_fn(
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis_dilate);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis_dilate)
+  );
   canny.compute_root();
   return canny;
 }
@@ -979,7 +982,10 @@ Func canny_morphology_close_fn(
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis_dilate);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis_dilate)
+  );
   canny.compute_root();
   return canny;
 }

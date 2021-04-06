@@ -14,7 +14,10 @@ func cannyAction(c *cli.Context) error {
 		return err
 	}
 
-	out, err := blurry.CannyWithDilate(in, c.Int("max"), c.Int("min"), c.Int("dilate"))
+  mode := blurry.CannyMorphologyMode(c.Int("mode"))
+  size := c.Int("size")
+  dilate := c.Int("dilate")
+	out, err := blurry.MorphologyCannyWithDilate(in, c.Int("max"), c.Int("min"), mode, size, dilate)
 	if err != nil {
 		return err
 	}
@@ -46,6 +49,16 @@ func init() {
 				Name:  "min",
 				Usage: "threshold min(maybe noise, to be eliminate)",
 				Value: 100,
+			},
+			cli.StringFlag{
+				Name:  "m,mode",
+				Usage: "morphology mode (0=none, 1=open, 2=close)",
+				Value: "0",
+			},
+			cli.IntFlag{
+				Name:  "s,size",
+				Usage: "morphology size (0 is skip morphology)",
+				Value: 0,
 			},
 			cli.IntFlag{
 				Name:  "d,dilate",

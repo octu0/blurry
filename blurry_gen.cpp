@@ -750,6 +750,8 @@ void generate_canny(std::vector<Target::Feature> features) {
   Param<int32_t> height{"height", 1080};
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<uint8_t> morphology_mode{"morphology_mode", 0};
+  Param<int32_t> morphology_size{"morphology_size", 0};
   Param<int32_t> dilate{"dilate", 0};
 
   init_input_rgba(src);
@@ -757,6 +759,7 @@ void generate_canny(std::vector<Target::Feature> features) {
   Func fn = canny_fn(
     src.in(), width, height,
     threshold_max, threshold_min,
+    morphology_mode, morphology_size,
     dilate
   );
 
@@ -765,6 +768,7 @@ void generate_canny(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     threshold_max, threshold_min,
+    morphology_mode, morphology_size,
     dilate
   }, fn.name());
 }
@@ -776,26 +780,32 @@ int jit_canny(char **argv) {
   Param<int32_t> height{"height", buf_src.get()->height()};
   Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
   Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
-  Param<int32_t> dilate{"dilate", std::stoi(argv[5])};
+  Param<uint8_t> morphology_mode{"morphology_mode", (uint8_t) std::stoi(argv[5])};
+  Param<int32_t> morphology_size{"morphology_size", std::stoi(argv[6])};
+  Param<int32_t> dilate{"dilate", std::stoi(argv[7])};
 
   Buffer<uint8_t> out = jit_realize_uint8(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min,
+    morphology_mode, morphology_size,
     dilate
   ), buf_src);
 
-  printf("save to %s\n", argv[6]);
-  save_image(out, argv[6]);
+  printf("save to %s\n", argv[8]);
+  save_image(out, argv[8]);
   return 0;
 }
 
 int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<uint8_t> morphology_mode{"morphology_mode", 2};
+  Param<int32_t> morphology_size{"morphology_size", 3};
   Param<int32_t> dilate{"dilate", 0};
   return jit_benchmark(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min,
+    morphology_mode, morphology_size,
     dilate
   ), buf_src);
 }

@@ -14,6 +14,8 @@ func cannyAction(c *cli.Context) error {
 	args := []string{
 		c.String("max"),
 		c.String("min"),
+		c.String("mode"),
+		c.String("size"),
 		c.String("dilate"),
 	}
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "canny", args); err != nil {
@@ -52,6 +54,16 @@ func init() {
 				Name:  "min",
 				Usage: "threshold min(maybe noise, to be eliminate)",
 				Value: "100",
+			},
+			cli.StringFlag{
+				Name:  "m,mode",
+				Usage: "morphology mode (0=none, 1=open, 2=close)",
+				Value: "0",
+			},
+			cli.StringFlag{
+				Name:  "s,size",
+				Usage: "morphology size (0 is skip morphology)",
+				Value: "0",
 			},
 			cli.StringFlag{
 				Name:  "d,dilate",

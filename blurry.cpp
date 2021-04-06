@@ -733,6 +733,7 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 Func canny_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> threshold_max, Param<int32_t> threshold_min,
+  Param<uint8_t> morphology_mode, Param<int32_t> morphology_size,
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
@@ -746,8 +747,19 @@ Func canny_fn(
   Func gray = Func("gray");
   gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
 
+  Func morph = Func("morphology");
+  Func morph_open = morphology_open(gray, morphology_size);
+  Func morph_close = morphology_close(gray, morphology_size);
+  morph(x, y) = select(
+    morphology_size < 1, gray(x, y),
+    morphology_mode < 1, gray(x, y),
+    morphology_mode == MORPH_OPEN, morph_open(x, y),
+    morphology_mode == MORPH_CLOSE, morph_close(x, y),
+    gray(x, y)
+  );
+
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
-  Func gauss = gaussian(gray, CANNY_SIGMA, gauss_rd, "gaussian5x5");
+  Func gauss = gaussian(morph, CANNY_SIGMA, gauss_rd, "gaussian5x5");
 
   Func ks_x = Func("kernel_sobel_x");
   ks_x(x, y) = 0;
@@ -849,6 +861,10 @@ Func canny_fn(
   canny.compute_root();
 
   gauss.compute_root();
+
+  morph_open.compute_root();
+  morph_close.compute_root();
+  morph.compute_root();
 
   gray.compute_root();
   return canny;

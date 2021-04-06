@@ -194,7 +194,7 @@ img, err := blurry.Canny(input, 250, 100)
 | :------------------------------: | :------------------------------------------: |
 | ![example](testdata/canny.png)   | ![example2](testdata/canny_max400_min10.png) |
 
-Canny with Dilate
+#### Canny with Dilate
 
 ```go
 img, err := blurry.CannyWithDilate(input, 250, 100, 3)
@@ -203,6 +203,22 @@ img, err := blurry.CannyWithDilate(input, 250, 100, 3)
 | `max:250 min:100 dilate:3`                           | `max:250 min:150 dilate:4`                            |
 | :--------------------------------------------------: | :---------------------------------------------------: |
 | ![example](testdata/canny_max250_min100_dilate3.png) | ![example2](testdata/canny_max250_min150_dilate4.png) |
+
+#### Morphology Canny with Dilate
+
+Pre-process morphology before applying Canny process.
+
+```go
+mode := blurry.CannyMorphologyClose
+morph_size := 5
+dilate_size := 3
+img, err := blurry.MorphologyCannyWithDilate(input, 250, 100, mode, morph_size, dilate_size);
+```
+
+| `blurry.CannyMorphologyMode` | Result                                       |
+| :-------------------------:  | :------------------------------------------: |
+| `blurry.CannyMorphologyOpen` | ![example](testdata/canny_morphology_open_size5_max250_min100_dilate3.png) |
+| `blurry.CannyMorphologyClose` | ![example](testdata/canny_morphology_close_size5_max250_min100_dilate3.png) |
 
 ## CLI usage
 

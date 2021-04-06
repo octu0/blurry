@@ -16,6 +16,7 @@ package blurry
 int libcanny(
   unsigned char *src, int32_t width, int32_t height,
   int32_t threshold_max, int32_t threshold_min,
+  unsigned char mode, int32_t size,
   int32_t dilate_size,
   unsigned char *out
 ) {
@@ -29,7 +30,13 @@ int libcanny(
     return 1;
   }
 
-  int ret = canny(in_rgba_buf, width, height, threshold_max, threshold_min, dilate_size, out_rgba_buf);
+  int ret = canny(
+    in_rgba_buf, width, height,
+    threshold_max, threshold_min,
+    mode, size,
+    dilate_size,
+    out_rgba_buf
+  );
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;
@@ -41,15 +48,35 @@ import (
 	"image"
 )
 
+type CannyMorphologyMode uint8
+const(
+  CannyMorphologyNone CannyMorphologyMode = iota
+  CannyMorphologyOpen
+  CannyMorphologyClose
+)
+
 var (
 	ErrCanny = errors.New("canny cgo call error")
 )
 
 func Canny(img *image.RGBA, thresholdMax, thresholdMin int) (*image.RGBA, error) {
-	return CannyWithDilate(img, thresholdMax, thresholdMin, -1)
+	return CannyWithDilate(img, thresholdMax, thresholdMin, 0)
 }
 
 func CannyWithDilate(img *image.RGBA, thresholdMax, thresholdMin int, dilateSize int) (*image.RGBA, error) {
+  return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, CannyMorphologyNone, 0, dilateSize)
+}
+
+func MorphologyCanny(img *image.RGBA, thresholdMax, thresholdMin int, mode CannyMorphologyMode, morphSize int) (*image.RGBA, error) {
+  return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, mode, morphSize, 0)
+}
+
+func MorphologyCannyWithDilate(
+  img *image.RGBA,
+  thresholdMax, thresholdMin int,
+  mode CannyMorphologyMode, morphSize int,
+  dilateSize int,
+) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
@@ -59,6 +86,8 @@ func CannyWithDilate(img *image.RGBA, thresholdMax, thresholdMin int, dilateSize
 		C.int(height),
 		C.int(thresholdMax),
 		C.int(thresholdMin),
+    C.uchar(mode),
+    C.int(morphSize),
 		C.int(dilateSize),
 		(*C.uchar)(&out.Pix[0]),
 	)

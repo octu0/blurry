@@ -52,6 +52,7 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 Func canny_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> threshold_max, Param<int32_t> threshold_min,
+  Param<uint8_t> morphology_mode, Param<int32_t> morphology_size,
   Param<int32_t> dilate_size
 );
 

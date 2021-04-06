@@ -74,22 +74,6 @@ Func rotate270(Func clamped, Param<int32_t> width, Param<int32_t> height, const 
   return read;
 }
 
-Func rotation(Param<int16_t> mode, Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
-  if(mode.get() == ROTATE0) {
-    return read(clamped, name);
-  }
-  if(mode.get() == ROTATE90) {
-    return rotate90(clamped, width, height, name);
-  }
-  if(mode.get() == ROTATE180) {
-    return rotate180(clamped, width, height, name);
-  }
-  if(mode.get() == ROTATE270) {
-    return rotate270(clamped, width, height, name);
-  }
-  return read(clamped, "unsupported rotation");
-}
-
 Func convolve(Func in, Func kernel, RDom rd_kernel) {
   Var x("x"), y("y"), ch("ch");
 
@@ -283,14 +267,32 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
 Func rotate_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int16_t> mode) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func clamped = BoundaryConditions::constant_exterior(input, 0, src_bounds);
-  Func in = rotation(mode, clamped, width, height, "in");
+  Func in = read(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func rotate = Func("rotate");
-  rotate(x, y, ch) = cast<uint8_t>(in(x, y, ch));
+  Func r90 = rotate90(in, width, height, "rotate90");
+  Func r180 = rotate180(in, width, height, "rotate180");
+  Func r270 = rotate270(in, width, height, "rotate270");
 
+  Func rotate = Func("rotate");
+  Expr value = select(
+    mode == ROTATE90,  r90(x, y, ch),
+    mode == ROTATE180, r180(x, y, ch),
+    mode == ROTATE270, r270(x, y, ch),
+    in(x, y, ch)
+  );
+  rotate(x, y, ch) = value;
+
+  rotate.compute_root()
+    .vectorize(x, 32);
+  r90.compute_root()
+    .vectorize(x, 32);
+  r180.compute_root()
+    .vectorize(x, 32);
+  r270.compute_root()
+    .vectorize(x, 32);
+  in.compute_root();
   return rotate;
 }
 

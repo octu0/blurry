@@ -247,7 +247,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.9.0
+   1.10.0
 
 COMMANDS:
      blockmozaic
@@ -267,6 +267,7 @@ COMMANDS:
      highpass
      invert
      laplacian
+     morphology
      rotate
      sobel
      help, h       Shows a list of commands or help for one command

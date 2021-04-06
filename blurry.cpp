@@ -2,19 +2,9 @@
 
 #define DEBUG 0
 
-#include <Halide.h>
-#include <halide_image_io.h>
-#include <halide_benchmark.h>
-
-using namespace Halide;
-using namespace Halide::Tools;
+#include "blurry.hpp"
 
 const uint8_t GRAY_R = 76, GRAY_G = 152, GRAY_B = 28;
-
-const int16_t ROTATE0   = 0;   // No rotation
-const int16_t ROTATE90  = 90;  // Rotate 90 degrees clockwise
-const int16_t ROTATE180 = 180; // Rotate 180 degrees
-const int16_t ROTATE270 = 270; // Rotate 270 degrees clockwise
 
 const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
@@ -176,6 +166,77 @@ Func gauss_kernel(Expr sigma) {
   return kernel;
 }
 
+Expr erode(Func in, RDom rd_erode) {
+  Var x("x"), y("y");
+  Expr val = in(x + rd_erode.x, y + rd_erode.y);
+  return minimum(val);
+}
+
+Expr dilate(Func in, RDom rd_dilate) {
+  Var x("x"), y("y");
+  Expr val = in(x + rd_dilate.x, y + rd_dilate.y);
+  return maximum(val);
+}
+
+Func morphology_open(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+  Var x("x"), y("y");
+
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
+  Func morph = Func(name);
+  morph(x, y) = 0;
+
+  int N = count.get();
+  for(int i = 0; i < N; i += 1) {
+    morph(x, y) = minimum(in(x + rd_morph.x, y + rd_morph.y));
+    morph(x, y) = maximum(morph(x + rd_morph.x, y + rd_morph.y));
+  }
+  return morph;
+}
+
+Func morphology_close(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+  Var x("x"), y("y");
+
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
+  Func morph = Func(name);
+  morph(x, y) = 0;
+
+  int N = count.get();
+  for(int i = 0; i < N; i += 1) {
+    morph(x, y) = maximum(in(x + rd_morph.x, y + rd_morph.y));
+    morph(x, y) = minimum(morph(x + rd_morph.x, y + rd_morph.y));
+  }
+  return morph;
+}
+
+Func morphology_gradient(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+  Var x("x"), y("y");
+
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
+  Func morph = Func(name);
+  morph(x, y) = 0;
+
+  int N = count.get();
+  for(int i = 0; i < N; i += 1) {
+    Expr val_dilate = maximum(in(x + rd_morph.x, y + rd_morph.y));
+    Expr val_erode = minimum(in(x + rd_morph.x, y + rd_morph.y));
+    morph(x, y) = val_dilate - val_erode;
+  }
+  return morph;
+}
+
+Func morphology(Func in, Param<uint8_t> mode, Param<int32_t> size, Param<int32_t> count, const char *name) {
+  if(mode.get() == MORPH_OPEN) {
+    return morphology_open(in, size, count, name);
+  }
+  if(mode.get() == MORPH_CLOSE) {
+    return morphology_close(in, size, count, name);
+  }
+  if(mode.get() == MORPH_GRADIENT) {
+    return morphology_gradient(in, size, count, name);
+  }
+  return morphology_open(in, size, count, name); // unknown = MORPH_OPEN
+}
+
 Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   Var x("x"), y("y");
   Var xo("xo"), xi("xi");
@@ -281,6 +342,26 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
   in.compute_root();
   return dilation;
+}
+
+Func morphology_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<uint8_t> mode, Param<int32_t> size, Param<int32_t> count
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func gray = Func("gray");
+  gray(x, y) = cast<uint8_t>(in(x, y, 0));
+
+  Func morph = morphology(gray, mode, size, count, "morpology");
+
+  return morph;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -424,7 +505,7 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
 Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr box_size = max(size, 1);
 
@@ -465,7 +546,7 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
 
 Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr radius = cast<int16_t>(ceil(sigma * 3));
   Expr acos_v = -1;
@@ -716,9 +797,7 @@ Func canny_fn(
     // defaults no dilation
     hysteresis = hy(x, y);
   } else {
-    RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "canny_dilate");
-    Expr dilate_val = hy(x + rd_dilate.x, y + rd_dilate.y);
-    hysteresis = maximum(dilate_val);
+    hysteresis = dilate(hy, RDom(0, dilate_size, 0, dilate_size, "canny_dilate"));
   }
 
   canny(x, y, ch) = select(
@@ -883,1100 +962,4 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   in.compute_root();
 
   return blockmozaic;
-}
-
-void generate_static_link(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
-  printf("generate %s\n", fn.name().c_str());
-
-  std::string lib_name = "lib" + name;
-  std::string name_linux = lib_name + "_linux";
-  std::string name_osx = lib_name + "_osx";
-  {
-    Target target;
-    target.os = Target::OSX;
-    target.arch = Target::X86;
-    target.bits = 64;
-    target.set_features(features);
-    fn.compile_to_static_library(
-      name_osx,
-      args,
-      name,
-      target
-    );
-  }
-  {
-    Target target;
-    target.os = Target::Linux;
-    target.arch = Target::X86;
-    target.bits = 64;
-    target.set_features(features);
-    fn.compile_to_static_library(
-      name_linux,
-      args,
-      name,
-      target
-    );
-  }
-}
-
-void generate_static_link_runtime(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
-  printf("generate runtime\n");
-
-  std::string lib_name = "lib" + name;
-  std::string name_linux = lib_name + "_linux";
-  std::string name_osx = lib_name + "_osx";
-  {
-    Target target;
-    target.os = Target::OSX;
-    target.arch = Target::X86;
-    target.bits = 64;
-    target.set_features(features);
-    fn.compile_to_static_library(
-      name_osx,
-      args,
-      name,
-      target.without_feature(Target::Feature::NoRuntime)
-    );
-  }
-  {
-    Target target;
-    target.os = Target::Linux;
-    target.arch = Target::X86;
-    target.bits = 64;
-    target.set_features(features);
-    fn.compile_to_static_library(
-      name_linux,
-      args,
-      name,
-      target.without_feature(Target::Feature::NoRuntime)
-    );
-  }
-}
-
-void init_input_rgba(ImageParam in) {
-  in.dim(0).set_stride(4);
-  in.dim(2).set_stride(1);
-  in.dim(2).set_bounds(0, 4);
-}
-
-void init_output_rgba(OutputImageParam out) {
-  out.dim(0).set_stride(4);
-  out.dim(2).set_stride(1);
-  out.dim(2).set_bounds(0, 4);
-}
-
-void generate_runtime(std::vector<Target::Feature> features) {
-  Var x("x");
-  Func f = Func("noop");
-  f(x) = 0;
-
-  generate_static_link_runtime(features, f, {}, "runtime");
-}
-
-int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
-  fn.compile_jit(get_jit_target_from_environment());
-
-  double result = benchmark(10, 10, [&]() {
-    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
-  });
-  printf("BenchmarkJIT/%-20s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
-  return 0;
-}
-
-Buffer<uint8_t> jit_realize_uint8_bounds(Func fn, int32_t width, int32_t height) {
-  fn.compile_jit(get_jit_target_from_environment());
-
-  printf("realize %s...\n", fn.name().c_str());
-  
-  return fn.realize({width, height, 3});
-}
-
-Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {
-  return jit_realize_uint8_bounds(fn, src.get()->width(), src.get()->height());
-}
-
-// {{{ cloneimg
-void generate_cloneimg(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = cloneimg_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_cloneimg(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(cloneimg_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(cloneimg_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} cloneimg
-
-// {{{ rotate
-void generate_rotate(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<int16_t> rotation{"rotation", ROTATE90};
-
-  init_input_rgba(src);
-
-  Func fn = rotate_fn(
-    src.in(), width, height, rotation
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, rotation
-  }, fn.name());
-}
-
-int jit_rotate(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<int16_t> rotation{"rotation", (int16_t) std::stoi(argv[3])};
-
-  Func fn = rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, rotation
-  );
-
-  Buffer<uint8_t> out;
-  if(rotation.get() == ROTATE0 || rotation.get() == ROTATE180) {
-    out = jit_realize_uint8_bounds(fn, width.get(), height.get());
-  } else {
-    out = jit_realize_uint8_bounds(fn, height.get(), width.get());
-  }
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_rotate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<int16_t> rotation{"rotation", ROTATE180};
-  return jit_benchmark(rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, rotation
-  ), buf_src);
-}
-// }}} rotate
-
-// {{{ erosion
-void generate_erosion(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<uint8_t> size{"size", 8};
-
-  init_input_rgba(src);
-
-  Func fn = erosion_fn(
-    src.in(), width, height, size
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, size,
-  }, fn.name());
-}
-
-int jit_erosion(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(erosion_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-    
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_erosion(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 5};
-  return jit_benchmark(erosion_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-}
-// }}} erosion
-
-// {{{ dilation
-void generate_dilation(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<uint8_t> size{"size", 8};
-
-  init_input_rgba(src);
-
-  Func fn = dilation_fn(
-    src.in(), width, height, size
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, size,
-  }, fn.name());
-}
-
-int jit_dilation(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(dilation_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-    
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 5};
-  return jit_benchmark(dilation_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-}
-// }}} dilation
-
-// {{{ grayscale
-void generate_grayscale(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = grayscale_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_grayscale(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(grayscale_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-    
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_grayscale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(grayscale_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} grayscale
-
-// {{{ invert
-void generate_invert(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = invert_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_invert(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(invert_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_invert(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(invert_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} invert
-
-// {{{ brightness
-void generate_brightness(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<float> factor{"factor", 1.5f};
-
-  init_input_rgba(src);
-
-  Func fn = brightness_fn(
-    src.in(), width, height, factor
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, factor
-  }, fn.name());
-}
-
-int jit_brightness(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<float>   factor{"factor", std::stof(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(brightness_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_brightness(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<float> factor{"factor", 1.5f};
-  return jit_benchmark(brightness_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-}
-// }}} brightness
-
-// {{{ gammacorrection
-void generate_gammacorrection(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<float> factor{"factor", 2.5f};
-
-  init_input_rgba(src);
-
-  Func fn = gammacorrection_fn(
-    src.in(), width, height, factor
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, factor
-  }, fn.name());
-}
-
-int jit_gammacorrection(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<float>   factor{"factor", std::stof(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(gammacorrection_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_gammacorrection(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<float> factor{"factor", 1.25f};
-  return jit_benchmark(gammacorrection_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-}
-// }}} gammacorrection
-
-// {{{ contrast
-void generate_contrast(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<float> factor{"factor", 0.525f};
-
-  init_input_rgba(src);
-
-  Func fn = contrast_fn(
-    src.in(), width, height, factor
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, factor
-  }, fn.name());
-}
-
-int jit_contrast(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<float>   factor{"factor", std::stof(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(contrast_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_contrast(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<float> factor{"factor", 0.525f};
-  return jit_benchmark(contrast_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
-}
-// }}} contrast
-
-// {{{ boxblur
-void generate_boxblur(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<uint8_t> size{"size", 11};
-
-  init_input_rgba(src);
-
-  Func fn = boxblur_fn(
-    src.in(), width, height, size
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, size
-  }, fn.name());
-}
-
-int jit_boxblur(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(boxblur_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_boxblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 10};
-  return jit_benchmark(boxblur_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
-}
-// }}} boxblur
-
-// {{{ gaussianblur
-void generate_gaussianblur(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<float> sigma{"sigma", 5.0};
-
-  init_input_rgba(src);
-
-  Func fn = gaussianblur_fn(
-    src.in(), width, height, sigma
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, sigma
-  }, fn.name());
-}
-
-int jit_gaussianblur(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<float> sigma{"sigma", std::stof(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(gaussianblur_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, sigma
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_gaussianblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<float> sigma{"sigma", 5.0f};
-  return jit_benchmark(gaussianblur_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, sigma
-  ), buf_src);
-}
-// }}} gaussianblur
-
-// {{{ edge
-void generate_edge(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = edge_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height
-  }, fn.name());
-}
-
-int jit_edge(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(edge_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_edge(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(edge_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} edge
-
-// {{{ sobel
-void generate_sobel(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = sobel_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height
-  }, fn.name());
-}
-
-int jit_sobel(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(sobel_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_sobel(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(sobel_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} sobel
-
-// {{{ canny
-void generate_canny(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<int32_t> threshold_max{"threshold_max", 250};
-  Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<int32_t> dilate{"dilate", 0};
-
-  init_input_rgba(src);
-
-  Func fn = canny_fn(
-    src.in(), width, height,
-    threshold_max, threshold_min,
-    dilate
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-    threshold_max, threshold_min,
-    dilate
-  }, fn.name());
-}
-
-int jit_canny(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
-  Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
-  Param<int32_t> dilate{"dilate", std::stoi(argv[5])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(canny_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    threshold_max, threshold_min,
-    dilate
-  ), buf_src);
-
-  printf("save to %s\n", argv[6]);
-  save_image(out, argv[6]);
-  return 0;
-}
-
-int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<int32_t> threshold_max{"threshold_max", 250};
-  Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<int32_t> dilate{"dilate", 0};
-  return jit_benchmark(canny_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    threshold_max, threshold_min,
-    dilate
-  ), buf_src);
-}
-// }}} canny
-
-// {{{ emboss
-void generate_emboss(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = emboss_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_emboss(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(emboss_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(emboss_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} emboss
-
-// {{{ laplacian
-void generate_laplacian(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = laplacian_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_laplacian(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(laplacian_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_laplacian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(laplacian_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} laplacian
-
-// {{{ highpass
-void generate_highpass(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = highpass_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_highpass(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(highpass_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_highpass(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(highpass_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} highpass
-
-// {{{ gradient
-void generate_gradient(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-
-  init_input_rgba(src);
-
-  Func fn = gradient_fn(
-    src.in(), width, height
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height,
-  }, fn.name());
-}
-
-int jit_gradient(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  Buffer<uint8_t> out = jit_realize_uint8(gradient_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-
-  printf("save to %s\n", argv[3]);
-  save_image(out, argv[3]);
-  return 0;
-}
-
-int benchmark_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(gradient_fn(
-    wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
-}
-// }}} gradient
-
-// {{{ blockmozaic
-void generate_blockmozaic(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-
-  Param<int32_t> width{"width", 1920};
-  Param<int32_t> height{"height", 1080};
-  Param<int32_t> block{"block", 10};
-
-  init_input_rgba(src);
-
-  Func fn = blockmozaic_fn(
-    src.in(), width, height, block
-  );
-
-  init_output_rgba(fn.output_buffer());
-
-  generate_static_link(features, fn, {
-    src, width, height, block
-  }, fn.name());
-}
-
-int jit_blockmozaic(char **argv) {
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<int32_t> block{"block", std::stoi(argv[3])};
-
-  Buffer<uint8_t> out = jit_realize_uint8(blockmozaic_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, block
-  ), buf_src);
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
-  return 0;
-}
-
-int benchmark_blockmozaic(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<int32_t> block{"block", 10};
-  return jit_benchmark(blockmozaic_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, block
-  ), buf_src);
-}
-// }}} blockmozaic
-
-void generate(){
-  printf("generate...\n");
-
-  std::vector<Target::Feature> features;
-  features.push_back(Target::AVX);
-  features.push_back(Target::AVX2);
-  //features.push_back(Target::FMA);
-  //features.push_back(Target::FMA4);
-  features.push_back(Target::F16C);
-  features.push_back(Target::SSE41);
-  features.push_back(Target::EmbedBitcode);
-  features.push_back(Target::EnableLLVMLoopOpt);
-  features.push_back(Target::Feature::NoRuntime);
-
-  generate_runtime(features);
-  generate_cloneimg(features);
-  generate_rotate(features);
-  generate_erosion(features);
-  generate_dilation(features);
-  generate_grayscale(features);
-  generate_invert(features);
-  generate_brightness(features);
-  generate_gammacorrection(features);
-  generate_contrast(features);
-  generate_boxblur(features);
-  generate_gaussianblur(features);
-  generate_edge(features);
-  generate_sobel(features);
-  generate_canny(features);
-  generate_emboss(features);
-  generate_laplacian(features);
-  generate_highpass(features);
-  generate_gradient(features);
-  generate_blockmozaic(features);
-}
-
-void benchmark(char **argv) {
-  printf("benchmark...\n");
-  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
-
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
-
-  printf("src %dx%d\n", width.get(), height.get());
-  benchmark_cloneimg(buf_src, width, height);
-  benchmark_rotate(buf_src, width, height);
-  benchmark_erosion(buf_src, width, height);
-  benchmark_dilation(buf_src, width, height);
-  benchmark_grayscale(buf_src, width, height);
-  benchmark_invert(buf_src, width, height);
-  benchmark_brightness(buf_src, width, height);
-  benchmark_gammacorrection(buf_src, width, height);
-  benchmark_contrast(buf_src, width, height);
-  benchmark_boxblur(buf_src, width, height);
-  benchmark_gaussianblur(buf_src, width, height);
-  benchmark_edge(buf_src, width, height);
-  benchmark_sobel(buf_src, width, height);
-  benchmark_canny(buf_src, width, height);
-  benchmark_emboss(buf_src, width, height);
-  benchmark_laplacian(buf_src, width, height);
-  benchmark_highpass(buf_src, width, height);
-  benchmark_gradient(buf_src, width, height);
-  benchmark_blockmozaic(buf_src, width, height);
-}
-
-int main(int argc, char **argv) {
-  if(argc == 1) {
-    generate();
-    return 0;
-  }
-  if(strcmp(argv[1], "benchmark") == 0) {
-    benchmark(argv);
-    return 0;
-  }
-
-  if(strcmp(argv[1], "cloneimg") == 0) {
-    return jit_cloneimg(argv);
-  } 
-  if(strcmp(argv[1], "rotate") == 0) {
-    return jit_rotate(argv);
-  } 
-  if(strcmp(argv[1], "erosion") == 0) {
-    return jit_erosion(argv);
-  }
-  if(strcmp(argv[1], "dilation") == 0) {
-    return jit_dilation(argv);
-  }
-  if(strcmp(argv[1], "grayscale") == 0) {
-    return jit_grayscale(argv);
-  }
-  if(strcmp(argv[1], "invert") == 0) {
-    return jit_invert(argv);
-  }
-  if(strcmp(argv[1], "brightness") == 0) {
-    return jit_brightness(argv);
-  }
-  if(strcmp(argv[1], "gammacorrection") == 0) {
-    return jit_gammacorrection(argv);
-  }
-  if(strcmp(argv[1], "contrast") == 0) {
-    return jit_contrast(argv);
-  }
-  if(strcmp(argv[1], "boxblur") == 0) {
-    return jit_boxblur(argv);
-  }
-  if(strcmp(argv[1], "gaussianblur") == 0) {
-    return jit_gaussianblur(argv);
-  }
-  if(strcmp(argv[1], "edge") == 0) {
-    return jit_edge(argv);
-  }
-  if(strcmp(argv[1], "sobel") == 0) {
-    return jit_sobel(argv);
-  }
-  if(strcmp(argv[1], "canny") == 0) {
-    return jit_canny(argv);
-  }
-  if(strcmp(argv[1], "emboss") == 0) {
-    return jit_emboss(argv);
-  }
-  if(strcmp(argv[1], "laplacian") == 0) {
-    return jit_laplacian(argv);
-  }
-  if(strcmp(argv[1], "highpass") == 0) {
-    return jit_highpass(argv);
-  }
-  if(strcmp(argv[1], "gradient") == 0) {
-    return jit_gradient(argv);
-  }
-  if(strcmp(argv[1], "blockmozaic") == 0) {
-    return jit_blockmozaic(argv);
-  }
-
-  printf("unknown command: %s\n", argv[1]);
-  return 1;
 }

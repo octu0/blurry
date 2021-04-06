@@ -2,5 +2,5 @@ package blurry
 
 const (
 	AppName string = "blurry"
-	Version string = "1.9.0"
+	Version string = "1.10.0"
 )

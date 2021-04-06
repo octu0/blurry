@@ -432,7 +432,7 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
 Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -444,7 +444,7 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     ch == 3, in(x, y, ch), // alpha
     255 - in(x, y, ch)     // r g b
   );
-  invert(x, y, ch) = cast<uint8_t>(value);
+  invert(x, y, ch) = value;
 
   invert.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -638,7 +638,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -648,7 +648,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   //Expr b = in(x, y, 2);
   //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
   //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = cast<uint8_t>(r);
+  gray(x, y) = r;
 
   Func gy = Func("gy");
   gy(x, y) = (gray(x, y + 1) - gray(x, y - 1)) / 2;
@@ -681,7 +681,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
@@ -692,7 +692,7 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
   //Expr value = (r + g + b) / 3;
   //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = cast<uint8_t>(r);
+  gray(x, y) = r;
 
   Func kernel_y = Func("kernel_y");
   kernel_y(x, y) = 0;
@@ -755,7 +755,7 @@ Func canny_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -763,7 +763,7 @@ Func canny_fn(
   Var ti("ti");
 
   Func gray = Func("gray");
-  gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
+  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
 
   /*
   Func morph = Func("morphology");

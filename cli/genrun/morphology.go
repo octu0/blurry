@@ -11,11 +11,20 @@ func morphologyAction(c *cli.Context) error {
 		return err
 	}
 
+	var cmd string
+	switch c.String("mode") {
+	case "1":
+		cmd = "morphology_open"
+	case "2":
+		cmd = "morphology_close"
+	case "3":
+		cmd = "morphology_gradient"
+	}
+
 	args := []string{
-		c.String("mode"),
 		c.String("size"),
 	}
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "morphology", args); err != nil {
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, args); err != nil {
 		return err
 	}
 

@@ -14,7 +14,7 @@ func rotateAction(c *cli.Context) error {
 		return err
 	}
 
-  mode := blurry.RotationMode(c.Int("rotate"))
+	mode := blurry.RotationMode(c.Int("rotate"))
 
 	out, err := blurry.Rotate(in, mode)
 	if err != nil {

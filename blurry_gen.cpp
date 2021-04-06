@@ -96,7 +96,7 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   double result = benchmark(10, 10, [&]() {
     fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
   });
-  printf("BenchmarkJIT/%-20s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-25s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
 }
 
@@ -154,58 +154,147 @@ int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 }
 // }}} cloneimg
 
-// {{{ rotate
-void generate_rotate(std::vector<Target::Feature> features) {
+// {{{ rotate0
+void generate_rotate0(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<int16_t> rotation{"rotation", ROTATE90};
 
   init_input_rgba(src);
 
-  Func fn = rotate_fn(
-    src.in(), width, height, rotation
-  );
+  Func fn = rotate0_fn(src.in(), width, height);
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
-    src, width, height, rotation
+    src, width, height
   }, fn.name());
 }
 
-int jit_rotate(char **argv) {
+int jit_rotate0(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<int16_t> rotation{"rotation", (int16_t) std::stoi(argv[3])};
 
-  Func fn = rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    rotation
-  );
+  Func fn = rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
 
-  Buffer<uint8_t> out;
-  if(rotation.get() == ROTATE0 || rotation.get() == ROTATE180) {
-    out = jit_realize_uint8_bounds(fn, width.get(), height.get());
-  } else {
-    out = jit_realize_uint8_bounds(fn, height.get(), width.get());
-  }
-
-  printf("save to %s\n", argv[4]);
-  save_image(out, argv[4]);
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
   return 0;
 }
 
-int benchmark_rotate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<int16_t> rotation{"rotation", ROTATE180};
-  return jit_benchmark(rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, rotation
-  ), buf_src);
+int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
 }
-// }}} rotate
+// }}} rotate0
+
+// {{{ rotate180
+void generate_rotate180(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate180_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate180(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate180(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate180
+
+// {{{ rotate90
+void generate_rotate90(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate90_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate90(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, height.get(), width.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate90(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate90
+
+// {{{ rotate270
+void generate_rotate270(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = rotate270_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+
+int jit_rotate270(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+// }}} rotate90
 
 // {{{ erosion
 void generate_erosion(std::vector<Target::Feature> features) {
@@ -297,57 +386,125 @@ int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 }
 // }}} dilation
 
-// {{{ morphology
-void generate_morphology(std::vector<Target::Feature> features) {
+// {{{ morphology_open
+void generate_morphology_open(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<uint8_t> mode{"mode", MORPH_OPEN};
   Param<int32_t> size{"size", 3};
 
   init_input_rgba(src);
 
-  Func fn = morphology_fn(
-    src.in(), width, height,
-    mode, size
-  );
+  Func fn = morphology_open_fn(src.in(), width, height, size);
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, {
-    src, width, height,
-    mode, size
-  }, fn.name());
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
 }
 
-int jit_morphology(char **argv) {
+int jit_morphology_open(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> mode{"mode", (uint8_t) std::stoi(argv[3])};
-  Param<int32_t> size{"size", (int32_t) std::stoi(argv[4])};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
 
-  Buffer<uint8_t> out = jit_realize_uint8(morphology_fn(
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_open_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    mode, size
+    size
   ), buf_src);
     
-  printf("save to %s\n", argv[5]);
-  save_image(out, argv[5]);
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
   return 0;
 }
 
-int benchmark_morphology(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> mode{"mode", MORPH_OPEN};
+int benchmark_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 3};
-  return jit_benchmark(morphology_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    mode, size
-  ), buf_src);
+  return jit_benchmark(morphology_open_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
 }
-// }}} morphology
+// }}} morphology_open
+
+// {{{ morphology_close
+void generate_morphology_close(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> size{"size", 3};
+
+  init_input_rgba(src);
+
+  Func fn = morphology_close_fn(src.in(), width, height, size);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+}
+
+int jit_morphology_close(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_close_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    size
+  ), buf_src);
+    
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
+  return 0;
+}
+
+int benchmark_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> size{"size", 3};
+  return jit_benchmark(morphology_close_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+}
+// }}} morphology_close
+
+// {{{ morphology_gradient
+void generate_morphology_gradient(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> size{"size", 3};
+
+  init_input_rgba(src);
+
+  Func fn = morphology_gradient_fn(src.in(), width, height, size);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+}
+
+int jit_morphology_gradient(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_gradient_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    size
+  ), buf_src);
+    
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
+  return 0;
+}
+
+int benchmark_morphology_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> size{"size", 3};
+  return jit_benchmark(morphology_gradient_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+}
+// }}} morphology_gradient
 
 // {{{ grayscale
 void generate_grayscale(std::vector<Target::Feature> features) {
@@ -750,26 +907,19 @@ void generate_canny(std::vector<Target::Feature> features) {
   Param<int32_t> height{"height", 1080};
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<uint8_t> morphology_mode{"morphology_mode", 0};
-  Param<int32_t> morphology_size{"morphology_size", 0};
-  Param<int32_t> dilate{"dilate", 0};
 
   init_input_rgba(src);
 
   Func fn = canny_fn(
     src.in(), width, height,
-    threshold_max, threshold_min,
-    morphology_mode, morphology_size,
-    dilate
+    threshold_max, threshold_min
   );
 
   init_output_rgba(fn.output_buffer());
 
   generate_static_link(features, fn, {
     src, width, height,
-    threshold_max, threshold_min,
-    morphology_mode, morphology_size,
-    dilate
+    threshold_max, threshold_min
   }, fn.name());
 }
 
@@ -780,36 +930,217 @@ int jit_canny(char **argv) {
   Param<int32_t> height{"height", buf_src.get()->height()};
   Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
   Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
-  Param<uint8_t> morphology_mode{"morphology_mode", (uint8_t) std::stoi(argv[5])};
-  Param<int32_t> morphology_size{"morphology_size", std::stoi(argv[6])};
-  Param<int32_t> dilate{"dilate", std::stoi(argv[7])};
 
   Buffer<uint8_t> out = jit_realize_uint8(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    threshold_max, threshold_min,
-    morphology_mode, morphology_size,
-    dilate
+    threshold_max, threshold_min
   ), buf_src);
 
-  printf("save to %s\n", argv[8]);
-  save_image(out, argv[8]);
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
   return 0;
 }
 
 int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> threshold_max{"threshold_max", 250};
   Param<int32_t> threshold_min{"threshold_min", 100};
-  Param<uint8_t> morphology_mode{"morphology_mode", 2};
-  Param<int32_t> morphology_size{"morphology_size", 3};
-  Param<int32_t> dilate{"dilate", 0};
   return jit_benchmark(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    threshold_max, threshold_min,
-    morphology_mode, morphology_size,
-    dilate
+    threshold_max, threshold_min
   ), buf_src);
 }
 // }}} canny
+
+// {{{ canny_dilate
+void generate_canny_dilate(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> dilate{"dilate", 0};
+
+  init_input_rgba(src);
+
+  Func fn = canny_dilate_fn(
+    src.in(), width, height,
+    threshold_max, threshold_min,
+    dilate
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    threshold_max, threshold_min,
+    dilate
+  }, fn.name());
+}
+
+int jit_canny_dilate(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
+  Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
+  Param<int32_t> dilate{"dilate", std::stoi(argv[5])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(canny_dilate_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    dilate
+  ), buf_src);
+
+  printf("save to %s\n", argv[6]);
+  save_image(out, argv[6]);
+  return 0;
+}
+
+int benchmark_canny_dilate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> dilate{"dilate", 3};
+  return jit_benchmark(canny_dilate_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    dilate
+  ), buf_src);
+}
+// }}} canny_dilate
+
+// {{{ canny_morphology_open
+void generate_canny_morphology_open(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> morphology_size{"morphology_size", 0};
+  Param<int32_t> dilate{"dilate", 0};
+
+  init_input_rgba(src);
+
+  Func fn = canny_morphology_open_fn(
+    src.in(), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  }, fn.name());
+}
+
+int jit_canny_morphology_open(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
+  Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
+  Param<int32_t> morphology_size{"morphology_size", std::stoi(argv[5])};
+  Param<int32_t> dilate{"dilate", std::stoi(argv[6])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(canny_morphology_open_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  ), buf_src);
+
+  printf("save to %s\n", argv[7]);
+  save_image(out, argv[7]);
+  return 0;
+}
+
+int benchmark_canny_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> morphology_size{"morphology_size", 3};
+  Param<int32_t> dilate{"dilate", 3};
+  return jit_benchmark(canny_morphology_open_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  ), buf_src);
+}
+// }}} canny_morphology_open
+
+// {{{ canny_morphology_close
+void generate_canny_morphology_close(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> morphology_size{"morphology_size", 0};
+  Param<int32_t> dilate{"dilate", 0};
+
+  init_input_rgba(src);
+
+  Func fn = canny_morphology_close_fn(
+    src.in(), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  }, fn.name());
+}
+
+int jit_canny_morphology_close(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> threshold_max{"threshold_max", std::stoi(argv[3])};
+  Param<int32_t> threshold_min{"threshold_min", std::stoi(argv[4])};
+  Param<int32_t> morphology_size{"morphology_size", std::stoi(argv[5])};
+  Param<int32_t> dilate{"dilate", std::stoi(argv[6])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(canny_morphology_close_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  ), buf_src);
+
+  printf("save to %s\n", argv[7]);
+  save_image(out, argv[7]);
+  return 0;
+}
+
+int benchmark_canny_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> threshold_max{"threshold_max", 250};
+  Param<int32_t> threshold_min{"threshold_min", 100};
+  Param<int32_t> morphology_size{"morphology_size", 3};
+  Param<int32_t> dilate{"dilate", 3};
+  return jit_benchmark(canny_morphology_close_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold_max, threshold_min,
+    morphology_size,
+    dilate
+  ), buf_src);
+}
+// }}} canny_morphology_close
 
 // {{{ emboss
 void generate_emboss(std::vector<Target::Feature> features) {
@@ -1040,10 +1371,15 @@ void generate(){
 
   generate_runtime(features);
   generate_cloneimg(features);
-  generate_rotate(features);
+  generate_rotate0(features);
+  generate_rotate90(features);
+  generate_rotate180(features);
+  generate_rotate270(features);
   generate_erosion(features);
   generate_dilation(features);
-  generate_morphology(features);
+  generate_morphology_open(features);
+  generate_morphology_close(features);
+  generate_morphology_gradient(features);
   generate_grayscale(features);
   generate_invert(features);
   generate_brightness(features);
@@ -1054,6 +1390,9 @@ void generate(){
   generate_edge(features);
   generate_sobel(features);
   generate_canny(features);
+  generate_canny_dilate(features);
+  generate_canny_morphology_open(features);
+  generate_canny_morphology_close(features);
   generate_emboss(features);
   generate_laplacian(features);
   generate_highpass(features);
@@ -1070,10 +1409,15 @@ void benchmark(char **argv) {
 
   printf("src %dx%d\n", width.get(), height.get());
   benchmark_cloneimg(buf_src, width, height);
-  benchmark_rotate(buf_src, width, height);
+  benchmark_rotate0(buf_src, width, height);
+  benchmark_rotate90(buf_src, width, height);
+  benchmark_rotate180(buf_src, width, height);
+  benchmark_rotate270(buf_src, width, height);
   benchmark_erosion(buf_src, width, height);
   benchmark_dilation(buf_src, width, height);
-  benchmark_morphology(buf_src, width, height);
+  benchmark_morphology_open(buf_src, width, height);
+  benchmark_morphology_close(buf_src, width, height);
+  benchmark_morphology_gradient(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
   benchmark_brightness(buf_src, width, height);
@@ -1084,6 +1428,9 @@ void benchmark(char **argv) {
   benchmark_edge(buf_src, width, height);
   benchmark_sobel(buf_src, width, height);
   benchmark_canny(buf_src, width, height);
+  benchmark_canny_dilate(buf_src, width, height);
+  benchmark_canny_morphology_open(buf_src, width, height);
+  benchmark_canny_morphology_close(buf_src, width, height);
   benchmark_emboss(buf_src, width, height);
   benchmark_laplacian(buf_src, width, height);
   benchmark_highpass(buf_src, width, height);
@@ -1104,8 +1451,17 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
   } 
-  if(strcmp(argv[1], "rotate") == 0) {
-    return jit_rotate(argv);
+  if(strcmp(argv[1], "rotate0") == 0) {
+    return jit_rotate0(argv);
+  } 
+  if(strcmp(argv[1], "rotate90") == 0) {
+    return jit_rotate90(argv);
+  } 
+  if(strcmp(argv[1], "rotate180") == 0) {
+    return jit_rotate180(argv);
+  } 
+  if(strcmp(argv[1], "rotate270") == 0) {
+    return jit_rotate270(argv);
   } 
   if(strcmp(argv[1], "erosion") == 0) {
     return jit_erosion(argv);
@@ -1113,8 +1469,14 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "dilation") == 0) {
     return jit_dilation(argv);
   }
-  if(strcmp(argv[1], "morphology") == 0) {
-    return jit_morphology(argv);
+  if(strcmp(argv[1], "morphology_open") == 0) {
+    return jit_morphology_open(argv);
+  }
+  if(strcmp(argv[1], "morphology_close") == 0) {
+    return jit_morphology_close(argv);
+  }
+  if(strcmp(argv[1], "morphology_gradient") == 0) {
+    return jit_morphology_gradient(argv);
   }
   if(strcmp(argv[1], "grayscale") == 0) {
     return jit_grayscale(argv);
@@ -1145,6 +1507,15 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "canny") == 0) {
     return jit_canny(argv);
+  }
+  if(strcmp(argv[1], "canny_dilate") == 0) {
+    return jit_canny_dilate(argv);
+  }
+  if(strcmp(argv[1], "canny_morphology_open") == 0) {
+    return jit_canny_morphology_open(argv);
+  }
+  if(strcmp(argv[1], "canny_morphology_close") == 0) {
+    return jit_canny_morphology_close(argv);
   }
   if(strcmp(argv[1], "emboss") == 0) {
     return jit_emboss(argv);

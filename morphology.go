@@ -1,18 +1,41 @@
 package blurry
 
 /*
-#cgo CFLAGS: -I${SRCDIR}
-#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -lmorphology_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -lmorphology_linux -ldl -lm
+#cgo CFLAGS: -I${SRCDIR}/include
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmorphology_open_osx -lmorphology_close_osx -lmorphology_gradient_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmorphology_open_linux -lmorphology_close_linux -lmorphology_gradient_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 
 #include "bridge.h"
 #ifdef __APPLE__
-#include "libmorphology_osx.h"
+#include "libmorphology_open_osx.h"
+#include "libmorphology_close_osx.h"
+#include "libmorphology_gradient_osx.h"
 #elif __linux__
-#include "libmorphology_linux.h"
+#include "libmorphology_open_linux.h"
+#include "libmorphology_close_linux.h"
+#include "libmorphology_gradient_linux.h"
 #endif
+
+int call_morphology(
+  unsigned char mode,
+  halide_buffer_t *in,
+  int32_t width, int32_t height,
+  int32_t size,
+  halide_buffer_t *out
+) {
+  if(1 == mode) {
+    return morphology_open(in, width, height, size, out);
+  }
+  if(2 == mode) {
+    return morphology_close(in, width, height, size, out);
+  }
+  if(3 == mode) {
+    return morphology_gradient(in, width, height, size, out);
+  }
+  return 1;
+}
 
 int libmorphology(
   unsigned char *src, int32_t width, int32_t height,
@@ -29,7 +52,7 @@ int libmorphology(
     free_buf(in_rgba_buf);
     return 1;
   }
-  if(morphology(in_rgba_buf, width, height, mode, size, out_rgba_buf) != 0) {
+  if(call_morphology(mode, in_rgba_buf, width, height, size, out_rgba_buf) != 0) {
     free_buf(in_rgba_buf);
     free_buf(out_rgba_buf);
     return 1;
@@ -50,7 +73,7 @@ int libmorphology(
       free_buf(in_tmp);
       return 1;
     }
-    if(morphology(in_tmp, width, height, mode, size, out_tmp) != 0){
+    if(call_morphology(mode, in_tmp, width, height, size, out_tmp) != 0){
       free_buf(in_tmp);
       free_buf(out_tmp);
       return 1;

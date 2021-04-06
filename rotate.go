@@ -1,17 +1,44 @@
 package blurry
 
 /*
-#cgo CFLAGS: -I${SRCDIR}
-#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -lrotate_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -lrotate_linux -ldl -lm
+#cgo CFLAGS: -I${SRCDIR}/include
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lrotate0_osx -lrotate90_osx -lrotate180_osx -lrotate270_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lrotate0_linux -lrotate90_linux -lrotate180_linux -lrotate270_linux -ldl -lm
 #include <stdlib.h>
 
 #include "bridge.h"
 #ifdef __APPLE__
-#include "librotate_osx.h"
+#include "librotate0_osx.h"
+#include "librotate90_osx.h"
+#include "librotate180_osx.h"
+#include "librotate270_osx.h"
 #elif __linux__
-#include "librotate_linux.h"
+#include "librotate0_linux.h"
+#include "librotate90_linux.h"
+#include "librotate180_linux.h"
+#include "librotate270_linux.h"
 #endif
+
+int call_rotate(
+  int16_t rotation,
+  halide_buffer_t *in,
+  int32_t width, int32_t height,
+  halide_buffer_t *out
+) {
+  if(rotation == 0) {
+    return rotate0(in, width, height, out);
+  }
+  if(rotation == 90) {
+    return rotate90(in, width, height, out);
+  }
+  if(rotation == 180) {
+    return rotate180(in, width, height, out);
+  }
+  if(rotation == 270) {
+    return rotate270(in, width, height, out);
+  }
+  return 1;
+}
 
 int librotate(unsigned char *src, int32_t width, int32_t height, int16_t rotation, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
@@ -30,7 +57,7 @@ int librotate(unsigned char *src, int32_t width, int32_t height, int16_t rotatio
     return 1;
   }
 
-  int ret = rotate(in_rgba_buf, width, height, rotation, out_rgba_buf);
+  int ret = call_rotate(rotation, in_rgba_buf, width, height, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;

@@ -14,11 +14,26 @@ func cannyAction(c *cli.Context) error {
 	args := []string{
 		c.String("max"),
 		c.String("min"),
-		c.String("mode"),
-		c.String("size"),
-		c.String("dilate"),
 	}
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "canny", args); err != nil {
+
+	var cmd string = "canny"
+
+	if c.String("dilate") != "0" {
+		switch c.String("mode") {
+		case "0":
+			cmd = "canny_dilate"
+			args = append(args, c.String("dilate"))
+		case "1":
+			cmd = "canny_morphology_open"
+			args = append(args, c.String("size"))
+			args = append(args, c.String("dilate"))
+		case "2":
+			cmd = "canny_morphology_close"
+			args = append(args, c.String("size"))
+			args = append(args, c.String("dilate"))
+		}
+	}
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, args); err != nil {
 		return err
 	}
 

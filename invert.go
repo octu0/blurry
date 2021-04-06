@@ -1,9 +1,9 @@
 package blurry
 
 /*
-#cgo CFLAGS: -I${SRCDIR}
-#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -linvert_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -linvert_linux -ldl -lm
+#cgo CFLAGS: -I${SRCDIR}/include
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -linvert_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -linvert_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 

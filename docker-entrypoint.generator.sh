@@ -31,5 +31,21 @@ for h in lib*_linux.a; do
   ar q ${h} halide_runtime_x86.o 
 done
 
+mkdir -p include
+mkdir -p lib
+
+for h in lib*.h; do
+  echo "move ${h} to include/"
+  mv  ${h} ./include/
+done
+
+for h in lib*.a; do
+  echo "move ${h} to lib/"
+  mv  ${h} ./lib/
+done
+
+echo "move halide_runtime_x86.o to lib/"
+mv halide_runtime_x86.o ./lib/
+
 rm blurry.out
 rm generator.out

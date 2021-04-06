@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int emboss(struct halide_buffer_t *_p18_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_emboss_buffer);
+int emboss(struct halide_buffer_t *_p20_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_emboss_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int emboss_argv(void **args);

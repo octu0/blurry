@@ -1,5 +1,5 @@
-#ifndef HALIDE__libgrayscale_osx_h
-#define HALIDE__libgrayscale_osx_h
+#ifndef HALIDE__libmorphology_close_osx_h
+#define HALIDE__libmorphology_close_osx_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int grayscale(struct halide_buffer_t *_p10_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_grayscale_buffer);
+int morphology_close(struct halide_buffer_t *_p8_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_close_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int grayscale_argv(void **args);
+int morphology_close_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *grayscale_metadata();
+const struct halide_filter_metadata_t *morphology_close_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

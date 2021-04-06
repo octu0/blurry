@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int highpass(struct halide_buffer_t *_p20_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_highpass_buffer);
+int highpass(struct halide_buffer_t *_p22_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_highpass_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int highpass_argv(void **args);

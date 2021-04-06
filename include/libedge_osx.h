@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int edge(struct halide_buffer_t *_p12_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_edge_buffer);
+int edge(struct halide_buffer_t *_p15_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_edge_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int edge_argv(void **args);

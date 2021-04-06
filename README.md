@@ -286,26 +286,26 @@ This is the result of using halide's [benchamrk](https://github.com/halide/Halid
 darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
-BenchmarkJIT/cloneimg            : 0.01867ms
-BenchmarkJIT/rotate              : 0.20135ms
-BenchmarkJIT/erosion             : 0.09721ms
-BenchmarkJIT/dilation            : 0.09837ms
-BenchmarkJIT/morphology          : 0.13726ms
-BenchmarkJIT/grayscale           : 0.08898ms
-BenchmarkJIT/invert              : 0.06520ms
-BenchmarkJIT/brightness          : 0.07338ms
-BenchmarkJIT/gammacorrection     : 0.10483ms
-BenchmarkJIT/contrast            : 0.07025ms
-BenchmarkJIT/boxblur             : 0.19381ms
-BenchmarkJIT/gaussianblur        : 0.16936ms
-BenchmarkJIT/edge                : 0.11125ms
-BenchmarkJIT/sobel               : 0.12053ms
-BenchmarkJIT/canny               : 0.56652ms
-BenchmarkJIT/emboss              : 0.15926ms
-BenchmarkJIT/laplacian           : 0.12677ms
-BenchmarkJIT/highpass            : 0.13126ms
-BenchmarkJIT/gradient            : 0.12860ms
-BenchmarkJIT/blockmozaic         : 0.35578ms
+BenchmarkJIT/cloneimg            : 0.01870ms
+BenchmarkJIT/rotate              : 0.21413ms
+BenchmarkJIT/erosion             : 0.09664ms
+BenchmarkJIT/dilation            : 0.09881ms
+BenchmarkJIT/morphology          : 0.13371ms
+BenchmarkJIT/grayscale           : 0.08289ms
+BenchmarkJIT/invert              : 0.06638ms
+BenchmarkJIT/brightness          : 0.06946ms
+BenchmarkJIT/gammacorrection     : 0.10396ms
+BenchmarkJIT/contrast            : 0.07380ms
+BenchmarkJIT/boxblur             : 0.23103ms
+BenchmarkJIT/gaussianblur        : 0.16299ms
+BenchmarkJIT/edge                : 0.10530ms
+BenchmarkJIT/sobel               : 0.12043ms
+BenchmarkJIT/canny               : 1.06528ms
+BenchmarkJIT/emboss              : 0.16584ms
+BenchmarkJIT/laplacian           : 0.12845ms
+BenchmarkJIT/highpass            : 0.13152ms
+BenchmarkJIT/gradient            : 0.13020ms
+BenchmarkJIT/blockmozaic         : 0.35565ms
 ```
 
 ## AOT benchmarks

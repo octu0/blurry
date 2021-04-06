@@ -92,6 +92,46 @@ img, err := blurry.Gaussianblur(input, 5.0)
 
 ![example](testdata/gaussianblur.png)
 
+### BlockMozaic
+
+```go
+img, err := blurry.Blockmozaic(input, 10)
+```
+
+![example](testdata/blockmozaic.png)
+
+### Erode
+
+```go
+img, err := blurry.Erosion(input, 5)
+```
+
+![example](testdata/erosion.png)
+
+### Dilate
+
+```go
+img, err := blurry.Dilation(input, 8)
+```
+
+![example](testdata/dilation.png)
+
+### Morphology
+
+Morphology repeats Erode and Dilate N times.
+
+```go
+size := 5
+N := 2
+img, err := blurry.Morphology(input, MorphOpen, size, N)
+```
+
+| `blurry.MorphologyMode`     | Result                                       |
+| :-------------------------: | :------------------------------------------: |
+| `blurry.MorphologyOpen`     | ![example](testdata/morphology_open.png)     |
+| `blurry.MorphologyClose`    | ![example](testdata/morphology_close.png)    |
+| `blurry.MorphologyGradient` | ![example](testdata/morphology_gradient.png) |
+
 ### Emboss
 
 ```go
@@ -163,30 +203,6 @@ img, err := blurry.CannyWithDilate(input, 250, 100, 3)
 | `max:250 min:100 dilate:3`                           | `max:250 min:150 dilate:4`                            |
 | :--------------------------------------------------: | :---------------------------------------------------: |
 | ![example](testdata/canny_max250_min100_dilate3.png) | ![example2](testdata/canny_max250_min150_dilate4.png) |
-
-### BlockMozaic
-
-```go
-img, err := blurry.Blockmozaic(input, 10)
-```
-
-![example](testdata/blockmozaic.png)
-
-### Erode
-
-```go
-img, err := blurry.Erosion(input, 5)
-```
-
-![example](testdata/erosion.png)
-
-### Dilate
-
-```go
-img, err := blurry.Dilation(input, 8)
-```
-
-![example](testdata/dilation.png)
 
 ## CLI usage
 

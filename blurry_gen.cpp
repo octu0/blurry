@@ -183,7 +183,8 @@ int jit_rotate(char **argv) {
   Param<int16_t> rotation{"rotation", (int16_t) std::stoi(argv[3])};
 
   Func fn = rotate_fn(
-    wrapFunc(buf_src, "buf_src"), width, height, rotation
+    wrapFunc(buf_src, "buf_src"), width, height,
+    rotation
   );
 
   Buffer<uint8_t> out;
@@ -295,6 +296,58 @@ int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
   ), buf_src);
 }
 // }}} dilation
+
+// {{{ morphology
+void generate_morphology(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<uint8_t> mode{"mode", MORPH_OPEN};
+  Param<int32_t> size{"size", 3};
+
+  init_input_rgba(src);
+
+  Func fn = morphology_fn(
+    src.in(), width, height,
+    mode, size
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    mode, size
+  }, fn.name());
+}
+
+int jit_morphology(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<uint8_t> mode{"mode", (uint8_t) std::stoi(argv[3])};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[4])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    mode, size
+  ), buf_src);
+    
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_morphology(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<uint8_t> mode{"mode", MORPH_OPEN};
+  Param<int32_t> size{"size", 3};
+  return jit_benchmark(morphology_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    mode, size
+  ), buf_src);
+}
+// }}} morphology
 
 // {{{ grayscale
 void generate_grayscale(std::vector<Target::Feature> features) {
@@ -980,6 +1033,7 @@ void generate(){
   generate_rotate(features);
   generate_erosion(features);
   generate_dilation(features);
+  generate_morphology(features);
   generate_grayscale(features);
   generate_invert(features);
   generate_brightness(features);
@@ -1009,6 +1063,7 @@ void benchmark(char **argv) {
   benchmark_rotate(buf_src, width, height);
   benchmark_erosion(buf_src, width, height);
   benchmark_dilation(buf_src, width, height);
+  benchmark_morphology(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
   benchmark_brightness(buf_src, width, height);
@@ -1047,6 +1102,9 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "dilation") == 0) {
     return jit_dilation(argv);
+  }
+  if(strcmp(argv[1], "morphology") == 0) {
+    return jit_morphology(argv);
   }
   if(strcmp(argv[1], "grayscale") == 0) {
     return jit_grayscale(argv);

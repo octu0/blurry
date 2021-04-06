@@ -162,63 +162,71 @@ Expr dilate(Func in, RDom rd_dilate) {
   return maximum(val);
 }
 
-Func morphology_open(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+Func morphology_open(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
-  Func morph = Func(name);
-  morph(x, y) = 0;
 
-  int N = count.get();
-  for(int i = 0; i < N; i += 1) {
-    morph(x, y) = minimum(in(x + rd_morph.x, y + rd_morph.y));
-    morph(x, y) = maximum(morph(x + rd_morph.x, y + rd_morph.y));
-  }
+  Func erode_tmp = Func("erode_tmp");
+  erode_tmp(x, y) = erode(in, rd_morph);
+  Func dilate_tmp = Func("dilate_tmp");
+  dilate_tmp(x, y) = dilate(erode_tmp, rd_morph);
+
+  Func morph = Func("morphology_open");
+  morph(x, y) = dilate_tmp(x, y);
+
+  erode_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  dilate_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  morph.compute_root()
+    .vectorize(x, 32);
+
   return morph;
 }
 
-Func morphology_close(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+Func morphology_close(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
-  Func morph = Func(name);
-  morph(x, y) = 0;
 
-  int N = count.get();
-  for(int i = 0; i < N; i += 1) {
-    morph(x, y) = maximum(in(x + rd_morph.x, y + rd_morph.y));
-    morph(x, y) = minimum(morph(x + rd_morph.x, y + rd_morph.y));
-  }
+  Func dilate_tmp = Func("dilate_tmp");
+  dilate_tmp(x, y) = dilate(in, rd_morph);
+  Func erode_tmp = Func("erode_tmp");
+  erode_tmp(x, y) = erode(dilate_tmp, rd_morph);
+
+  Func morph = Func("morphology_close");
+  morph(x, y) = erode_tmp(x, y);
+
+  dilate_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  erode_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  morph.compute_root()
+    .vectorize(x, 32);
+
   return morph;
 }
 
-Func morphology_gradient(Func in, Param<int32_t> size, Param<int32_t> count, const char *name) {
+Func morphology_gradient(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
-  Func morph = Func(name);
-  morph(x, y) = 0;
+  Func morph = Func("morphology_gradient");
+  Expr val_dilate = dilate(in, rd_morph);
+  Expr val_erode = erode(in, rd_morph);
+  morph(x, y) = val_dilate - val_erode;
 
-  int N = count.get();
-  for(int i = 0; i < N; i += 1) {
-    Expr val_dilate = maximum(in(x + rd_morph.x, y + rd_morph.y));
-    Expr val_erode = minimum(in(x + rd_morph.x, y + rd_morph.y));
-    morph(x, y) = val_dilate - val_erode;
-  }
+  morph.compute_root()
+    .vectorize(x, 32);
   return morph;
-}
-
-Func morphology(Func in, Param<uint8_t> mode, Param<int32_t> size, Param<int32_t> count, const char *name) {
-  if(mode.get() == MORPH_OPEN) {
-    return morphology_open(in, size, count, name);
-  }
-  if(mode.get() == MORPH_CLOSE) {
-    return morphology_close(in, size, count, name);
-  }
-  if(mode.get() == MORPH_GRADIENT) {
-    return morphology_gradient(in, size, count, name);
-  }
-  return morphology_open(in, size, count, name); // unknown = MORPH_OPEN
 }
 
 Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
@@ -348,22 +356,31 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
 Func morphology_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<uint8_t> mode, Param<int32_t> size, Param<int32_t> count
+  Param<uint8_t> mode, Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
 
   Func gray = Func("gray");
   gray(x, y) = cast<uint8_t>(in(x, y, 0));
 
-  Func morph = morphology(gray, mode, size, count, "morpology");
+  Func open = morphology_open(gray, size);
+  Func close = morphology_close(gray, size);
+  Func grad = morphology_gradient(gray, size);
 
-  return morph;
+  Func morphology = Func("morphology");
+  morphology(x, y, ch) = select(
+    ch == 3, 255,
+    mode == MORPH_OPEN,     open(x, y),
+    mode == MORPH_CLOSE,    close(x, y),
+    mode == MORPH_GRADIENT, grad(x, y),
+    gray(x, y)
+  );
+
+  gray.compute_root();
+  return morphology;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {

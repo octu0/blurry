@@ -1,5 +1,5 @@
-#ifndef HALIDE__libhighpass_linux_h
-#define HALIDE__libhighpass_linux_h
+#ifndef HALIDE__libmorphology_linux_h
+#define HALIDE__libmorphology_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int highpass(struct halide_buffer_t *_p17_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_highpass_buffer);
+int morphology(struct halide_buffer_t *_p4_buffer, int32_t _width, int32_t _height, uint8_t _mode, int32_t _size, struct halide_buffer_t *_morphology_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int highpass_argv(void **args);
+int morphology_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *highpass_metadata();
+const struct halide_filter_metadata_t *morphology_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

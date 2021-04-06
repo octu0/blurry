@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gradient(struct halide_buffer_t *_p17_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_gradient_buffer);
+int gradient(struct halide_buffer_t *_p18_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_gradient_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int gradient_argv(void **args);

@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int boxblur(struct halide_buffer_t *_p9_buffer, int32_t _width, int32_t _height, uint8_t _size, struct halide_buffer_t *_boxblur_buffer);
+int boxblur(struct halide_buffer_t *_p10_buffer, int32_t _width, int32_t _height, uint8_t _size, struct halide_buffer_t *_boxblur_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int boxblur_argv(void **args);

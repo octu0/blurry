@@ -28,7 +28,7 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
 Func morphology_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<uint8_t> mode, Param<int32_t> size, Param<int32_t> count
+  Param<uint8_t> mode, Param<int32_t> size
 );
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height);

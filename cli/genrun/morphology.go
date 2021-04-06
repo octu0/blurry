@@ -4,7 +4,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-func rotateAction(c *cli.Context) error {
+func morphologyAction(c *cli.Context) error {
 	runtimePath := c.String("runtime")
 	generateOutFilePath, err := generate(runtimePath, c.String("file"))
 	if err != nil {
@@ -12,9 +12,10 @@ func rotateAction(c *cli.Context) error {
 	}
 
 	args := []string{
-		c.String("rotate"),
+		c.String("mode"),
+		c.String("size"),
 	}
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "rotate", runArgs(args)); err != nil {
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "morphology", args); err != nil {
 		return err
 	}
 
@@ -23,8 +24,8 @@ func rotateAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "rotate",
-		Action: rotateAction,
+		Name:   "morphology",
+		Action: morphologyAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
@@ -42,9 +43,14 @@ func init() {
 				Value: "./blurry.cpp",
 			},
 			cli.StringFlag{
-				Name:  "rotate",
-				Usage: "rotation degrees(0 or 90 or 180 or 270)",
-				Value: "90",
+				Name:  "m,mode",
+				Usage: "morphology mode(1 = open, 2 = close, 3 = gradient)",
+				Value: "1",
+			},
+			cli.StringFlag{
+				Name:  "s,size",
+				Usage: "box size",
+				Value: "3",
 			},
 		},
 	})

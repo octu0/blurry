@@ -386,57 +386,125 @@ int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 }
 // }}} dilation
 
-// {{{ morphology
-void generate_morphology(std::vector<Target::Feature> features) {
+// {{{ morphology_open
+void generate_morphology_open(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<uint8_t> mode{"mode", MORPH_OPEN};
   Param<int32_t> size{"size", 3};
 
   init_input_rgba(src);
 
-  Func fn = morphology_fn(
-    src.in(), width, height,
-    mode, size
-  );
+  Func fn = morphology_open_fn(src.in(), width, height, size);
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, {
-    src, width, height,
-    mode, size
-  }, fn.name());
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
 }
 
-int jit_morphology(char **argv) {
+int jit_morphology_open(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> mode{"mode", (uint8_t) std::stoi(argv[3])};
-  Param<int32_t> size{"size", (int32_t) std::stoi(argv[4])};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
 
-  Buffer<uint8_t> out = jit_realize_uint8(morphology_fn(
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_open_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    mode, size
+    size
   ), buf_src);
     
-  printf("save to %s\n", argv[5]);
-  save_image(out, argv[5]);
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
   return 0;
 }
 
-int benchmark_morphology(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> mode{"mode", MORPH_OPEN};
+int benchmark_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 3};
-  return jit_benchmark(morphology_fn(
-    wrapFunc(buf_src, "buf_src"), width, height,
-    mode, size
-  ), buf_src);
+  return jit_benchmark(morphology_open_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
 }
-// }}} morphology
+// }}} morphology_open
+
+// {{{ morphology_close
+void generate_morphology_close(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> size{"size", 3};
+
+  init_input_rgba(src);
+
+  Func fn = morphology_close_fn(src.in(), width, height, size);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+}
+
+int jit_morphology_close(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_close_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    size
+  ), buf_src);
+    
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
+  return 0;
+}
+
+int benchmark_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> size{"size", 3};
+  return jit_benchmark(morphology_close_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+}
+// }}} morphology_close
+
+// {{{ morphology_gradient
+void generate_morphology_gradient(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> size{"size", 3};
+
+  init_input_rgba(src);
+
+  Func fn = morphology_gradient_fn(src.in(), width, height, size);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+}
+
+int jit_morphology_gradient(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(morphology_gradient_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    size
+  ), buf_src);
+    
+  printf("save to %s\n", argv[4]);
+  save_image(out, argv[4]);
+  return 0;
+}
+
+int benchmark_morphology_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> size{"size", 3};
+  return jit_benchmark(morphology_gradient_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+}
+// }}} morphology_gradient
 
 // {{{ grayscale
 void generate_grayscale(std::vector<Target::Feature> features) {
@@ -1135,7 +1203,9 @@ void generate(){
   generate_rotate270(features);
   generate_erosion(features);
   generate_dilation(features);
-  generate_morphology(features);
+  generate_morphology_open(features);
+  generate_morphology_close(features);
+  generate_morphology_gradient(features);
   generate_grayscale(features);
   generate_invert(features);
   generate_brightness(features);
@@ -1168,7 +1238,9 @@ void benchmark(char **argv) {
   benchmark_rotate270(buf_src, width, height);
   benchmark_erosion(buf_src, width, height);
   benchmark_dilation(buf_src, width, height);
-  benchmark_morphology(buf_src, width, height);
+  benchmark_morphology_open(buf_src, width, height);
+  benchmark_morphology_close(buf_src, width, height);
+  benchmark_morphology_gradient(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
   benchmark_brightness(buf_src, width, height);
@@ -1217,8 +1289,14 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "dilation") == 0) {
     return jit_dilation(argv);
   }
-  if(strcmp(argv[1], "morphology") == 0) {
-    return jit_morphology(argv);
+  if(strcmp(argv[1], "morphology_open") == 0) {
+    return jit_morphology_open(argv);
+  }
+  if(strcmp(argv[1], "morphology_close") == 0) {
+    return jit_morphology_close(argv);
+  }
+  if(strcmp(argv[1], "morphology_gradient") == 0) {
+    return jit_morphology_gradient(argv);
   }
   if(strcmp(argv[1], "grayscale") == 0) {
     return jit_grayscale(argv);

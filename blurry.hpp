@@ -32,10 +32,11 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
 
 Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
 
-Func morphology_fn(
-  Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<uint8_t> mode, Param<int32_t> size
-);
+Func morphology_open_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
+
+Func morphology_close_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
+
+Func morphology_gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 

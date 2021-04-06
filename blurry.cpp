@@ -162,73 +162,6 @@ Expr dilate(Func in, RDom rd_dilate) {
   return maximum(val);
 }
 
-Func morphology_open(Func in, Param<int32_t> size) {
-  Var x("x"), y("y");
-
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
-
-  Func erode_tmp = Func("erode_tmp");
-  erode_tmp(x, y) = erode(in, rd_morph);
-  Func dilate_tmp = Func("dilate_tmp");
-  dilate_tmp(x, y) = dilate(erode_tmp, rd_morph);
-
-  Func morph = Func("morphology_open");
-  morph(x, y) = dilate_tmp(x, y);
-
-  erode_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-  dilate_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-
-  morph.compute_root()
-    .vectorize(x, 32);
-
-  return morph;
-}
-
-Func morphology_close(Func in, Param<int32_t> size) {
-  Var x("x"), y("y");
-
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
-
-  Func dilate_tmp = Func("dilate_tmp");
-  dilate_tmp(x, y) = dilate(in, rd_morph);
-  Func erode_tmp = Func("erode_tmp");
-  erode_tmp(x, y) = erode(dilate_tmp, rd_morph);
-
-  Func morph = Func("morphology_close");
-  morph(x, y) = erode_tmp(x, y);
-
-  dilate_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-
-  erode_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-
-  morph.compute_root()
-    .vectorize(x, 32);
-
-  return morph;
-}
-
-Func morphology_gradient(Func in, Param<int32_t> size) {
-  Var x("x"), y("y");
-
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
-  Func morph = Func("morphology_gradient");
-  Expr val_dilate = dilate(in, rd_morph);
-  Expr val_erode = erode(in, rd_morph);
-  morph(x, y) = val_dilate - val_erode;
-
-  morph.compute_root()
-    .vectorize(x, 32);
-  return morph;
-}
-
 Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   Var x("x"), y("y");
   Var xo("xo"), xi("xi");
@@ -369,33 +302,103 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   return dilation;
 }
 
-Func morphology_fn(
+Func morphology_open_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<uint8_t> mode, Param<int32_t> size
+  Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
   Func gray = Func("gray");
-  gray(x, y) = cast<uint8_t>(in(x, y, 0));
+  gray(x, y) = in(x, y, 0);
 
-  Func open = morphology_open(gray, size);
-  Func close = morphology_close(gray, size);
-  Func grad = morphology_gradient(gray, size);
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
 
-  Func morphology = Func("morphology");
-  morphology(x, y, ch) = select(
-    ch == 3, 255,
-    mode == MORPH_OPEN,     open(x, y),
-    mode == MORPH_CLOSE,    close(x, y),
-    mode == MORPH_GRADIENT, grad(x, y),
-    gray(x, y)
-  );
+  Func erode_tmp = Func("erode_tmp");
+  erode_tmp(x, y) = erode(gray, rd_morph);
+  Func dilate_tmp = Func("dilate_tmp");
+  dilate_tmp(x, y) = dilate(erode_tmp, rd_morph);
+
+  Func morph = Func("morphology_open");
+  morph(x, y, ch) = dilate_tmp(x, y);
+
+  erode_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  dilate_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  morph.compute_root()
+    .vectorize(x, 32);
 
   gray.compute_root();
-  return morphology;
+  return morph;
+}
+
+Func morphology_close_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> size
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func gray = Func("gray");
+  gray(x, y) = in(x, y, 0);
+
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
+
+  Func dilate_tmp = Func("dilate_tmp");
+  dilate_tmp(x, y) = dilate(gray, rd_morph);
+  Func erode_tmp = Func("erode_tmp");
+  erode_tmp(x, y) = erode(dilate_tmp, rd_morph);
+
+  Func morph = Func("morphology_close");
+  morph(x, y, ch) = erode_tmp(x, y);
+
+  dilate_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  erode_tmp.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  morph.compute_root()
+    .vectorize(x, 32);
+
+  gray.compute_root();
+  return morph;
+}
+
+Func morphology_gradient_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> size
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func gray = Func("gray");
+  gray(x, y) = in(x, y, 0);
+
+  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
+  Func morph = Func("morphology_gradient");
+  Expr val_dilate = dilate(gray, rd_morph);
+  Expr val_erode = erode(gray, rd_morph);
+  morph(x, y, ch) = val_dilate - val_erode;
+
+  morph.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  gray.compute_root();
+  return morph;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -762,6 +765,7 @@ Func canny_fn(
   Func gray = Func("gray");
   gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
 
+  /*
   Func morph = Func("morphology");
   Func morph_open = morphology_open(gray, morphology_size);
   Func morph_close = morphology_close(gray, morphology_size);
@@ -772,9 +776,10 @@ Func canny_fn(
     morphology_mode == MORPH_CLOSE, morph_close(x, y),
     gray(x, y)
   );
+  */
 
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
-  Func gauss = gaussian(morph, CANNY_SIGMA, gauss_rd, "gaussian5x5");
+  Func gauss = gaussian(gray, CANNY_SIGMA, gauss_rd, "gaussian5x5");
 
   Func ks_x = Func("kernel_sobel_x");
   ks_x(x, y) = 0;
@@ -877,9 +882,11 @@ Func canny_fn(
 
   gauss.compute_root();
 
+  /*
   morph_open.compute_root();
   morph_close.compute_root();
   morph.compute_root();
+  */
 
   gray.compute_root();
   return canny;

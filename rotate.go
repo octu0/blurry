@@ -19,6 +19,27 @@ package blurry
 #include "librotate270_linux.h"
 #endif
 
+int call_rotate(
+  int16_t rotation,
+  halide_buffer_t *in,
+  int32_t width, int32_t height,
+  halide_buffer_t *out
+) {
+  if(rotation == 0) {
+    return rotate0(in, width, height, out);
+  }
+  if(rotation == 90) {
+    return rotate90(in, width, height, out);
+  }
+  if(rotation == 180) {
+    return rotate180(in, width, height, out);
+  }
+  if(rotation == 270) {
+    return rotate270(in, width, height, out);
+  }
+  return 1;
+}
+
 int librotate(unsigned char *src, int32_t width, int32_t height, int16_t rotation, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
@@ -36,19 +57,7 @@ int librotate(unsigned char *src, int32_t width, int32_t height, int16_t rotatio
     return 1;
   }
 
-  int ret = -1;
-  if(rotation == 0) {
-    ret = rotate0(in_rgba_buf, width, height, out_rgba_buf);
-  }
-  if(rotation == 90) {
-    ret = rotate90(in_rgba_buf, width, height, out_rgba_buf);
-  }
-  if(rotation == 180) {
-    ret = rotate180(in_rgba_buf, width, height, out_rgba_buf);
-  }
-  if(rotation == 270) {
-    ret = rotate270(in_rgba_buf, width, height, out_rgba_buf);
-  }
+  int ret = call_rotate(rotation, in_rgba_buf, width, height, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;

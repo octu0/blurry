@@ -898,9 +898,11 @@ Func canny_fn(
 
   canny(x, y, ch) = cast<uint8_t>(hysteresis);
 
-  canny.compute_root();
-
+  canny.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
   gray.compute_root();
+
   return canny;
 }
 
@@ -925,8 +927,11 @@ Func canny_dilate_fn(
 
   canny(x, y, ch) = cast<uint8_t>(hysteresis_dilate);
 
-  canny.compute_root();
+  canny.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
   gray.compute_root();
+
   return canny;
 }
 
@@ -956,7 +961,12 @@ Func canny_morphology_open_fn(
     ch == 3, 255,
     cast<uint8_t>(hysteresis_dilate)
   );
-  canny.compute_root();
+
+  canny.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  gray.compute_root();
+
   return canny;
 }
 
@@ -986,7 +996,12 @@ Func canny_morphology_close_fn(
     ch == 3, 255,
     cast<uint8_t>(hysteresis_dilate)
   );
-  canny.compute_root();
+
+  canny.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  gray.compute_root();
+
   return canny;
 }
 

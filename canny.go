@@ -1,9 +1,9 @@
 package blurry
 
 /*
-#cgo CFLAGS: -I${SRCDIR}
-#cgo darwin LDFLAGS: -L${SRCDIR} -lruntime_osx -lcanny_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR} -lruntime_linux -lcanny_linux -ldl -lm
+#cgo CFLAGS: -I${SRCDIR}/include
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lcanny_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lcanny_linux -ldl -lm
 #include <stdlib.h>
 
 #include "bridge.h"
@@ -49,10 +49,11 @@ import (
 )
 
 type CannyMorphologyMode uint8
-const(
-  CannyMorphologyNone CannyMorphologyMode = iota
-  CannyMorphologyOpen
-  CannyMorphologyClose
+
+const (
+	CannyMorphologyNone CannyMorphologyMode = iota
+	CannyMorphologyOpen
+	CannyMorphologyClose
 )
 
 var (
@@ -64,18 +65,18 @@ func Canny(img *image.RGBA, thresholdMax, thresholdMin int) (*image.RGBA, error)
 }
 
 func CannyWithDilate(img *image.RGBA, thresholdMax, thresholdMin int, dilateSize int) (*image.RGBA, error) {
-  return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, CannyMorphologyNone, 0, dilateSize)
+	return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, CannyMorphologyNone, 0, dilateSize)
 }
 
 func MorphologyCanny(img *image.RGBA, thresholdMax, thresholdMin int, mode CannyMorphologyMode, morphSize int) (*image.RGBA, error) {
-  return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, mode, morphSize, 0)
+	return MorphologyCannyWithDilate(img, thresholdMax, thresholdMin, mode, morphSize, 0)
 }
 
 func MorphologyCannyWithDilate(
-  img *image.RGBA,
-  thresholdMax, thresholdMin int,
-  mode CannyMorphologyMode, morphSize int,
-  dilateSize int,
+	img *image.RGBA,
+	thresholdMax, thresholdMin int,
+	mode CannyMorphologyMode, morphSize int,
+	dilateSize int,
 ) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
@@ -86,8 +87,8 @@ func MorphologyCannyWithDilate(
 		C.int(height),
 		C.int(thresholdMax),
 		C.int(thresholdMin),
-    C.uchar(mode),
-    C.int(morphSize),
+		C.uchar(mode),
+		C.int(morphSize),
 		C.int(dilateSize),
 		(*C.uchar)(&out.Pix[0]),
 	)

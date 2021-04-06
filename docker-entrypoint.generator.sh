@@ -44,5 +44,8 @@ for h in lib*.a; do
   mv  ${h} ./lib/
 done
 
+echo "move halide_runtime_x86.o to lib/"
+mv halide_runtime_x86.o ./lib/
+
 rm blurry.out
 rm generator.out

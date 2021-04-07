@@ -20,6 +20,8 @@ github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrk
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/octu0/blurry v1.8.2-0.20210405095037-6d0cb9047d7d h1:HSq09GbTjpsNQNkRm4BHGnXGeoxokYVey2LVKSZDmdA=
 github.com/octu0/blurry v1.8.2-0.20210405095037-6d0cb9047d7d/go.mod h1:GPH1m9IKMVvQ8WBXzY+uWAdNxiKyy+J5TFCJvR38Ptc=
+github.com/octu0/blurry v1.11.0 h1:1EIF7xRE+ctm7yhuZ3o74t9ZkWhHLe5lqs32uHuwvMo=
+github.com/octu0/blurry v1.11.0/go.mod h1:GPH1m9IKMVvQ8WBXzY+uWAdNxiKyy+J5TFCJvR38Ptc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=

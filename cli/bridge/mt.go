@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	"image"
+	"image/color"
 	"log"
 	"sort"
 
@@ -45,6 +47,41 @@ func matchTemplateAction(c *cli.Context) error {
 
 	for _, s := range scores {
 		log.Printf("info: match x:%d y:%d score:%d", s.Point.X, s.Point.Y, s.Score)
+	}
+
+	if c.Bool("render") {
+		out := image.NewRGBA(in.Rect)
+		copy(out.Pix, in.Pix)
+
+		tplBounds := tpl.Bounds()
+		tplWidth := tplBounds.Max.X
+		tplHeight := tplBounds.Max.Y
+
+		for _, s := range scores {
+			startX, endX := s.Point.X, s.Point.X+tplWidth
+			startY, endY := s.Point.Y, s.Point.Y+tplHeight
+			// draw row : start
+			for x := startX; x < endX; x += 1 {
+				out.SetRGBA(x, startY, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+			}
+			// draw row : end
+			for x := startX; x < endX; x += 1 {
+				out.SetRGBA(x, endY, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+			}
+			// draw col : start
+			for y := startY; y < endY; y += 1 {
+				out.SetRGBA(startX, y, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+			}
+			// draw col : end
+			for y := startY; y < endY; y += 1 {
+				out.SetRGBA(endX, y, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+			}
+		}
+		path, err := saveImage(out)
+		if err != nil {
+			return err
+		}
+		log.Printf("info: open %s", path)
 	}
 
 	return nil

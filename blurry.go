@@ -34,31 +34,27 @@ func rgbaSize(width, height int) int {
 	return width * height * RGBAStride
 }
 
-func poolKey(width, height int) uint64 {
-	return (uint64(width) * 1000) + uint64(height)
-}
-
-func GetByteBuf(width, height int) []byte {
+func GetByteBuf(size int) []byte {
 	if atomic.LoadInt32(&usePool) == 0 {
-		return make([]byte, rgbaSize(width, height))
+		return make([]byte, size)
 	}
 
-	key := poolKey(width, height)
+	key := uint64(size)
 	pool, ok := pools.Load(key)
 	if ok != true {
-		pool = &sync.Pool{New: poolNewFunc(width, height)}
+		pool = &sync.Pool{New: poolNewFunc(size)}
 		pools.Store(key, pool)
 	}
 	sp := pool.(*sync.Pool)
 	return sp.Get().([]byte)
 }
 
-func PutByteBuf(width, height int, data []byte) {
+func PutByteBuf(data []byte) {
 	if atomic.LoadInt32(&usePool) == 0 {
 		return // discard
 	}
 
-	key := poolKey(width, height)
+	key := uint64(cap(data))
 	pool, ok := pools.Load(key)
 	if ok != true {
 		return // discard
@@ -66,22 +62,28 @@ func PutByteBuf(width, height int, data []byte) {
 	pool.(*sync.Pool).Put(data)
 }
 
+func GetRGBAByteBuf(width, height int) []byte {
+	return GetByteBuf(rgbaSize(width, height))
+}
+
+func PutRGBAByteBuf(data []byte) {
+	PutByteBuf(data)
+}
+
 func GetRGBA(width, height int) *image.RGBA {
 	return &image.RGBA{
-		Pix:    GetByteBuf(width, height),
+		Pix:    GetRGBAByteBuf(width, height),
 		Stride: width * 4,
 		Rect:   image.Rect(0, 0, width, height),
 	}
 }
 
 func PutRGBA(img *image.RGBA) {
-	width, height := wh(img)
-	PutByteBuf(width, height, img.Pix)
+	PutRGBAByteBuf(img.Pix)
 }
 
-func poolNewFunc(width, height int) func() interface{} {
+func poolNewFunc(size int) func() interface{} {
 	return func() interface{} {
-		size := rgbaSize(width, height)
 		return make([]byte, size)
 	}
 }

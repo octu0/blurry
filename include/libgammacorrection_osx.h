@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gammacorrection(struct halide_buffer_t *_p13_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_gammacorrection_buffer);
+int gammacorrection(struct halide_buffer_t *_p8_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_gammacorrection_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int gammacorrection_argv(void **args);

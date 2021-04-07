@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gaussianblur(struct halide_buffer_t *_p16_buffer, int32_t _width, int32_t _height, float _sigma, struct halide_buffer_t *_gaussianblur_buffer);
+int gaussianblur(struct halide_buffer_t *_p11_buffer, int32_t _width, int32_t _height, float _sigma, struct halide_buffer_t *_gaussianblur_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int gaussianblur_argv(void **args);

@@ -1093,3 +1093,53 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
 
   return blockmozaic;
 }
+
+Func match_template_sad_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func sad = Func("sad");
+  Expr diff_r = abs(in(x + rd_template.x, y + rd_template.y, 0) - t(rd_template.x, rd_template.y, 0));
+  Expr diff_g = abs(in(x + rd_template.x, y + rd_template.y, 1) - t(rd_template.x, rd_template.y, 1));
+  Expr diff_b = abs(in(x + rd_template.x, y + rd_template.y, 2) - t(rd_template.x, rd_template.y, 2));
+  Expr value = diff_r + diff_g + diff_b;
+  sad(x, y) += value;
+
+  Func match = Func("match_template_sad");
+  match(x, y) = cast<uint16_t>(sad(x, y));
+  
+  return match;
+}
+
+Func match_template_ssd_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func ssd = Func("ssd");
+  Expr diff_r = in(x + rd_template.x, y + rd_template.y, 0) - t(rd_template.x, rd_template.y, 0);
+  Expr diff_g = in(x + rd_template.x, y + rd_template.y, 1) - t(rd_template.x, rd_template.y, 1);
+  Expr diff_b = in(x + rd_template.x, y + rd_template.y, 2) - t(rd_template.x, rd_template.y, 2);
+  Expr value = fast_pow(diff_r + diff_g + diff_b, 2);
+  ssd(x, y) += value;
+
+  Func match = Func("match_template_ssd");
+  match(x, y) = cast<int32_t>(ssd(x, y));
+  
+  return match;
+}

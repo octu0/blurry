@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int contrast(struct halide_buffer_t *_p14_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_contrast_buffer);
+int contrast(struct halide_buffer_t *_p9_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_contrast_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int contrast_argv(void **args);

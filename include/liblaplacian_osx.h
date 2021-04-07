@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int laplacian(struct halide_buffer_t *_p24_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_laplacian_buffer);
+int laplacian(struct halide_buffer_t *_p19_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_laplacian_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int laplacian_argv(void **args);

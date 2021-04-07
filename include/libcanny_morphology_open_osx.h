@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int canny_morphology_open(struct halide_buffer_t *_p21_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _morphology_size, int32_t _dilate, struct halide_buffer_t *_canny_morphology_open_buffer);
+int canny_morphology_open(struct halide_buffer_t *_p26_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _morphology_size, int32_t _dilate, struct halide_buffer_t *_canny_morphology_open_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int canny_morphology_open_argv(void **args);

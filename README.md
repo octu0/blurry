@@ -220,6 +220,34 @@ img, err := blurry.MorphologyCannyWithDilate(input, 250, 100, mode, morph_size, 
 | `blurry.CannyMorphologyOpen` | ![example](testdata/canny_morphology_open_size5_max250_min100_dilate3.png) |
 | `blurry.CannyMorphologyClose` | ![example](testdata/canny_morphology_close_size5_max250_min100_dilate3.png) |
 
+### Template Matching
+
+SAD(Sum of Absolute Difference) and SSD(Sum of Squared Difference) methods are available for template matching.
+
+#### SAD
+
+```go
+scores, err := blurry.MatchTemplateSAD(input, template, threshold)
+```
+
+| filter    | input                              | template                           | Result                                |
+| :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
+| none      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_sad.png)       |
+| grayscale | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_sad_gray.png)  |
+| sobel     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_sad_sobel.png) |
+
+#### SSD
+
+```go
+scores, err := blurry.MatchTemplateSSD(input, template, threshold)
+```
+
+| filter    | input                              | template                           | Result                                |
+| :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
+| none      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_ssd.png)       |
+| grayscale | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_ssd_gray.png)  |
+| sobel     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_ssd_sobel.png) |
+
 ## CLI usage
 
 Run it via docker.  
@@ -288,34 +316,36 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                 : 0.01786ms
-BenchmarkJIT/rotate0                  : 0.01954ms
-BenchmarkJIT/rotate90                 : 0.08525ms
-BenchmarkJIT/rotate180                : 0.02042ms
-BenchmarkJIT/rotate270                : 0.09831ms
-BenchmarkJIT/erosion                  : 0.09513ms
-BenchmarkJIT/dilation                 : 0.09205ms
-BenchmarkJIT/morphology_open          : 0.08778ms
-BenchmarkJIT/morphology_close         : 0.09000ms
-BenchmarkJIT/morphology_gradient      : 0.07242ms
-BenchmarkJIT/grayscale                : 0.08449ms
-BenchmarkJIT/invert                   : 0.06844ms
-BenchmarkJIT/brightness               : 0.07116ms
-BenchmarkJIT/gammacorrection          : 0.15254ms
-BenchmarkJIT/contrast                 : 0.07038ms
-BenchmarkJIT/boxblur                  : 0.18862ms
-BenchmarkJIT/gaussianblur             : 0.16574ms
-BenchmarkJIT/edge                     : 0.10480ms
-BenchmarkJIT/sobel                    : 0.11860ms
-BenchmarkJIT/canny                    : 0.60562ms
-BenchmarkJIT/canny_dilate             : 0.63445ms
-BenchmarkJIT/canny_morphology_open    : 0.69378ms
-BenchmarkJIT/canny_morphology_close   : 0.69121ms
-BenchmarkJIT/emboss$1                 : 0.16086ms
-BenchmarkJIT/laplacian                : 0.11895ms
-BenchmarkJIT/highpass                 : 0.12482ms
-BenchmarkJIT/gradient                 : 0.11960ms
-BenchmarkJIT/blockmozaic              : 0.34673ms
+BenchmarkJIT/cloneimg                 : 0.01789ms
+BenchmarkJIT/rotate0                  : 0.01986ms
+BenchmarkJIT/rotate90                 : 0.08148ms
+BenchmarkJIT/rotate180                : 0.02055ms
+BenchmarkJIT/rotate270                : 0.09403ms
+BenchmarkJIT/grayscale                : 0.08608ms
+BenchmarkJIT/invert                   : 0.06483ms
+BenchmarkJIT/brightness               : 0.07079ms
+BenchmarkJIT/gammacorrection          : 0.10503ms
+BenchmarkJIT/contrast                 : 0.06942ms
+BenchmarkJIT/boxblur                  : 0.19393ms
+BenchmarkJIT/gaussianblur             : 0.16552ms
+BenchmarkJIT/blockmozaic              : 0.32501ms
+BenchmarkJIT/erosion                  : 0.09540ms
+BenchmarkJIT/dilation                 : 0.09335ms
+BenchmarkJIT/morphology_open          : 0.09122ms
+BenchmarkJIT/morphology_close         : 0.09307ms
+BenchmarkJIT/morphology_gradient      : 0.07916ms
+BenchmarkJIT/emboss$1                 : 0.15903ms
+BenchmarkJIT/laplacian                : 0.13108ms
+BenchmarkJIT/highpass                 : 0.13289ms
+BenchmarkJIT/gradient                 : 0.12516ms
+BenchmarkJIT/edge                     : 0.10689ms
+BenchmarkJIT/sobel                    : 0.10965ms
+BenchmarkJIT/canny                    : 0.59971ms
+BenchmarkJIT/canny_dilate             : 0.62082ms
+BenchmarkJIT/canny_morphology_open    : 0.69147ms
+BenchmarkJIT/canny_morphology_close   : 0.68410ms
+BenchmarkJIT/match_template_sad       : 5.34344ms
+BenchmarkJIT/match_template_ssd       : 4.25746ms
 ```
 
 ## AOT benchmarks

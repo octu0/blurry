@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int morphology_close(struct halide_buffer_t *_p8_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_close_buffer);
+int morphology_close(struct halide_buffer_t *_p16_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_close_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int morphology_close_argv(void **args);

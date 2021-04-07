@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int invert(struct halide_buffer_t *_p11_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_invert_buffer);
+int invert(struct halide_buffer_t *_p6_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_invert_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int invert_argv(void **args);

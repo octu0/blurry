@@ -10,11 +10,17 @@ using namespace Halide::Tools;
 #ifndef BLURRY_H_
 #define BLURRY_H_
 
-const int16_t ROTATE0   = 0;   // No rotation
-const int16_t ROTATE90  = 90;  // Rotate 90 degrees clockwise
-const int16_t ROTATE180 = 180; // Rotate 180 degrees
-const int16_t ROTATE270 = 270; // Rotate 270 degrees clockwise
-const uint8_t MORPH_OPEN = 1, MORPH_CLOSE = 2, MORPH_GRADIENT = 3;
+Func kernel_sobel3x3_y();
+
+Func kernel_sobel3x3_x();
+
+Func kernel_emboss3x3();
+
+Func kernel_laplacian3x3();
+
+Func kernel_highpass3x3();
+
+Func kernel_gradient3x3();
 
 Func wrapFunc(Buffer<uint8_t> buf, const char* name);
 
@@ -91,4 +97,13 @@ Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size);
 
+Func match_template_sad_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
+
+Func match_template_ssd_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
 #endif // BLURRY_H_

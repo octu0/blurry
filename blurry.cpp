@@ -10,9 +10,94 @@ const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 
+const Func kernel_sobel_x = kernel_sobel3x3_x();
+const Func kernel_sobel_y = kernel_sobel3x3_y();
+const Func kernel_emboss = kernel_emboss3x3();
+const Func kernel_laplacian = kernel_laplacian3x3();
+const Func kernel_highpass = kernel_highpass3x3();
+const Func kernel_gradient = kernel_gradient3x3();
+const RDom rd_kernel = RDom(-1, 3, -1, 3, "rd_kernel");
+
+Func kernel_sobel3x3_x() {
+  Var x("x"), y("y");
+
+  Func kernel_x = Func("kernel_sobel_x");
+  kernel_x(x, y) = 0;
+  kernel_x(-1, -1) = -1; kernel_x(0, -1) = 0; kernel_x(1, -1) = 1;
+  kernel_x(-1,  0) = -2; kernel_x(0,  0) = 0; kernel_x(1,  0) = 2;
+  kernel_x(-1,  1) = -1; kernel_x(0,  1) = 0; kernel_x(1,  1) = 1;
+
+  kernel_x.compute_root();
+  return kernel_x;
+}
+
+Func kernel_sobel3x3_y() {
+  Var x("x"), y("y");
+
+  Func kernel_y = Func("kernel_sobel_y");
+  kernel_y(x, y) = 0;
+  kernel_y(-1, -1) = -1; kernel_y(0, -1) = -2; kernel_y(1, -1) = -1;
+  kernel_y(-1,  0) =  0; kernel_y(0,  0) =  0; kernel_y(1,  0) =  0;
+  kernel_y(-1,  1) =  1; kernel_y(0,  1) =  2; kernel_y(1,  1) =  1;
+
+  kernel_y.compute_root();
+  return kernel_y;
+}
+
+Func kernel_emboss3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_emboss");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = -1; kernel(0, -1) = -1; kernel(1, -1) = 0;
+  kernel(-1,  0) = -1; kernel(0,  0) =  0; kernel(1,  0) = 1;
+  kernel(-1,  1) =  0; kernel(0,  1) =  1; kernel(1,  1) = 1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_laplacian3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_laplacian");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = 0; kernel(0, -1) =  1; kernel(1, -1) = 0;
+  kernel(-1,  0) = 1; kernel(0,  0) = -4; kernel(1,  0) = 1;
+  kernel(-1,  1) = 0; kernel(0,  1) =  1; kernel(1,  1) = 0;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_highpass3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_highpass");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = -1; kernel(0, -1) = -1; kernel(1, -1) = -1;
+  kernel(-1,  0) = -1; kernel(0,  0) =  8; kernel(1,  0) = -1;
+  kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_gradient3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_gradient");
+  kernel(x, y) = 0;
+  kernel(-1, -1) =  1; kernel(0, -1) =  1; kernel(1, -1) =  1;
+  kernel(-1,  0) =  0; kernel(0,  0) =  0; kernel(1,  0) =  0;
+  kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
 Func wrapFunc(Buffer<uint8_t> buf, const char* name) {
   Var x("x"), y("y"), ch("channel");
-
   Func f = Func(name);
   f(x, y, ch) = buf(x, y, ch);
   return f;
@@ -32,25 +117,24 @@ Func readUI8(Func clamped, const char *name) {
   return read;
 }
 
-Func readUI16(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<uint16_t>(clamped(x, y, ch));
-  return read;
+Func gray_xy(Func in) {
+  Var x("x"), y("y");
+
+  Func gray = Func("gray");
+  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+
+  gray.compute_root();
+  return gray;
 }
 
-Func readUI32(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<uint32_t>(clamped(x, y, ch));
-  return read;
-}
+Func gray_xy_uint8(Func in, const char *name) {
+  Var x("x"), y("y");
 
-Func readI32(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<int32_t>(clamped(x, y, ch));
-  return read;
+  Func gray = Func(name);
+  gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
+
+  gray.compute_root();
+  return gray;
 }
 
 Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
@@ -104,26 +188,21 @@ Func filter2d_gray(
   RDom rd_kernel,
   const char *name
 ) {
-  Func in = read(BoundaryConditions::repeat_edge(input, bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  gray(x, y) = r;
-
-  Func conv = convolve_xy(gray, kernel, rd_kernel);
+  Func conv = convolve_xy(in, kernel, rd_kernel);
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
     ch == 3, 255,
-    conv(x, y) & 128
+    cast<uint8_t>(conv(x, y) & 128)
   );
 
-  // schedule
   conv.compute_root()
     .vectorize(x, 32);
 
@@ -133,7 +212,6 @@ Func filter2d_gray(
     .parallel(ti)
     .vectorize(xi, 32);
 
-  gray.compute_root();
   return gradient;
 }
 
@@ -256,20 +334,8 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
   Func gauss = gaussian(in, CANNY_SIGMA, gauss_rd, "gaussian3x3");
 
-  Func ks_x = Func("kernel_sobel_x");
-  ks_x(x, y) = 0;
-  ks_x(-1, -1) = -1; ks_x(0, -1) = 0; ks_x(1, -1) = 1;
-  ks_x(-1,  0) = -2; ks_x(0,  0) = 0; ks_x(1,  0) = 2;
-  ks_x(-1,  1) = -1; ks_x(0,  1) = 0; ks_x(1,  1) = 1;
-
-  Func ks_y = Func("kernel_sobel_y");
-  ks_y(x, y) = 0;
-  ks_y(-1, -1) = -1; ks_y(0, -1) = -2; ks_y(1, -1) = -1;
-  ks_y(-1,  0) =  0; ks_y(0,  0) =  0; ks_y(1,  0) =  0;
-  ks_y(-1,  1) =  1; ks_y(0,  1) =  2; ks_y(1,  1) =  1;
-
-  Func gx = convolve_xy(gauss, ks_x, RDom(-1,3, -1,3, "rd_kernel_sobel_x"));
-  Func gy = convolve_xy(gauss, ks_y, RDom(-1,3, -1,3, "rd_kernel_sobel_y"));
+  Func gx = convolve_xy(gauss, kernel_sobel_x, rd_kernel);
+  Func gy = convolve_xy(gauss, kernel_sobel_y, rd_kernel);
 
   //
   // sobel x/y
@@ -323,13 +389,6 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
     value
   );
   hy(x, y) = th_val;
-
-  ks_x.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
-  ks_y.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
 
   gy.compute_root()
     .parallel(y, 8)
@@ -471,18 +530,14 @@ Func morphology_open_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
-
-  Func f = morphology_open(gray, size);
+  Func f = morphology_open(in, size);
   Func morph = Func("morphology_open");
   morph(x, y, ch) = f(x, y);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -491,18 +546,14 @@ Func morphology_close_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
-
-  Func f = morphology_close(gray, size);
+  Func f = morphology_close(in, size);
   Func morph = Func("morphology_close");
   morph(x, y, ch) = f(x, y);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -511,24 +562,20 @@ Func morphology_gradient_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
-
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
   Func morph = Func("morphology_gradient");
-  Expr val_dilate = dilate(gray, rd_morph);
-  Expr val_erode = erode(gray, rd_morph);
+  Expr val_dilate = dilate(in, rd_morph);
+  Expr val_erode = erode(in, rd_morph);
   morph(x, y, ch) = val_dilate - val_erode;
 
   morph.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -547,7 +594,10 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Expr b = in(x, y, 2);
   Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
 
-  grayscale(x, y, ch) = cast<uint8_t>(value);
+  grayscale(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(value)
+  );
 
   grayscale.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -769,23 +819,15 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  //Expr g = in(x, y, 1);
-  //Expr b = in(x, y, 2);
-  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
-  //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = r;
-
   Func gy = Func("gy");
-  gy(x, y) = (gray(x, y + 1) - gray(x, y - 1)) / 2;
+  gy(x, y) = (in(x, y + 1) - in(x, y - 1)) / 2;
 
   Func gx = Func("gx");
-  gx(x, y) = (gray(x + 1, y) - gray(x - 1, y)) / 2;
+  gx(x, y) = (in(x + 1, y) - in(x - 1, y)) / 2;
 
   Func edge = Func("edge");
   Expr pow_gy = fast_pow(gy(x, y), 2);
@@ -806,46 +848,23 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   edge.compute_root()
     .parallel(ch);
 
-  gray.compute_root();
   return edge;
 }
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  //Expr g = in(x, y, 1);
-  //Expr b = in(x, y, 2);
-  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
-  //Expr value = (r + g + b) / 3;
-  //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = r;
-
-  Func kernel_y = Func("kernel_y");
-  kernel_y(x, y) = 0;
-  kernel_y(0, 0) = -1; kernel_y(1, 0) = -2; kernel_y(2, 0) = -1;
-  kernel_y(0, 1) =  0; kernel_y(1, 1) =  0; kernel_y(2, 1) =  0;
-  kernel_y(0, 2) =  1; kernel_y(1, 2) =  2; kernel_y(2, 2) =  1;
-
-  Func kernel_x = Func("kernel_x");
-  kernel_x(x, y) = 0;
-  kernel_x(0, 0) = -1; kernel_x(1, 0) = 0; kernel_x(2, 0) = 1;
-  kernel_x(0, 1) = -2; kernel_x(1, 1) = 0; kernel_x(2, 1) = 2;
-  kernel_x(0, 2) = -1; kernel_x(1, 2) = 0; kernel_x(2, 2) = 1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
   Func gy = Func("grad_y");
-  Expr gy_in = gray(x + rd_kernel.x, y + rd_kernel.y);
-  Expr gy_val = kernel_y(rd_kernel.x, rd_kernel.y);
+  Expr gy_in = in(x + rd_kernel.x, y + rd_kernel.y);
+  Expr gy_val = kernel_sobel_y(rd_kernel.x, rd_kernel.y);
   gy(x, y) += gy_in * gy_val;
 
   Func gx = Func("grad_x");
-  Expr gx_in = gray(x + rd_kernel.x, y + rd_kernel.y);
-  Expr gx_val = kernel_x(rd_kernel.x, rd_kernel.y);
+  Expr gx_in = in(x + rd_kernel.x, y + rd_kernel.y);
+  Expr gx_val = kernel_sobel_x(rd_kernel.x, rd_kernel.y);
   gx(x, y) += gx_in * gx_val;
 
   Func sobel = Func("sobel");
@@ -856,13 +875,6 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     ch == 3, 255,
     cast<uint8_t>(magnitude)
   );
-
-  kernel_x.compute_root()
-    .parallel(y)
-    .vectorize(x, 32);
-  kernel_y.compute_root()
-    .parallel(y)
-    .vectorize(x, 32);
 
   gy.compute_at(sobel, x)
     .parallel(y, 16)
@@ -875,7 +887,6 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .parallel(ch)
     .parallel(y, 8);
 
-  gray.compute_root();
   return sobel;
 }
 
@@ -884,14 +895,11 @@ Func canny_fn(
   Param<int32_t> threshold_max, Param<int32_t> threshold_min
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
-
-  Func hy = canny(gray, threshold_max, threshold_min);
+  Func hy = canny(in, threshold_max, threshold_min);
 
   Func canny = Func("canny");
   Expr hysteresis = hy(x, y);
@@ -901,7 +909,6 @@ Func canny_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -912,14 +919,11 @@ Func canny_dilate_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
-
-  Func hy = canny(gray, threshold_max, threshold_min);
+  Func hy = canny(in, threshold_max, threshold_min);
 
   Func canny = Func("canny_dilate");
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
@@ -930,7 +934,6 @@ Func canny_dilate_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -942,14 +945,11 @@ Func canny_morphology_open_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
-
-  Func morph = morphology_open(gray, morphology_size);
+  Func morph = morphology_open(in, morphology_size);
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
@@ -965,7 +965,6 @@ Func canny_morphology_open_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -977,14 +976,11 @@ Func canny_morphology_close_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
-
-  Func morph = morphology_close(gray, morphology_size);
+  Func morph = morphology_close(in, morphology_size);
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
@@ -1000,7 +996,6 @@ Func canny_morphology_close_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -1014,14 +1009,7 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = 0;
-  kernel(0, 1) = -1; kernel(1, 1) =  0; kernel(2, 1) = 1;
-  kernel(0, 2) =  0; kernel(1, 2) =  1; kernel(2, 2) = 1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  Func conv = convolve(in, kernel, rd_kernel);
+  Func conv = convolve(in, kernel_emboss, rd_kernel);
 
   Func emboss = Func("emboss");
   emboss(x, y, ch) = select(
@@ -1047,28 +1035,14 @@ Func laplacian_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = 0; kernel(1, 0) =  1; kernel(2, 0) = 0;
-  kernel(0, 1) = 1; kernel(1, 1) = -4; kernel(2, 1) = 1;
-  kernel(0, 2) = 0; kernel(1, 2) =  1; kernel(2, 2) = 0;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "laplacian");
+  return filter2d_gray(input, bounds, kernel_laplacian, rd_kernel, "laplacian");
 }
 
 Func highpass_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = -1;
-  kernel(0, 1) = -1; kernel(1, 1) =  8; kernel(2, 1) = -1;
-  kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "highpass");
+  return filter2d_gray(input, bounds, kernel_highpass, rd_kernel, "highpass");
 }
 
 // gradient filter
@@ -1076,19 +1050,12 @@ Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) =  1; kernel(1, 0) =  1; kernel(2, 0) =  1;
-  kernel(0, 1) =  0; kernel(1, 1) =  0; kernel(2, 1) =  0;
-  kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "gradient");
+  return filter2d_gray(input, bounds, kernel_gradient, rd_kernel, "gradient");
 }
 
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -1128,4 +1095,80 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   in.compute_root();
 
   return blockmozaic;
+}
+
+Func match_template_sad_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func sad = Func("sad");
+  Expr diff_r = abs(in(x + rd_template.x, y + rd_template.y, 0) - t(rd_template.x, rd_template.y, 0));
+  Expr diff_g = abs(in(x + rd_template.x, y + rd_template.y, 1) - t(rd_template.x, rd_template.y, 1));
+  Expr diff_b = abs(in(x + rd_template.x, y + rd_template.y, 2) - t(rd_template.x, rd_template.y, 2));
+  Expr value = diff_r + diff_g + diff_b;
+  sad(x, y) += value;
+
+  Func match = Func("match_template_sad");
+  match(x, y) = cast<uint16_t>(sad(x, y));
+  
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+  t.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  return match;
+}
+
+Func match_template_ssd_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func ssd = Func("ssd");
+  Expr diff_r = in(x + rd_template.x, y + rd_template.y, 0) - t(rd_template.x, rd_template.y, 0);
+  Expr diff_g = in(x + rd_template.x, y + rd_template.y, 1) - t(rd_template.x, rd_template.y, 1);
+  Expr diff_b = in(x + rd_template.x, y + rd_template.y, 2) - t(rd_template.x, rd_template.y, 2);
+  Expr value = fast_pow(diff_r + diff_g + diff_b, 2);
+  ssd(x, y) += value;
+
+  Func match = Func("match_template_ssd");
+  match(x, y) = cast<int32_t>(ssd(x, y));
+ 
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+  t.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+  return match;
 }

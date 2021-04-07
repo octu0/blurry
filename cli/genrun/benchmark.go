@@ -11,7 +11,10 @@ func benchmarkAction(c *cli.Context) error {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "benchmark", nil); err != nil {
+	args := []string{
+    c.String("template"),
+  }
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "benchmark", args); err != nil {
 		return err
 	}
 
@@ -37,6 +40,11 @@ func init() {
 				Name:  "f,file",
 				Usage: "/path/to/blurry.cpp path",
 				Value: "./blurry.cpp",
+			},
+			cli.StringFlag{
+				Name:  "t,template",
+				Usage: "/path/to/input image",
+				Value: "./testdata/tpl.png",
 			},
 		},
 	})

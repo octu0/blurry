@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io/ioutil"
 
 	_ "embed"
 )
@@ -13,6 +14,7 @@ import (
 var testImgData []byte
 
 var testImg *image.RGBA
+var testImgARGB *image.RGBA
 
 func init() {
 	img, err := png.Decode(bytes.NewReader(testImgData))
@@ -32,4 +34,31 @@ func init() {
 			testImg.Set(x, y, c)
 		}
 	}
+
+	argb, err := RGBAToARGB(testImg)
+	if err != nil {
+		panic("testImg RGBA to ARGB error:" + err.Error())
+	}
+	testImgARGB = argb
+}
+
+func saveImage(img *image.RGBA) (string, error) {
+	out, err := ioutil.TempFile("/tmp", "out*.png")
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	if err := png.Encode(out, img); err != nil {
+		return "", err
+	}
+	return out.Name(), nil
+}
+
+func saveImageFromARGB(img *image.RGBA) (string, error) {
+	rgba, err := ARGBToRGBA(img)
+	if err != nil {
+		return "", err
+	}
+	return saveImage(rgba)
 }

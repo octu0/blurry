@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int blockmozaic(struct halide_buffer_t *_p27_buffer, int32_t _width, int32_t _height, int32_t _block, struct halide_buffer_t *_blockmozaic_buffer);
+int blockmozaic(struct halide_buffer_t *_p12_buffer, int32_t _width, int32_t _height, int32_t _block, struct halide_buffer_t *_blockmozaic_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int blockmozaic_argv(void **args);

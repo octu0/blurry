@@ -117,20 +117,6 @@ Func readUI8(Func clamped, const char *name) {
   return read;
 }
 
-Func readUI16(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<uint16_t>(clamped(x, y, ch));
-  return read;
-}
-
-Func readUI32(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<uint32_t>(clamped(x, y, ch));
-  return read;
-}
-
 Func gray_xy(Func in) {
   Var x("x"), y("y");
 
@@ -141,11 +127,14 @@ Func gray_xy(Func in) {
   return gray;
 }
 
-Func readI32(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
-  Func read = Func(name);
-  read(x, y, ch) = cast<int32_t>(clamped(x, y, ch));
-  return read;
+Func gray_xy_uint8(Func in, const char *name) {
+  Var x("x"), y("y");
+
+  Func gray = Func(name);
+  gray(x, y) = cast<uint8_t>(in(x, y, 0)); // rgba(r) for grayscale
+
+  gray.compute_root();
+  return gray;
 }
 
 Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
@@ -199,16 +188,14 @@ Func filter2d_gray(
   RDom rd_kernel,
   const char *name
 ) {
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func gray = gray_xy(in);
-
-  Func conv = convolve_xy(gray, kernel, rd_kernel);
+  Func conv = convolve_xy(in, kernel, rd_kernel);
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
@@ -543,13 +530,11 @@ Func morphology_open_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func f = morphology_open(gray, size);
+  Func f = morphology_open(in, size);
   Func morph = Func("morphology_open");
   morph(x, y, ch) = f(x, y);
 
@@ -561,13 +546,11 @@ Func morphology_close_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func f = morphology_close(gray, size);
+  Func f = morphology_close(in, size);
   Func morph = Func("morphology_close");
   morph(x, y, ch) = f(x, y);
 
@@ -579,16 +562,14 @@ Func morphology_gradient_fn(
   Param<int32_t> size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::mirror_image(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
   Func morph = Func("morphology_gradient");
-  Expr val_dilate = dilate(gray, rd_morph);
-  Expr val_erode = erode(gray, rd_morph);
+  Expr val_dilate = dilate(in, rd_morph);
+  Expr val_erode = erode(in, rd_morph);
   morph(x, y, ch) = val_dilate - val_erode;
 
   morph.compute_root()
@@ -835,17 +816,15 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
   Func gy = Func("gy");
-  gy(x, y) = (gray(x, y + 1) - gray(x, y - 1)) / 2;
+  gy(x, y) = (in(x, y + 1) - in(x, y - 1)) / 2;
 
   Func gx = Func("gx");
-  gx(x, y) = (gray(x + 1, y) - gray(x - 1, y)) / 2;
+  gx(x, y) = (in(x + 1, y) - in(x - 1, y)) / 2;
 
   Func edge = Func("edge");
   Expr pow_gy = fast_pow(gy(x, y), 2);
@@ -871,19 +850,17 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
   Func gy = Func("grad_y");
-  Expr gy_in = gray(x + rd_kernel.x, y + rd_kernel.y);
+  Expr gy_in = in(x + rd_kernel.x, y + rd_kernel.y);
   Expr gy_val = kernel_sobel_y(rd_kernel.x, rd_kernel.y);
   gy(x, y) += gy_in * gy_val;
 
   Func gx = Func("grad_x");
-  Expr gx_in = gray(x + rd_kernel.x, y + rd_kernel.y);
+  Expr gx_in = in(x + rd_kernel.x, y + rd_kernel.y);
   Expr gx_val = kernel_sobel_x(rd_kernel.x, rd_kernel.y);
   gx(x, y) += gx_in * gx_val;
 
@@ -915,13 +892,11 @@ Func canny_fn(
   Param<int32_t> threshold_max, Param<int32_t> threshold_min
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func hy = canny(gray, threshold_max, threshold_min);
+  Func hy = canny(in, threshold_max, threshold_min);
 
   Func canny = Func("canny");
   Expr hysteresis = hy(x, y);
@@ -941,13 +916,11 @@ Func canny_dilate_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func hy = canny(gray, threshold_max, threshold_min);
+  Func hy = canny(in, threshold_max, threshold_min);
 
   Func canny = Func("canny_dilate");
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
@@ -969,13 +942,11 @@ Func canny_morphology_open_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func morph = morphology_open(gray, morphology_size);
+  Func morph = morphology_open(in, morphology_size);
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
@@ -1002,13 +973,11 @@ Func canny_morphology_close_fn(
   Param<int32_t> dilate_size
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = gray_xy(in);
-
-  Func morph = morphology_close(gray, morphology_size);
+  Func morph = morphology_close(in, morphology_size);
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
@@ -1083,7 +1052,7 @@ Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size){
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readI32(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");

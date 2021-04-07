@@ -288,34 +288,34 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                 : 0.01786ms
-BenchmarkJIT/rotate0                  : 0.01954ms
-BenchmarkJIT/rotate90                 : 0.08525ms
-BenchmarkJIT/rotate180                : 0.02042ms
-BenchmarkJIT/rotate270                : 0.09831ms
-BenchmarkJIT/erosion                  : 0.09513ms
-BenchmarkJIT/dilation                 : 0.09205ms
-BenchmarkJIT/morphology_open          : 0.08778ms
-BenchmarkJIT/morphology_close         : 0.09000ms
-BenchmarkJIT/morphology_gradient      : 0.07242ms
-BenchmarkJIT/grayscale                : 0.08449ms
-BenchmarkJIT/invert                   : 0.06844ms
-BenchmarkJIT/brightness               : 0.07116ms
-BenchmarkJIT/gammacorrection          : 0.15254ms
-BenchmarkJIT/contrast                 : 0.07038ms
-BenchmarkJIT/boxblur                  : 0.18862ms
-BenchmarkJIT/gaussianblur             : 0.16574ms
-BenchmarkJIT/edge                     : 0.10480ms
-BenchmarkJIT/sobel                    : 0.11860ms
-BenchmarkJIT/canny                    : 0.60562ms
-BenchmarkJIT/canny_dilate             : 0.63445ms
-BenchmarkJIT/canny_morphology_open    : 0.69378ms
-BenchmarkJIT/canny_morphology_close   : 0.69121ms
-BenchmarkJIT/emboss$1                 : 0.16086ms
-BenchmarkJIT/laplacian                : 0.11895ms
-BenchmarkJIT/highpass                 : 0.12482ms
-BenchmarkJIT/gradient                 : 0.11960ms
-BenchmarkJIT/blockmozaic              : 0.34673ms
+BenchmarkJIT/cloneimg                 : 0.01874ms
+BenchmarkJIT/rotate0                  : 0.01973ms
+BenchmarkJIT/rotate90                 : 0.08517ms
+BenchmarkJIT/rotate180                : 0.02258ms
+BenchmarkJIT/rotate270                : 0.09327ms
+BenchmarkJIT/grayscale                : 0.08283ms
+BenchmarkJIT/invert                   : 0.06125ms
+BenchmarkJIT/brightness               : 0.06690ms
+BenchmarkJIT/gammacorrection          : 0.10089ms
+BenchmarkJIT/contrast                 : 0.06710ms
+BenchmarkJIT/boxblur                  : 0.18762ms
+BenchmarkJIT/gaussianblur             : 0.16406ms
+BenchmarkJIT/blockmozaic              : 0.31987ms
+BenchmarkJIT/erosion                  : 0.10486ms
+BenchmarkJIT/dilation                 : 0.09676ms
+BenchmarkJIT/morphology_open          : 0.09116ms
+BenchmarkJIT/morphology_close         : 0.09109ms
+BenchmarkJIT/morphology_gradient      : 0.07529ms
+BenchmarkJIT/emboss$1                 : 0.15940ms
+BenchmarkJIT/laplacian                : 0.12463ms
+BenchmarkJIT/highpass                 : 0.13114ms
+BenchmarkJIT/gradient                 : 0.12426ms
+BenchmarkJIT/edge                     : 0.10577ms
+BenchmarkJIT/sobel                    : 0.10783ms
+BenchmarkJIT/canny                    : 0.59555ms
+BenchmarkJIT/canny_dilate             : 0.61828ms
+BenchmarkJIT/canny_morphology_open    : 0.67740ms
+BenchmarkJIT/canny_morphology_close   : 0.69415ms
 ```
 
 ## AOT benchmarks

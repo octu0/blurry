@@ -1104,6 +1104,9 @@ Func match_template_sad_fn(
   Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
 
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
   Func sad = Func("sad");
@@ -1116,6 +1119,16 @@ Func match_template_sad_fn(
   Func match = Func("match_template_sad");
   match(x, y) = cast<uint16_t>(sad(x, y));
   
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+  t.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
   return match;
 }
 
@@ -1129,6 +1142,9 @@ Func match_template_ssd_fn(
   Func t = read(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
 
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
   Func ssd = Func("ssd");
@@ -1140,6 +1156,16 @@ Func match_template_ssd_fn(
 
   Func match = Func("match_template_ssd");
   match(x, y) = cast<int32_t>(ssd(x, y));
-  
+ 
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+  t.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
   return match;
 }

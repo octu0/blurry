@@ -1151,9 +1151,7 @@ void generate_emboss(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = emboss_fn(
-    src.in(), width, height
-  );
+  Func fn = emboss_fn(src.in(), width, height);
 
   init_output_rgba(fn.output_buffer());
 
@@ -1375,11 +1373,6 @@ void generate(){
   generate_rotate90(features);
   generate_rotate180(features);
   generate_rotate270(features);
-  generate_erosion(features);
-  generate_dilation(features);
-  generate_morphology_open(features);
-  generate_morphology_close(features);
-  generate_morphology_gradient(features);
   generate_grayscale(features);
   generate_invert(features);
   generate_brightness(features);
@@ -1387,17 +1380,22 @@ void generate(){
   generate_contrast(features);
   generate_boxblur(features);
   generate_gaussianblur(features);
+  generate_blockmozaic(features);
+  generate_erosion(features);
+  generate_dilation(features);
+  generate_morphology_open(features);
+  generate_morphology_close(features);
+  generate_morphology_gradient(features);
+  generate_emboss(features);
+  generate_laplacian(features);
+  generate_highpass(features);
+  generate_gradient(features);
   generate_edge(features);
   generate_sobel(features);
   generate_canny(features);
   generate_canny_dilate(features);
   generate_canny_morphology_open(features);
   generate_canny_morphology_close(features);
-  generate_emboss(features);
-  generate_laplacian(features);
-  generate_highpass(features);
-  generate_gradient(features);
-  generate_blockmozaic(features);
 }
 
 void benchmark(char **argv) {
@@ -1413,11 +1411,6 @@ void benchmark(char **argv) {
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);
   benchmark_rotate270(buf_src, width, height);
-  benchmark_erosion(buf_src, width, height);
-  benchmark_dilation(buf_src, width, height);
-  benchmark_morphology_open(buf_src, width, height);
-  benchmark_morphology_close(buf_src, width, height);
-  benchmark_morphology_gradient(buf_src, width, height);
   benchmark_grayscale(buf_src, width, height);
   benchmark_invert(buf_src, width, height);
   benchmark_brightness(buf_src, width, height);
@@ -1425,17 +1418,22 @@ void benchmark(char **argv) {
   benchmark_contrast(buf_src, width, height);
   benchmark_boxblur(buf_src, width, height);
   benchmark_gaussianblur(buf_src, width, height);
+  benchmark_blockmozaic(buf_src, width, height);
+  benchmark_erosion(buf_src, width, height);
+  benchmark_dilation(buf_src, width, height);
+  benchmark_morphology_open(buf_src, width, height);
+  benchmark_morphology_close(buf_src, width, height);
+  benchmark_morphology_gradient(buf_src, width, height);
+  benchmark_emboss(buf_src, width, height);
+  benchmark_laplacian(buf_src, width, height);
+  benchmark_highpass(buf_src, width, height);
+  benchmark_gradient(buf_src, width, height);
   benchmark_edge(buf_src, width, height);
   benchmark_sobel(buf_src, width, height);
   benchmark_canny(buf_src, width, height);
   benchmark_canny_dilate(buf_src, width, height);
   benchmark_canny_morphology_open(buf_src, width, height);
   benchmark_canny_morphology_close(buf_src, width, height);
-  benchmark_emboss(buf_src, width, height);
-  benchmark_laplacian(buf_src, width, height);
-  benchmark_highpass(buf_src, width, height);
-  benchmark_gradient(buf_src, width, height);
-  benchmark_blockmozaic(buf_src, width, height);
 }
 
 int main(int argc, char **argv) {

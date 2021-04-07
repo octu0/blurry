@@ -10,9 +10,94 @@ const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 
+const Func kernel_sobel_x = kernel_sobel3x3_x();
+const Func kernel_sobel_y = kernel_sobel3x3_y();
+const Func kernel_emboss = kernel_emboss3x3();
+const Func kernel_laplacian = kernel_laplacian3x3();
+const Func kernel_highpass = kernel_highpass3x3();
+const Func kernel_gradient = kernel_gradient3x3();
+const RDom rd_kernel = RDom(-1, 3, -1, 3, "rd_kernel");
+
+Func kernel_sobel3x3_x() {
+  Var x("x"), y("y");
+
+  Func kernel_x = Func("kernel_sobel_x");
+  kernel_x(x, y) = 0;
+  kernel_x(-1, -1) = -1; kernel_x(0, -1) = 0; kernel_x(1, -1) = 1;
+  kernel_x(-1,  0) = -2; kernel_x(0,  0) = 0; kernel_x(1,  0) = 2;
+  kernel_x(-1,  1) = -1; kernel_x(0,  1) = 0; kernel_x(1,  1) = 1;
+
+  kernel_x.compute_root();
+  return kernel_x;
+}
+
+Func kernel_sobel3x3_y() {
+  Var x("x"), y("y");
+
+  Func kernel_y = Func("kernel_sobel_y");
+  kernel_y(x, y) = 0;
+  kernel_y(-1, -1) = -1; kernel_y(0, -1) = -2; kernel_y(1, -1) = -1;
+  kernel_y(-1,  0) =  0; kernel_y(0,  0) =  0; kernel_y(1,  0) =  0;
+  kernel_y(-1,  1) =  1; kernel_y(0,  1) =  2; kernel_y(1,  1) =  1;
+
+  kernel_y.compute_root();
+  return kernel_y;
+}
+
+Func kernel_emboss3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_emboss");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = -1; kernel(0, -1) = -1; kernel(1, -1) = 0;
+  kernel(-1,  0) = -1; kernel(0,  0) =  0; kernel(1,  0) = 1;
+  kernel(-1,  1) =  0; kernel(0,  1) =  1; kernel(1,  1) = 1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_laplacian3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_laplacian");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = 0; kernel(0, -1) =  1; kernel(1, -1) = 0;
+  kernel(-1,  0) = 1; kernel(0,  0) = -4; kernel(1,  0) = 1;
+  kernel(-1,  1) = 0; kernel(0,  1) =  1; kernel(1,  1) = 0;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_highpass3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_highpass");
+  kernel(x, y) = 0;
+  kernel(-1, -1) = -1; kernel(0, -1) = -1; kernel(1, -1) = -1;
+  kernel(-1,  0) = -1; kernel(0,  0) =  8; kernel(1,  0) = -1;
+  kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
+Func kernel_gradient3x3() {
+  Var x("x"), y("y");
+
+  Func kernel = Func("kernel_gradient");
+  kernel(x, y) = 0;
+  kernel(-1, -1) =  1; kernel(0, -1) =  1; kernel(1, -1) =  1;
+  kernel(-1,  0) =  0; kernel(0,  0) =  0; kernel(1,  0) =  0;
+  kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
+
+  kernel.compute_root();
+  return kernel;
+}
+
 Func wrapFunc(Buffer<uint8_t> buf, const char* name) {
   Var x("x"), y("y"), ch("channel");
-
   Func f = Func(name);
   f(x, y, ch) = buf(x, y, ch);
   return f;
@@ -44,6 +129,16 @@ Func readUI32(Func clamped, const char *name) {
   Func read = Func(name);
   read(x, y, ch) = cast<uint32_t>(clamped(x, y, ch));
   return read;
+}
+
+Func gray_xy(Func in) {
+  Var x("x"), y("y");
+
+  Func gray = Func("gray");
+  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+
+  gray.compute_root();
+  return gray;
 }
 
 Func readI32(Func clamped, const char *name) {
@@ -104,16 +199,14 @@ Func filter2d_gray(
   RDom rd_kernel,
   const char *name
 ) {
-  Func in = read(BoundaryConditions::repeat_edge(input, bounds), "in");
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  gray(x, y) = r;
+  Func gray = gray_xy(in);
 
   Func conv = convolve_xy(gray, kernel, rd_kernel);
 
@@ -123,7 +216,6 @@ Func filter2d_gray(
     conv(x, y) & 128
   );
 
-  // schedule
   conv.compute_root()
     .vectorize(x, 32);
 
@@ -133,7 +225,6 @@ Func filter2d_gray(
     .parallel(ti)
     .vectorize(xi, 32);
 
-  gray.compute_root();
   return gradient;
 }
 
@@ -256,20 +347,8 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   RDom gauss_rd = RDom(-1, 3, "gaussian_rdom");
   Func gauss = gaussian(in, CANNY_SIGMA, gauss_rd, "gaussian3x3");
 
-  Func ks_x = Func("kernel_sobel_x");
-  ks_x(x, y) = 0;
-  ks_x(-1, -1) = -1; ks_x(0, -1) = 0; ks_x(1, -1) = 1;
-  ks_x(-1,  0) = -2; ks_x(0,  0) = 0; ks_x(1,  0) = 2;
-  ks_x(-1,  1) = -1; ks_x(0,  1) = 0; ks_x(1,  1) = 1;
-
-  Func ks_y = Func("kernel_sobel_y");
-  ks_y(x, y) = 0;
-  ks_y(-1, -1) = -1; ks_y(0, -1) = -2; ks_y(1, -1) = -1;
-  ks_y(-1,  0) =  0; ks_y(0,  0) =  0; ks_y(1,  0) =  0;
-  ks_y(-1,  1) =  1; ks_y(0,  1) =  2; ks_y(1,  1) =  1;
-
-  Func gx = convolve_xy(gauss, ks_x, RDom(-1,3, -1,3, "rd_kernel_sobel_x"));
-  Func gy = convolve_xy(gauss, ks_y, RDom(-1,3, -1,3, "rd_kernel_sobel_y"));
+  Func gx = convolve_xy(gauss, kernel_sobel_x, rd_kernel);
+  Func gy = convolve_xy(gauss, kernel_sobel_y, rd_kernel);
 
   //
   // sobel x/y
@@ -323,13 +402,6 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
     value
   );
   hy(x, y) = th_val;
-
-  ks_x.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
-  ks_y.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
 
   gy.compute_root()
     .parallel(y, 8)
@@ -475,14 +547,12 @@ Func morphology_open_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
+  Func gray = gray_xy(in);
 
   Func f = morphology_open(gray, size);
   Func morph = Func("morphology_open");
   morph(x, y, ch) = f(x, y);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -495,14 +565,12 @@ Func morphology_close_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
+  Func gray = gray_xy(in);
 
   Func f = morphology_close(gray, size);
   Func morph = Func("morphology_close");
   morph(x, y, ch) = f(x, y);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -515,8 +583,7 @@ Func morphology_gradient_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0);
+  Func gray = gray_xy(in);
 
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
   Func morph = Func("morphology_gradient");
@@ -528,7 +595,6 @@ Func morphology_gradient_fn(
     .parallel(y, 16)
     .vectorize(x, 32);
 
-  gray.compute_root();
   return morph;
 }
 
@@ -773,13 +839,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  //Expr g = in(x, y, 1);
-  //Expr b = in(x, y, 2);
-  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
-  //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = r;
+  Func gray = gray_xy(in);
 
   Func gy = Func("gy");
   gy(x, y) = (gray(x, y + 1) - gray(x, y - 1)) / 2;
@@ -806,7 +866,6 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   edge.compute_root()
     .parallel(ch);
 
-  gray.compute_root();
   return edge;
 }
 
@@ -816,36 +875,16 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  Expr r = in(x, y, 0);
-  //Expr g = in(x, y, 1);
-  //Expr b = in(x, y, 2);
-  //Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
-  //Expr value = (r + g + b) / 3;
-  //gray(x, y) = cast<uint8_t>(value);
-  gray(x, y) = r;
+  Func gray = gray_xy(in);
 
-  Func kernel_y = Func("kernel_y");
-  kernel_y(x, y) = 0;
-  kernel_y(0, 0) = -1; kernel_y(1, 0) = -2; kernel_y(2, 0) = -1;
-  kernel_y(0, 1) =  0; kernel_y(1, 1) =  0; kernel_y(2, 1) =  0;
-  kernel_y(0, 2) =  1; kernel_y(1, 2) =  2; kernel_y(2, 2) =  1;
-
-  Func kernel_x = Func("kernel_x");
-  kernel_x(x, y) = 0;
-  kernel_x(0, 0) = -1; kernel_x(1, 0) = 0; kernel_x(2, 0) = 1;
-  kernel_x(0, 1) = -2; kernel_x(1, 1) = 0; kernel_x(2, 1) = 2;
-  kernel_x(0, 2) = -1; kernel_x(1, 2) = 0; kernel_x(2, 2) = 1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
   Func gy = Func("grad_y");
   Expr gy_in = gray(x + rd_kernel.x, y + rd_kernel.y);
-  Expr gy_val = kernel_y(rd_kernel.x, rd_kernel.y);
+  Expr gy_val = kernel_sobel_y(rd_kernel.x, rd_kernel.y);
   gy(x, y) += gy_in * gy_val;
 
   Func gx = Func("grad_x");
   Expr gx_in = gray(x + rd_kernel.x, y + rd_kernel.y);
-  Expr gx_val = kernel_x(rd_kernel.x, rd_kernel.y);
+  Expr gx_val = kernel_sobel_x(rd_kernel.x, rd_kernel.y);
   gx(x, y) += gx_in * gx_val;
 
   Func sobel = Func("sobel");
@@ -856,13 +895,6 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     ch == 3, 255,
     cast<uint8_t>(magnitude)
   );
-
-  kernel_x.compute_root()
-    .parallel(y)
-    .vectorize(x, 32);
-  kernel_y.compute_root()
-    .parallel(y)
-    .vectorize(x, 32);
 
   gy.compute_at(sobel, x)
     .parallel(y, 16)
@@ -875,7 +907,6 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .parallel(ch)
     .parallel(y, 8);
 
-  gray.compute_root();
   return sobel;
 }
 
@@ -888,8 +919,7 @@ Func canny_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+  Func gray = gray_xy(in);
 
   Func hy = canny(gray, threshold_max, threshold_min);
 
@@ -901,7 +931,6 @@ Func canny_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -916,8 +945,7 @@ Func canny_dilate_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+  Func gray = gray_xy(in);
 
   Func hy = canny(gray, threshold_max, threshold_min);
 
@@ -930,7 +958,6 @@ Func canny_dilate_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -946,8 +973,7 @@ Func canny_morphology_open_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+  Func gray = gray_xy(in);
 
   Func morph = morphology_open(gray, morphology_size);
 
@@ -965,7 +991,6 @@ Func canny_morphology_open_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -981,8 +1006,7 @@ Func canny_morphology_close_fn(
 
   Var x("x"), y("y"), ch("ch");
 
-  Func gray = Func("gray");
-  gray(x, y) = in(x, y, 0); // rgba(r) for grayscale
+  Func gray = gray_xy(in);
 
   Func morph = morphology_close(gray, morphology_size);
 
@@ -1000,7 +1024,6 @@ Func canny_morphology_close_fn(
   canny.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
-  gray.compute_root();
 
   return canny;
 }
@@ -1014,14 +1037,7 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = 0;
-  kernel(0, 1) = -1; kernel(1, 1) =  0; kernel(2, 1) = 1;
-  kernel(0, 2) =  0; kernel(1, 2) =  1; kernel(2, 2) = 1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  Func conv = convolve(in, kernel, rd_kernel);
+  Func conv = convolve(in, kernel_emboss, rd_kernel);
 
   Func emboss = Func("emboss");
   emboss(x, y, ch) = select(
@@ -1047,28 +1063,14 @@ Func laplacian_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = 0; kernel(1, 0) =  1; kernel(2, 0) = 0;
-  kernel(0, 1) = 1; kernel(1, 1) = -4; kernel(2, 1) = 1;
-  kernel(0, 2) = 0; kernel(1, 2) =  1; kernel(2, 2) = 0;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "laplacian");
+  return filter2d_gray(input, bounds, kernel_laplacian, rd_kernel, "laplacian");
 }
 
 Func highpass_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) = -1; kernel(1, 0) = -1; kernel(2, 0) = -1;
-  kernel(0, 1) = -1; kernel(1, 1) =  8; kernel(2, 1) = -1;
-  kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "highpass");
+  return filter2d_gray(input, bounds, kernel_highpass, rd_kernel, "highpass");
 }
 
 // gradient filter
@@ -1076,14 +1078,7 @@ Func gradient_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Region bounds = {{0, width},{0, height},{0, 4}};
 
-  Func kernel = Func("kernel");
-  kernel(x, y) = 0;
-  kernel(0, 0) =  1; kernel(1, 0) =  1; kernel(2, 0) =  1;
-  kernel(0, 1) =  0; kernel(1, 1) =  0; kernel(2, 1) =  0;
-  kernel(0, 2) = -1; kernel(1, 2) = -1; kernel(2, 2) = -1;
-
-  RDom rd_kernel = RDom(0,3, 0,3, "rd_kernel");
-  return filter2d_gray(input, bounds, kernel, rd_kernel, "gradient");
+  return filter2d_gray(input, bounds, kernel_gradient, rd_kernel, "gradient");
 }
 
 Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> block_size){

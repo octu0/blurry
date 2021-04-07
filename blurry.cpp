@@ -200,7 +200,7 @@ Func filter2d_gray(
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
     ch == 3, 255,
-    conv(x, y) & 128
+    cast<uint8_t>(conv(x, y) & 128)
   );
 
   conv.compute_root()

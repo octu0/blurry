@@ -594,7 +594,10 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Expr b = in(x, y, 2);
   Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
 
-  grayscale(x, y, ch) = cast<uint8_t>(value);
+  grayscale(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(value)
+  );
 
   grayscale.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

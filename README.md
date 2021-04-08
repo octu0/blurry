@@ -222,7 +222,7 @@ img, err := blurry.MorphologyCannyWithDilate(input, 250, 100, mode, morph_size, 
 
 ### Template Matching
 
-SAD(Sum of Absolute Difference) and SSD(Sum of Squared Difference) methods are available for template matching.
+SAD(Sum of Absolute Difference), SSD(Sum of Squared Difference) AND NCC(Normalized Cross Correlation) methods are available for template matching.
 
 #### SAD
 
@@ -232,9 +232,10 @@ scores, err := blurry.MatchTemplateSAD(input, template, threshold)
 
 | filter    | input                              | template                           | Result                                |
 | :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
-| none      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_sad.png)       |
-| grayscale | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_sad_gray.png)  |
-| sobel     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_sad_sobel.png) |
+| `none`      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_sad.png)       |
+| `grayscale` | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_sad_gray.png)  |
+| `sobel`     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_sad_sobel.png) |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png)     | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_sad_canny_morph_open_d3.png) |
 
 #### SSD
 
@@ -244,9 +245,10 @@ scores, err := blurry.MatchTemplateSSD(input, template, threshold)
 
 | filter    | input                              | template                           | Result                                |
 | :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
-| none      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_ssd.png)       |
-| grayscale | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_ssd_gray.png)  |
-| sobel     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_ssd_sobel.png) |
+| `none`      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_ssd.png)       |
+| `grayscale` | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_ssd_gray.png)  |
+| `sobel`     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_ssd_sobel.png) |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png)     | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_ssd_canny_morph_open_d3.png) |
 
 ## CLI usage
 

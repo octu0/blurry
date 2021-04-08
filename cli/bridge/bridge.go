@@ -91,3 +91,22 @@ func convertRGBA(img image.Image) *image.RGBA {
 	}
 	return out
 }
+
+func renderBox(dst *image.RGBA, startX, endX int, startY, endY int, c color.RGBA) {
+	// draw row : start
+	for x := startX; x < endX; x += 1 {
+		dst.SetRGBA(x, startY, c)
+	}
+	// draw row : end
+	for x := startX; x < endX; x += 1 {
+		dst.SetRGBA(x, endY, c)
+	}
+	// draw col : start
+	for y := startY; y < endY; y += 1 {
+		dst.SetRGBA(startX, y, c)
+	}
+	// draw col : end
+	for y := startY; y < endY; y += 1 {
+		dst.SetRGBA(endX, y, c)
+	}
+}

@@ -227,28 +227,42 @@ SAD(Sum of Absolute Difference), SSD(Sum of Squared Difference) AND NCC(Normaliz
 #### SAD
 
 ```go
-scores, err := blurry.MatchTemplateSAD(input, template, threshold)
+scores, err := blurry.MatchTemplateSAD(input, template, 1000)
 ```
 
-| filter    | input                              | template                           | Result                                |
-| :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
-| `none`      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_sad.png)       |
-| `grayscale` | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_sad_gray.png)  |
-| `sobel`     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_sad_sobel.png) |
-| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png)     | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_sad_canny_morph_open_d3.png) |
+| filter                       | input                                            | template                                         | Result                                              |
+| :--------------------------: | :----------------------------------------------: | :----------------------------------------------: | :-------------------------------------------------: |
+| `none`                       | ![example](testdata/src.png)                     | ![example](testdata/tpl.png)                     | ![example](testdata/mt_sad.png)                     |
+| `grayscale`                  | ![example](testdata/grayscale.png)               | ![example](testdata/tpl_gray.png)                | ![example](testdata/mt_sad_gray.png)                |
+| `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_sad_sobel.png)               |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_sad_canny_morph_open_d3.png) |
 
 #### SSD
 
 ```go
-scores, err := blurry.MatchTemplateSSD(input, template, threshold)
+scores, err := blurry.MatchTemplateSSD(input, template, 1000)
 ```
 
-| filter    | input                              | template                           | Result                                |
-| :-------: | :--------------------------------: | :--------------------------------: | :-----------------------------------: |
-| `none`      | ![example](testdata/src.png)       | ![example](testdata/tpl.png)       | ![example](testdata/mt_ssd.png)       |
-| `grayscale` | ![example](testdata/grayscale.png) | ![example](testdata/tpl_gray.png)  | ![example](testdata/mt_ssd_gray.png)  |
-| `sobel`     | ![example](testdata/sobel.png)     | ![example](testdata/tpl_sobel.png) | ![example](testdata/mt_ssd_sobel.png) |
-| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png)     | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_ssd_canny_morph_open_d3.png) |
+| filter                       | input                                            | template                                         | Result                                              |
+| :--------------------------: | :----------------------------------------------: | :----------------------------------------------: | :-------------------------------------------------: |
+| `none`                       | ![example](testdata/src.png)                     | ![example](testdata/tpl.png)                     | ![example](testdata/mt_ssd.png)                     |
+| `grayscale`                  | ![example](testdata/grayscale.png)               | ![example](testdata/tpl_gray.png)                | ![example](testdata/mt_ssd_gray.png)                |
+| `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_ssd_sobel.png)               |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_ssd_canny_morph_open_d3.png) |
+
+#### NCC
+
+```go
+scores, err := blurry.MatchTemplateNCC(input, template, 0.1)
+```
+
+| filter                       | input                                            | template                                         | Result                                              |
+| :--------------------------: | :----------------------------------------------: | :----------------------------------------------: | :-------------------------------------------------: |
+| `none`                       | ![example](testdata/src.png)                     | ![example](testdata/tpl.png)                     | ![example](testdata/mt_ncc.png)                     |
+| `grayscale`                  | ![example](testdata/grayscale.png)               | ![example](testdata/tpl_gray.png)                | ![example](testdata/mt_ncc_gray.png)                |
+| `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_ncc_sobel.png)               |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_ncc_canny_morph_open_d3.png) |
+
 
 ## CLI usage
 
@@ -318,36 +332,37 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                 : 0.01789ms
-BenchmarkJIT/rotate0                  : 0.01986ms
-BenchmarkJIT/rotate90                 : 0.08148ms
-BenchmarkJIT/rotate180                : 0.02055ms
-BenchmarkJIT/rotate270                : 0.09403ms
-BenchmarkJIT/grayscale                : 0.08608ms
-BenchmarkJIT/invert                   : 0.06483ms
-BenchmarkJIT/brightness               : 0.07079ms
-BenchmarkJIT/gammacorrection          : 0.10503ms
-BenchmarkJIT/contrast                 : 0.06942ms
-BenchmarkJIT/boxblur                  : 0.19393ms
-BenchmarkJIT/gaussianblur             : 0.16552ms
-BenchmarkJIT/blockmozaic              : 0.32501ms
-BenchmarkJIT/erosion                  : 0.09540ms
-BenchmarkJIT/dilation                 : 0.09335ms
-BenchmarkJIT/morphology_open          : 0.09122ms
-BenchmarkJIT/morphology_close         : 0.09307ms
-BenchmarkJIT/morphology_gradient      : 0.07916ms
-BenchmarkJIT/emboss$1                 : 0.15903ms
-BenchmarkJIT/laplacian                : 0.13108ms
-BenchmarkJIT/highpass                 : 0.13289ms
-BenchmarkJIT/gradient                 : 0.12516ms
-BenchmarkJIT/edge                     : 0.10689ms
-BenchmarkJIT/sobel                    : 0.10965ms
-BenchmarkJIT/canny                    : 0.59971ms
-BenchmarkJIT/canny_dilate             : 0.62082ms
-BenchmarkJIT/canny_morphology_open    : 0.69147ms
-BenchmarkJIT/canny_morphology_close   : 0.68410ms
-BenchmarkJIT/match_template_sad       : 5.34344ms
-BenchmarkJIT/match_template_ssd       : 4.25746ms
+BenchmarkJIT/cloneimg                 : 0.01862ms
+BenchmarkJIT/rotate0                  : 0.01951ms
+BenchmarkJIT/rotate90                 : 0.08718ms
+BenchmarkJIT/rotate180                : 0.02239ms
+BenchmarkJIT/rotate270                : 0.08980ms
+BenchmarkJIT/grayscale                : 0.08124ms
+BenchmarkJIT/invert                   : 0.06432ms
+BenchmarkJIT/brightness               : 0.06673ms
+BenchmarkJIT/gammacorrection          : 0.10340ms
+BenchmarkJIT/contrast                 : 0.06726ms
+BenchmarkJIT/boxblur                  : 0.18134ms
+BenchmarkJIT/gaussianblur             : 0.16342ms
+BenchmarkJIT/blockmozaic              : 0.31450ms
+BenchmarkJIT/erosion                  : 0.09010ms
+BenchmarkJIT/dilation                 : 0.09402ms
+BenchmarkJIT/morphology_open          : 0.08982ms
+BenchmarkJIT/morphology_close         : 0.09786ms
+BenchmarkJIT/morphology_gradient      : 0.09497ms
+BenchmarkJIT/emboss$1                 : 0.16786ms
+BenchmarkJIT/laplacian                : 0.13665ms
+BenchmarkJIT/highpass                 : 0.14077ms
+BenchmarkJIT/gradient                 : 0.14108ms
+BenchmarkJIT/edge                     : 0.10536ms
+BenchmarkJIT/sobel                    : 0.10951ms
+BenchmarkJIT/canny                    : 0.60258ms
+BenchmarkJIT/canny_dilate             : 0.63061ms
+BenchmarkJIT/canny_morphology_open    : 0.69504ms
+BenchmarkJIT/canny_morphology_close   : 0.69271ms
+BenchmarkJIT/match_template_sad       : 5.34206ms
+BenchmarkJIT/match_template_ssd       : 4.17693ms
+BenchmarkJIT/match_template_ncc       : 7.84047ms
 ```
 
 ## AOT benchmarks

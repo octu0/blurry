@@ -243,7 +243,7 @@ Expr dilate(Func in, RDom rd_dilate) {
 Func morphology_open(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
+  RDom rd_morph = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_morph_open");
 
   Func erode_tmp = Func("erode_tmp");
   erode_tmp(x, y) = erode(in, rd_morph);
@@ -269,7 +269,7 @@ Func morphology_open(Func in, Param<int32_t> size) {
 Func morphology_close(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
+  RDom rd_morph = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_morph_close");
 
   Func dilate_tmp = Func("dilate_tmp");
   dilate_tmp(x, y) = dilate(in, rd_morph);

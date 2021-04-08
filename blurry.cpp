@@ -679,7 +679,10 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
   value = cast<float>(value);
   value = fast_pow(value / 255.0f, e) * 255.0f;
 
-  gammacorrection(x, y, ch) = cast<uint8_t>(value);
+  gammacorrection(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(value)
+  );
 
   gammacorrection.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

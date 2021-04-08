@@ -12,6 +12,7 @@ const struct halide_type_t halide_int32_t = { halide_type_int, 32, 1 };
 const struct halide_type_t halide_uint8_t = { halide_type_uint,  8, 1 };
 const struct halide_type_t halide_uint16_t = { halide_type_uint, 16, 1 };
 const struct halide_type_t halide_float_t = { halide_type_float, 32, 1 };
+const struct halide_type_t halide_double_t = { halide_type_float, 64, 1 };
 
 halide_buffer_t *create_rgba_buffer(unsigned char *data, int32_t width, int32_t height) {
   int32_t dimensions = 3;
@@ -81,6 +82,24 @@ halide_buffer_t *create_float_array_buffer(unsigned char *data, int32_t width, i
 
   init_array_dim(dim, width, height);
   init_float_buf(buffer, dim, data, dimensions);
+
+  return buffer;
+}
+
+halide_buffer_t *create_double_array_buffer(unsigned char *data, int32_t width, int32_t height) {
+  int32_t dimensions = 2;
+  halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));
+  if(buffer == NULL) {
+    return NULL;
+  }
+  halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
+  if(dim == NULL) {
+    free(buffer);
+    return NULL;
+  }
+
+  init_array_dim(dim, width, height);
+  init_double_buf(buffer, dim, data, dimensions);
 
   return buffer;
 }
@@ -157,6 +176,16 @@ void init_float_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned c
   buffer->host = data;
   buffer->flags = halide_buffer_flag_host_dirty;
   buffer->type = halide_float_t;
+}
+
+void init_double_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
+  buffer->dimensions = dimensions;
+  buffer->dim = dim;
+  buffer->device = 0;
+  buffer->device_interface = NULL;
+  buffer->host = data;
+  buffer->flags = halide_buffer_flag_host_dirty;
+  buffer->type = halide_double_t;
 }
 
 void free_buf(halide_buffer_t *buffer) {

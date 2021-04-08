@@ -1188,8 +1188,8 @@ Func match_template_ncc_fn(
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
-  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-  Func t = gray_xy_uint8(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -1199,8 +1199,8 @@ Func match_template_ncc_fn(
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
 
   Func match = Func("match_template_ncc");
-  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
-  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
+  Expr src_val = cast<double>(in(x + rd_template.x, y + rd_template.y));
+  Expr tpl_val = cast<double>(t(rd_template.x, rd_template.y));
   Expr vector  = sum(src_val * tpl_val);
   Expr src_mag = sum(src_val * src_val);
   Expr tpl_mag = sum(tpl_val * tpl_val);

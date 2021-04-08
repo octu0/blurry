@@ -904,7 +904,10 @@ Func canny_fn(
   Func canny = Func("canny");
   Expr hysteresis = hy(x, y);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis)
+  );
 
   canny.compute_root()
     .parallel(y, 16)
@@ -929,7 +932,10 @@ Func canny_dilate_fn(
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis_dilate);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis_dilate)
+  );
 
   canny.compute_root()
     .parallel(y, 16)

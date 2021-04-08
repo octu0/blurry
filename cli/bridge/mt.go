@@ -126,11 +126,11 @@ func matchTemplateAction(c *cli.Context) error {
 		}
 		return logIntScore(ssdScores, in, tpl, c.Bool("render"))
 	case "ncc":
-		th, err := strconv.ParseFloat(threshold, 32)
+		th, err := strconv.ParseFloat(threshold, 64)
 		if err != nil {
 			return err
 		}
-		nccScores, err := blurry.MatchTemplateNCC(in, tpl, float32(th))
+		nccScores, err := blurry.MatchTemplateNCC(in, tpl, th)
 		if err != nil {
 			return err
 		}

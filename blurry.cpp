@@ -243,7 +243,7 @@ Expr dilate(Func in, RDom rd_dilate) {
 Func morphology_open(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_open");
+  RDom rd_morph = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_morph_open");
 
   Func erode_tmp = Func("erode_tmp");
   erode_tmp(x, y) = erode(in, rd_morph);
@@ -269,7 +269,7 @@ Func morphology_open(Func in, Param<int32_t> size) {
 Func morphology_close(Func in, Param<int32_t> size) {
   Var x("x"), y("y");
 
-  RDom rd_morph = RDom(0, size, 0, size, "rd_morph_close");
+  RDom rd_morph = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_morph_close");
 
   Func dilate_tmp = Func("dilate_tmp");
   dilate_tmp(x, y) = dilate(in, rd_morph);
@@ -679,7 +679,10 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
   value = cast<float>(value);
   value = fast_pow(value / 255.0f, e) * 255.0f;
 
-  gammacorrection(x, y, ch) = cast<uint8_t>(value);
+  gammacorrection(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(value)
+  );
 
   gammacorrection.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -904,7 +907,10 @@ Func canny_fn(
   Func canny = Func("canny");
   Expr hysteresis = hy(x, y);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis)
+  );
 
   canny.compute_root()
     .parallel(y, 16)
@@ -929,7 +935,10 @@ Func canny_dilate_fn(
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = cast<uint8_t>(hysteresis_dilate);
+  canny(x, y, ch) = select(
+    ch == 3, 255,
+    cast<uint8_t>(hysteresis_dilate)
+  );
 
   canny.compute_root()
     .parallel(y, 16)
@@ -1179,8 +1188,8 @@ Func match_template_ncc_fn(
 ) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
-  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-  Func t = gray_xy_uint8(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
 
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -1190,8 +1199,8 @@ Func match_template_ncc_fn(
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
 
   Func match = Func("match_template_ncc");
-  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
-  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
+  Expr src_val = cast<double>(in(x + rd_template.x, y + rd_template.y));
+  Expr tpl_val = cast<double>(t(rd_template.x, rd_template.y));
   Expr vector  = sum(src_val * tpl_val);
   Expr src_mag = sum(src_val * src_val);
   Expr tpl_mag = sum(tpl_val * tpl_val);

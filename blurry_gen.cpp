@@ -11,7 +11,7 @@ typedef struct mt_score_uint32 {
 typedef struct mt_score_float {
   int x;
   int y;
-  float score;
+  double score;
 } mt_score_float;
 
 void generate_static_link(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
@@ -141,7 +141,7 @@ Buffer<int32_t> jit_realize_int32_bounds(Func fn, int32_t width, int32_t height)
   return fn.realize({width, height, 3});
 }
 
-Buffer<float> jit_realize_float_bounds(Func fn, int32_t width, int32_t height) {
+Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
   printf("realize(int32_t) %s...\n", fn.name().c_str());
@@ -161,8 +161,8 @@ Buffer<int32_t> jit_realize_int32(Func fn, Buffer<uint8_t> src) {
   return jit_realize_int32_bounds(fn, src.get()->width(), src.get()->height());
 }
 
-Buffer<float> jit_realize_float(Func fn, Buffer<uint8_t> src) {
-  return jit_realize_float_bounds(fn, src.get()->width(), src.get()->height());
+Buffer<double> jit_realize_double(Func fn, Buffer<uint8_t> src) {
+  return jit_realize_double_bounds(fn, src.get()->width(), src.get()->height());
 }
 
 // {{{ cloneimg
@@ -1607,12 +1607,12 @@ int jit_match_template_ncc(char **argv) {
   Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
-  Buffer<float> out = jit_realize_float(match_template_ncc_fn(
+  Buffer<double> out = jit_realize_double(match_template_ncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
   ), buf_src);
 
-  float *data = out.data();
+  double *data = out.data();
   int32_t w = out.extent(0);
   int32_t h = out.extent(1);
 
@@ -1621,7 +1621,7 @@ int jit_match_template_ncc(char **argv) {
   for(int y = 0; y < h; y += 1) {
     for(int x = 0; x < w; x += 1) {
       int idx = (y * w) + x;
-      float score = data[idx];
+      double score = data[idx];
       if(score < 0.1) {
         continue; // threshold
       }

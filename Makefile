@@ -34,7 +34,7 @@ endif
 .PHONY: build-generator
 build-generator:
 	docker build -f Dockerfile.generator -t $(_HALIDE):$(_HALIDE_VER) .
-	docker tag $(_HALIDE):$(_HALIDE_VER) $(_NAME):latest
+	docker tag $(_HALIDE):$(_HALIDE_VER) $(_HALIDE):latest
 
 .PHONY: generate
 generate: build-generator

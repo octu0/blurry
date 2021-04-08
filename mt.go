@@ -96,7 +96,7 @@ int libmtncc(
     free_buf(in_src_buf);
     return 1;
   }
-  halide_buffer_t *out_buf = create_float_array_buffer(out, width, height);
+  halide_buffer_t *out_buf = create_double_array_buffer(out, width, height);
   if(out_buf == NULL){
     free_buf(in_src_buf);
     free_buf(in_tpl_buf);
@@ -135,11 +135,11 @@ type MatchTemplateIntScore struct {
 
 type MatchTemplateFloatScore struct {
 	Point image.Point
-	Score float32
+	Score float64
 }
 
 type byteSliceToIntScore func(data []byte) uint32
-type byteSliceToFloatScore func(data []byte) float32
+type byteSliceToFloatScore func(data []byte) float64
 
 func readUint16(data []byte) uint32 {
 	score := binary.LittleEndian.Uint16(data)
@@ -155,8 +155,8 @@ func readInt32(data []byte) uint32 {
 	return uint32(score)
 }
 
-func readFloat32(data []byte) float32 {
-	var score float32
+func readFloat32(data []byte) float64 {
+	var score float64
 	buf := bytes.NewBuffer(data)
 	if err := binary.Read(buf, binary.LittleEndian, &score); err != nil {
 		return -1.0
@@ -164,16 +164,16 @@ func readFloat32(data []byte) float32 {
 	return score
 }
 
-func makeScoresUint16(data []byte, width, height int, threshold uint16) []MatchTemplateIntScore {
-	return makeIntScore(data, width, height, uint32(threshold), readUint16, C.sizeof_uint16_t)
+func makeScoresUint16(data []byte, width, height int, threshold uint16, bitSize int) []MatchTemplateIntScore {
+	return makeIntScore(data, width, height, uint32(threshold), readUint16, bitSize)
 }
 
-func makeScoresInt32(data []byte, width, height int, threshold uint32) []MatchTemplateIntScore {
-	return makeIntScore(data, width, height, threshold, readInt32, C.sizeof_int32_t)
+func makeScoresInt32(data []byte, width, height int, threshold uint32, bitSize int) []MatchTemplateIntScore {
+	return makeIntScore(data, width, height, threshold, readInt32, bitSize)
 }
 
-func makeScoresFloat32(data []byte, width, height int, threshold float32) []MatchTemplateFloatScore {
-	return makeFloatScore(data, width, height, threshold, readFloat32, C.sizeof_float)
+func makeScoresFloat32(data []byte, width, height int, threshold float64, bitSize int) []MatchTemplateFloatScore {
+	return makeFloatScore(data, width, height, threshold, readFloat32, bitSize)
 }
 
 func makeIntScore(data []byte, width, height int, threshold uint32, reader byteSliceToIntScore, bitSize int) []MatchTemplateIntScore {
@@ -197,7 +197,7 @@ func makeIntScore(data []byte, width, height int, threshold uint32, reader byteS
 	return scores
 }
 
-func makeFloatScore(data []byte, width, height int, threshold float32, reader byteSliceToFloatScore, bitSize int) []MatchTemplateFloatScore {
+func makeFloatScore(data []byte, width, height int, threshold float64, reader byteSliceToFloatScore, bitSize int) []MatchTemplateFloatScore {
 	scores := make([]MatchTemplateFloatScore, 0, width*height)
 	offset := 0
 	for y := 0; y < height; y += 1 {
@@ -205,6 +205,9 @@ func makeFloatScore(data []byte, width, height int, threshold float32, reader by
 			score := reader(data[offset : offset+bitSize])
 			offset += bitSize
 
+			if math.IsNaN(score) {
+				continue
+			}
 			if score < threshold { // best match is nearest to 1.0
 				continue
 			}
@@ -237,14 +240,14 @@ func MatchTemplateSAD(img *image.RGBA, tpl *image.RGBA, threshold uint16) ([]Mat
 	if int(ret) != 0 {
 		return nil, ErrMatchTemplateSAD
 	}
-	return makeScoresUint16(out, width, height, threshold), nil
+	return makeScoresUint16(out, width, height, threshold, C.sizeof_uint16_t), nil
 }
 
 func MatchTemplateSSD(img *image.RGBA, tpl *image.RGBA, threshold uint32) ([]MatchTemplateIntScore, error) {
 	width, height := wh(img)
 	tplWidth, tplHeight := wh(tpl)
 
-	out := GetByteBuf(width * height * C.sizeof_uint32_t)
+	out := GetByteBuf(width * height * C.sizeof_int32_t)
 	defer PutByteBuf(out)
 
 	ret := C.libmtssd(
@@ -259,14 +262,14 @@ func MatchTemplateSSD(img *image.RGBA, tpl *image.RGBA, threshold uint32) ([]Mat
 	if int(ret) != 0 {
 		return nil, ErrMatchTemplateSSD
 	}
-	return makeScoresInt32(out, width, height, threshold), nil
+	return makeScoresInt32(out, width, height, threshold, C.sizeof_int32_t), nil
 }
 
-func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float32) ([]MatchTemplateFloatScore, error) {
+func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]MatchTemplateFloatScore, error) {
 	width, height := wh(img)
 	tplWidth, tplHeight := wh(tpl)
 
-	out := GetByteBuf(width * height * C.sizeof_float)
+	out := GetByteBuf(width * height * C.sizeof_double)
 	defer PutByteBuf(out)
 
 	ret := C.libmtncc(
@@ -281,5 +284,5 @@ func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float32) ([]Ma
 	if int(ret) != 0 {
 		return nil, ErrMatchTemplateSSD
 	}
-	return makeScoresFloat32(out, width, height, threshold), nil
+	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }

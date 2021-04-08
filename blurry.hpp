@@ -106,4 +106,9 @@ Func match_template_ssd_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );
+
+Func match_template_ncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
 #endif // BLURRY_H_

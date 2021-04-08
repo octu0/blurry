@@ -1172,3 +1172,43 @@ Func match_template_ssd_fn(
     .vectorize(x, 32);
   return match;
 }
+
+Func match_template_ncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  Func t = gray_xy_uint8(BoundaryConditions::repeat_edge(tpl, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("match_template_ncc");
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
+  Expr vector  = sum(src_val * tpl_val);
+  Expr src_mag = sum(src_val * src_val);
+  Expr tpl_mag = sum(tpl_val * tpl_val);
+  Expr value = vector / sqrt(src_mag * tpl_mag);
+
+  match(x, y) = value;
+ 
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  in.compute_root();
+  t.compute_root()
+    .parallel(y, 16)
+    .vectorize(x, 32);
+
+  return match;
+}

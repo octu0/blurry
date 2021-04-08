@@ -291,7 +291,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.11.0
+   1.13.0
 
 COMMANDS:
      blockmozaic
@@ -312,9 +312,10 @@ COMMANDS:
      invert
      laplacian
      morphology
+     match_template
      rotate
      sobel
-     help, h       Shows a list of commands or help for one command
+     help, h         Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --debug, -d    debug mode

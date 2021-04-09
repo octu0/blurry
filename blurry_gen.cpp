@@ -144,7 +144,7 @@ Buffer<int32_t> jit_realize_int32_bounds(Func fn, int32_t width, int32_t height)
 Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
-  printf("realize(int32_t) %s...\n", fn.name().c_str());
+  printf("realize(double) %s...\n", fn.name().c_str());
   
   return fn.realize({width, height, 3});
 }
@@ -1655,6 +1655,89 @@ int benchmark_match_template_ncc(
 }
 // }}} match_template_ncc
 
+// {{{ match_template_zncc
+void generate_match_template_zncc(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam tpl(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(src);
+  init_input_rgba(tpl);
+
+  Func fn = match_template_zncc_fn(
+    src.in(), width, height,
+    tpl.in(), tpl_width, tpl_height
+  );
+
+  init_output_array(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    tpl, tpl_width, tpl_height
+  }, fn.name());
+}
+
+int jit_match_template_zncc(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> buf_tpl = load_and_convert_image(argv[3]);
+  Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
+  Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
+
+  Buffer<double> out = jit_realize_double(match_template_zncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+  ), buf_src);
+
+  double *data = out.data();
+  int32_t w = out.extent(0);
+  int32_t h = out.extent(1);
+
+  std::vector<mt_score_float> vec;
+  printf("output w:%d, h:%d\n", w, h);
+  for(int y = 0; y < h; y += 1) {
+    for(int x = 0; x < w; x += 1) {
+      int idx = (y * w) + x;
+      double score = data[idx];
+      if(score < 0.1) {
+        continue; // threshold
+      }
+
+      vec.push_back({ x, y, score });
+    }
+  }
+  std::sort(vec.begin(), vec.end(), [](const mt_score_float a, const mt_score_float b) {
+    return a.score > b.score; // desc. best match is nearest to 1.0
+  });
+
+  int lim = 0;
+  for(const mt_score_float e : vec) {
+    if(10 < lim) { // top10
+      break;
+    }
+    printf("x:%d y:%d score:%2.5f\n", e.x, e.y, e.score);
+    lim += 1;
+  }
+  return 0;
+}
+
+int benchmark_match_template_zncc(
+  Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
+  Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+){
+  return jit_benchmark(match_template_zncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+  ), buf_src);
+}
+// }}} match_template_zncc
+
 void generate(){
   printf("generate...\n");
 
@@ -1701,6 +1784,7 @@ void generate(){
   generate_match_template_sad(features);
   generate_match_template_ssd(features);
   generate_match_template_ncc(features);
+  generate_match_template_zncc(features);
 }
 
 void benchmark(char **argv) {
@@ -1745,6 +1829,7 @@ void benchmark(char **argv) {
   benchmark_match_template_sad(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 
 int main(int argc, char **argv) {
@@ -1849,6 +1934,9 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "match_template_ncc") == 0) {
     return jit_match_template_ncc(argv);
+  }
+  if(strcmp(argv[1], "match_template_zncc") == 0) {
+    return jit_match_template_zncc(argv);
   }
 
   printf("unknown command: %s\n", argv[1]);

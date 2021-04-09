@@ -1175,7 +1175,9 @@ Func match_template_ssd_fn(
     .parallel(ti)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
   t.compute_root()
     .parallel(y, 16)
     .vectorize(x, 32);
@@ -1201,23 +1203,74 @@ Func match_template_ncc_fn(
   Func match = Func("match_template_ncc");
   Expr src_val = cast<double>(in(x + rd_template.x, y + rd_template.y));
   Expr tpl_val = cast<double>(t(rd_template.x, rd_template.y));
-  Expr vector  = sum(src_val * tpl_val);
-  Expr src_mag = sum(src_val * src_val);
-  Expr tpl_mag = sum(tpl_val * tpl_val);
-  Expr value = vector / sqrt(src_mag * tpl_mag);
 
-  match(x, y) = value;
- 
+  Func vector = Func("vector");
+  Func src_mag = Func("src_magnitude");
+  Func tpl_mag = Func("tpl_magnitude");
+  vector(x, y) += src_val * tpl_val;
+  src_mag(x, y) += fast_pow(src_val, 2);
+  tpl_mag(x, y) += fast_pow(tpl_val, 2);
+
+  match(x, y) = vector(x, y) / sqrt(src_mag(x, y) * tpl_mag(x, y));
+
   match.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
     .fuse(xo, yo, ti)
     .parallel(ti)
-    .vectorize(xi, 32);
-
-  in.compute_root();
+    .vectorize(xi, 16);
+  in.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
   t.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
+    .parallel(y, 8)
+    .vectorize(x, 16);
+  return match;
+}
 
+Func match_template_zncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("match_template_zncc");
+  Expr tpl_size = cast<double>(tpl_width * tpl_height);
+  Expr src_val = cast<double>(in(x + rd_template.x, y + rd_template.y));
+  Expr tpl_val = cast<double>(t(rd_template.x, rd_template.y));
+
+  Expr src_avg = sum(src_val) / tpl_size;
+  Expr tpl_avg = sum(tpl_val) / tpl_size;
+
+  Func vector = Func("vector");
+  Func src_mag = Func("src_magnitude");
+  Func tpl_mag = Func("tpl_magnitude");
+
+  vector(x, y) += (src_val - src_avg) * (tpl_val - tpl_avg);
+  src_mag(x, y) += fast_pow(src_val - src_avg, 2);
+  tpl_mag(x, y) += fast_pow(tpl_val - tpl_avg, 2);
+
+  match(x, y) = vector(x, y) / sqrt(src_mag(x, y) * tpl_mag(x, y));
+
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 16);
+  in.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
+  t.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 16);
   return match;
 }

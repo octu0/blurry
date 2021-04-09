@@ -49,7 +49,7 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "m,mode",
-				Usage: "matching method: sad,ssd,ncc",
+				Usage: "matching method: sad,ssd,ncc,zncc",
 				Value: "sad",
 			},
 		},

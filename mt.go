@@ -2,8 +2,8 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -lmatch_template_zncc_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -lmatch_template_zncc_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,10 +12,12 @@ package blurry
 #include "libmatch_template_sad_osx.h"
 #include "libmatch_template_ssd_osx.h"
 #include "libmatch_template_ncc_osx.h"
+#include "libmatch_template_zncc_osx.h"
 #elif __linux__
 #include "libmatch_template_sad_linux.h"
 #include "libmatch_template_ssd_linux.h"
 #include "libmatch_template_ncc_linux.h"
+#include "libmatch_template_zncc_linux.h"
 #endif
 
 int libmtsad(
@@ -113,6 +115,38 @@ int libmtncc(
   free_buf(out_buf);
   return ret;
 }
+
+int libmtzncc(
+  unsigned char *src, int32_t width, int32_t height,
+  unsigned char *tpl, int32_t tpl_width, int32_t tpl_height,
+  unsigned char *out
+) {
+  halide_buffer_t *in_src_buf = create_rgba_buffer(src, width, height);
+  if(in_src_buf == NULL){
+    return 1;
+  }
+  halide_buffer_t *in_tpl_buf = create_rgba_buffer(tpl, tpl_width, tpl_height);
+  if(in_tpl_buf == NULL){
+    free_buf(in_src_buf);
+    return 1;
+  }
+  halide_buffer_t *out_buf = create_double_array_buffer(out, width, height);
+  if(out_buf == NULL){
+    free_buf(in_src_buf);
+    free_buf(in_tpl_buf);
+    return 1;
+  }
+
+  int ret = match_template_zncc(
+    in_src_buf, width, height,
+    in_tpl_buf, tpl_width, tpl_height,
+    out_buf
+  );
+  free_buf(in_src_buf);
+  free_buf(in_tpl_buf);
+  free_buf(out_buf);
+  return ret;
+}
 */
 import "C"
 import (
@@ -124,8 +158,10 @@ import (
 )
 
 var (
-	ErrMatchTemplateSAD = errors.New("match_template_sad cgo call error")
-	ErrMatchTemplateSSD = errors.New("match_template_ssd cgo call error")
+	ErrMatchTemplateSAD  = errors.New("match_template_sad cgo call error")
+	ErrMatchTemplateSSD  = errors.New("match_template_ssd cgo call error")
+	ErrMatchTemplateNCC  = errors.New("match_template_ncc cgo call error")
+	ErrMatchTemplateZNCC = errors.New("match_template_zncc cgo call error")
 )
 
 type MatchTemplateIntScore struct {
@@ -282,7 +318,29 @@ func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]Ma
 		(*C.uchar)(&out[0]),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMatchTemplateSSD
+		return nil, ErrMatchTemplateNCC
+	}
+	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
+}
+
+func MatchTemplateZNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]MatchTemplateFloatScore, error) {
+	width, height := wh(img)
+	tplWidth, tplHeight := wh(tpl)
+
+	out := GetByteBuf(width * height * C.sizeof_double)
+	defer PutByteBuf(out)
+
+	ret := C.libmtzncc(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&tpl.Pix[0]),
+		C.int(tplWidth),
+		C.int(tplHeight),
+		(*C.uchar)(&out[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrMatchTemplateZNCC
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }

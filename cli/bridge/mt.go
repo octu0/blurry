@@ -135,6 +135,16 @@ func matchTemplateAction(c *cli.Context) error {
 			return err
 		}
 		return logFloatScore(nccScores, in, tpl, c.Bool("render"))
+	case "zncc":
+		th, err := strconv.ParseFloat(threshold, 64)
+		if err != nil {
+			return err
+		}
+		nccScores, err := blurry.MatchTemplateZNCC(in, tpl, th)
+		if err != nil {
+			return err
+		}
+		return logFloatScore(nccScores, in, tpl, c.Bool("render"))
 	}
 	return nil
 }

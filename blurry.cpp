@@ -805,8 +805,6 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr radius = cast<int16_t>(ceil(sigma * 3));
-  Expr acos_v = -1;
-  Expr pi = acos(acos_v);
   Expr sig2 = 2 * sigma * sigma;
   Expr sigR = sigma * sqrt(2 * pi);
 
@@ -1339,7 +1337,7 @@ Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
   Expr s = sum(val - avg);
   return Tuple(
-    fast_pow(s, 0.5f) / size, // 0.5 = sqrt
+    sqrt(s) / size,
     avg
   );
 }
@@ -1349,7 +1347,7 @@ Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
   Expr val = cast<float>(in(rd.x, rd.y));
   Expr s = sum(val - avg);
   return Tuple(
-    fast_pow(s, 0.5f) / size, // 0.5 = sqrt
+    sqrt(s) / size,
     avg
   );
 }

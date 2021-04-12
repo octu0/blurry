@@ -1887,7 +1887,6 @@ void benchmark(char **argv) {
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
   printf("src %dx%d\n", width.get(), height.get());
-  /*
   benchmark_cloneimg(buf_src, width, height);
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
@@ -1916,12 +1915,12 @@ void benchmark(char **argv) {
   benchmark_canny_dilate(buf_src, width, height);
   benchmark_canny_morphology_open(buf_src, width, height);
   benchmark_canny_morphology_close(buf_src, width, height);
-  */
   benchmark_match_template_sad(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
-  benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  // too slow
+  //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 
 int main(int argc, char **argv) {

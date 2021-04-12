@@ -1350,6 +1350,77 @@ Func zncc_stddev_tpl(Func in, RDom rd, Expr size, Func avg) {
   return stddev;
 }
 
+Func prepare_zncc_template_fn(
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func serialize = Func("prepare_zncc_template");
+  Expr tpl_size = cast<float>(tpl_width * tpl_height);
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func tpl_avg = zncc_avg_tpl(t, rd_template, tpl_size);
+  Func tpl_stddev = zncc_stddev_tpl(t, rd_template, tpl_size, tpl_avg);
+
+  serialize(x, y) = Tuple(
+    cast<float>(t(x, y) - tpl_avg(_)),
+    tpl_stddev(_)
+  );
+
+  serialize.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 16);
+  return serialize;
+}
+
+Func prepared_match_template_zncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func buf_tpl_val, Func buf_tpl_stddev,
+  Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("prepared_match_template_zncc");
+  Expr tpl_size = cast<float>(tpl_width * tpl_height);
+  Func src_avg = zncc_avg(in, rd_template, tpl_size);
+  Func src_stddev = zncc_stddev(in, rd_template, tpl_size, src_avg);
+
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_avg(x, y);
+  Expr tpl_val = cast<float>(buf_tpl_val(rd_template.x, rd_template.y));
+  Expr s = cast<float>(sum(src_val * tpl_val));
+  Expr v = s / sqrt(src_stddev(x, y) * buf_tpl_stddev(0, 0));
+  match(x, y) = cast<double>(v);
+
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  src_avg.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  src_stddev.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  in.compute_root();
+  return match;
+}
+
 Func match_template_zncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height

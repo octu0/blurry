@@ -1322,6 +1322,38 @@ Func match_template_ncc_fn(
   return match;
 }
 
+Expr zncc_avg(Func in, RDom rd, Var x, Var y, Expr size) {
+  Expr val = cast<float>(in(x + rd.x, y + rd.y));
+  Expr avg = sum(val) / size;
+  return avg;
+}
+
+Expr zncc_avg_tpl(Func in, RDom rd, Expr size) {
+  Expr val = cast<float>(in(rd.x, rd.y));
+  Expr avg = sum(val) / size;
+  return avg;
+}
+
+Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
+  Expr avg = zncc_avg(in, rd, x, y, size);
+  Expr val = cast<float>(in(x + rd.x, y + rd.y));
+  Expr s = sum(val - avg);
+  return Tuple(
+    fast_pow(s, 0.5f) / size, // 0.5 = sqrt
+    avg
+  );
+}
+
+Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
+  Expr avg = zncc_avg_tpl(in, rd, size);
+  Expr val = cast<float>(in(rd.x, rd.y));
+  Expr s = sum(val - avg);
+  return Tuple(
+    fast_pow(s, 0.5f) / size, // 0.5 = sqrt
+    avg
+  );
+}
+
 Func match_template_zncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
@@ -1340,19 +1372,14 @@ Func match_template_zncc_fn(
 
   Func match = Func("match_template_zncc");
   Expr tpl_size = cast<float>(tpl_width * tpl_height);
-  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
-  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
+  Tuple src_std = zncc_stddev(in, rd_template, x, y, tpl_size);
+  Tuple tpl_std = zncc_stddev_tpl(t, rd_template, tpl_size);
 
-  Expr src_avg = sum(src_val) / tpl_size;
-  Expr tpl_avg = sum(tpl_val) / tpl_size;
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_std[1];
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_std[1];
+  Expr s = sum(src_val * tpl_val);
 
-  Expr s_v = src_val - src_avg;
-  Expr t_v = tpl_val - tpl_avg;
-  Expr vector = sum((s_v) * (t_v));
-  Expr src_mag = sum(fast_pow(s_v, 2));
-  Expr tpl_mag = sum(fast_pow(t_v, 2));
-
-  match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
+  match(x, y) = s / (src_std[0] * tpl_std[0]);
 
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

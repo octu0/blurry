@@ -1921,7 +1921,7 @@ void benchmark(char **argv) {
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
-  //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 
 int main(int argc, char **argv) {

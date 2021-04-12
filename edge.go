@@ -2,16 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ledge_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ledge_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ledgedetect_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ledgedetect_linux -ldl -lm
 #include <stdlib.h>
 #include <string.h>
 
 #include "bridge.h"
 #ifdef __APPLE__
-#include "libedge_osx.h"
+#include "libedgedetect_osx.h"
 #elif __linux__
-#include "libedge_linux.h"
+#include "libedgedetect_linux.h"
 #endif
 
 int libedge(unsigned char *src, int32_t width, int32_t height, unsigned char *out) {
@@ -25,7 +25,7 @@ int libedge(unsigned char *src, int32_t width, int32_t height, unsigned char *ou
     return 1;
   }
 
-  int ret = edge(in_rgba_buf, width, height, out_rgba_buf);
+  int ret = edgedetect(in_rgba_buf, width, height, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;

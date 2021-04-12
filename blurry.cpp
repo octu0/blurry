@@ -890,7 +890,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Func gx = Func("gx");
   gx(x, y) = (in(x + 1, y) - in(x - 1, y)) / 2;
 
-  Func edge = Func("edge");
+  Func edge = Func("edgedetect");
   Expr pow_gy = fast_pow(gy(x, y), 2);
   Expr pow_gx = fast_pow(gx(x, y), 2);
   Expr magnitude = pow_gy + pow_gx;
@@ -909,6 +909,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   edge.compute_root()
     .parallel(ch);
 
+  in.compute_root();
   return edge;
 }
 

@@ -122,6 +122,16 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   return 0;
 }
 
+int jit_benchmark_once(Func fn, Buffer<uint8_t> buf_src) {
+  fn.compile_jit(get_jit_target_from_environment());
+
+  double result = benchmark(1, 1, [&]() {
+    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+  });
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  return 0;
+}
+
 Buffer<uint8_t> jit_realize_uint8_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
@@ -1954,8 +1964,7 @@ void benchmark(char **argv) {
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
-  // too slow
-  //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 
 int main(int argc, char **argv) {

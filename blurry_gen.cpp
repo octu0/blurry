@@ -88,6 +88,11 @@ void init_input_rgba(ImageParam in) {
   in.dim(2).set_bounds(0, 4);
 }
 
+void init_input_array(ImageParam in, Param<int32_t> width, Param<int32_t> height) {
+  in.dim(0).set_stride(1);
+  in.dim(1).set_stride(width);
+}
+
 void init_output_rgba(OutputImageParam out) {
   out.dim(0).set_stride(4);
   out.dim(2).set_stride(1);
@@ -1655,10 +1660,29 @@ int benchmark_match_template_ncc(
 }
 // }}} match_template_ncc
 
+// {{{ prepare_ncc_template
+void generate_prepare_ncc_template(std::vector<Target::Feature> features) {
+  ImageParam tpl(type_of<uint8_t>(), 3);
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(tpl);
+
+  Func fn = prepare_ncc_template_fn(
+    tpl.in(), tpl_width, tpl_height
+  );
+
+  generate_static_link(features, fn, {
+    tpl, tpl_width, tpl_height
+  }, fn.name());
+}
+// }}} prepare_ncc_template
+
 // {{{ prepared_match_template_ncc
 void generate_prepared_match_template_ncc(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
-  ImageParam tpl(type_of<uint8_t>(), 3);
+  ImageParam buf_tpl_val(type_of<float>(), 2);
+  ImageParam buf_tpl_sum(type_of<float>(), 2);
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1666,18 +1690,21 @@ void generate_prepared_match_template_ncc(std::vector<Target::Feature> features)
   Param<int32_t> tpl_height{"tpl_height", 60};
 
   init_input_rgba(src);
-  init_input_rgba(tpl);
+  init_input_array(buf_tpl_val, tpl_width, tpl_height);
+  init_input_array(buf_tpl_val, tpl_width, tpl_height);
 
-  Func fn = match_template_ncc_fn(
+  Func fn = prepated_match_template_ncc_fn(
     src.in(), width, height,
-    tpl.in(), tpl_width, tpl_height
+    buf_tpl_val.in(), buf_tpl_sum.in(),
+    tpl_width, tpl_height
   );
 
   init_output_array(fn.output_buffer(), width, height);
 
   generate_static_link(features, fn, {
     src, width, height,
-    tpl, tpl_width, tpl_height
+    buf_tpl_val, buf_tpl_sum,
+    tpl_width, tpl_height
   }, fn.name());
 }
 
@@ -1690,9 +1717,15 @@ int jit_prepared_match_template_ncc(char **argv) {
   Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
-  Buffer<double> out = jit_realize_double(match_template_ncc_fn(
+  Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
+  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Buffer<float> buf_tpl_val = r[0];
+  Buffer<float> buf_tpl_sum = r[1];
+
+  Buffer<double> out = jit_realize_double(prepated_match_template_ncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
+    tpl_width, tpl_height
   ), buf_src);
 
   double *data = out.data();
@@ -1731,7 +1764,7 @@ int benchmark_prepared_match_template_ncc(
   Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
-  Func fn = prepare_ncc_template(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
+  Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
   Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_sum = r[1];
@@ -1874,6 +1907,8 @@ void generate(){
   generate_match_template_ssd(features);
   generate_match_template_ncc(features);
   generate_match_template_zncc(features);
+  generate_prepare_ncc_template(features);
+  generate_prepared_match_template_ncc(features);
 }
 
 void benchmark(char **argv) {
@@ -2025,6 +2060,9 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "match_template_ncc") == 0) {
     return jit_match_template_ncc(argv);
+  }
+  if(strcmp(argv[1], "prepared_match_template_ncc") == 0) {
+    return jit_prepared_match_template_ncc(argv);
   }
   if(strcmp(argv[1], "match_template_zncc") == 0) {
     return jit_match_template_zncc(argv);

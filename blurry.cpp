@@ -1217,7 +1217,7 @@ Func match_template_ssd_fn(
   return match;
 }
 
-Func prepare_ncc_template(
+Func prepare_ncc_template_fn(
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ) {
   Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
@@ -1228,7 +1228,7 @@ Func prepare_ncc_template(
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  Func serialize = Func("serialize_ncc");
+  Func serialize = Func("prepare_ncc_template");
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
   Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
   Expr serialize_sum = sum(fast_pow(tpl_val, 2));
@@ -1322,20 +1322,20 @@ Func match_template_ncc_fn(
 
 Expr zncc_avg(Func in, RDom rd, Var x, Var y, Expr size) {
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  Expr avg = sum(val) / size;
+  Expr avg = cast<float>(sum(val) / size);
   return avg;
 }
 
 Expr zncc_avg_tpl(Func in, RDom rd, Expr size) {
   Expr val = cast<float>(in(rd.x, rd.y));
-  Expr avg = sum(val) / size;
+  Expr avg = cast<float>(sum(val) / size);
   return avg;
 }
 
 Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
   Expr avg = zncc_avg(in, rd, x, y, size);
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  Expr s = sum(val - avg);
+  Expr s = cast<float>(sum(val - avg));
   return Tuple(
     sqrt(s) / size,
     avg
@@ -1345,7 +1345,7 @@ Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
 Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
   Expr avg = zncc_avg_tpl(in, rd, size);
   Expr val = cast<float>(in(rd.x, rd.y));
-  Expr s = sum(val - avg);
+  Expr s = cast<float>(sum(val - avg));
   return Tuple(
     sqrt(s) / size,
     avg
@@ -1377,7 +1377,7 @@ Func match_template_zncc_fn(
   Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_std[1];
   Expr s = sum(src_val * tpl_val);
 
-  match(x, y) = s / (src_std[0] * tpl_std[0]);
+  match(x, y) = cast<double>(s / fast_pow(tpl_size, 2) * (src_std[0] * tpl_std[0]));
 
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

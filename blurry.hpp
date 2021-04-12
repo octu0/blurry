@@ -122,7 +122,7 @@ Func match_template_ncc_fn(
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );
 
-Func prepare_ncc_template(
+Func prepare_ncc_template_fn(
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );
 

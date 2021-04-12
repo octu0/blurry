@@ -2,8 +2,8 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -lmatch_template_zncc_osx -lprepare_ncc_template_osx -lprepared_match_template_ncc_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -lmatch_template_zncc_linux -lprepare_ncc_template_linux -lprepared_match_template_ncc_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -lmatch_template_zncc_osx -lprepare_ncc_template_osx -lprepared_match_template_ncc_osx -lprepare_zncc_template_osx -lprepared_match_template_zncc_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -lmatch_template_zncc_linux -lprepare_ncc_template_linux -lprepared_match_template_ncc_linux -lprepare_zncc_template_linux -lprepared_match_template_zncc_linux -ldl -lm
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,17 +19,24 @@ import (
 )
 
 var (
-	ErrMatchTemplateSAD         = errors.New("match_template_sad cgo call error")
-	ErrMatchTemplateSSD         = errors.New("match_template_ssd cgo call error")
-	ErrMatchTemplateNCC         = errors.New("match_template_ncc cgo call error")
-	ErrMatchTemplateZNCC        = errors.New("match_template_zncc cgo call error")
-	ErrCreatePrepareNCCTemplate = errors.New("create_prepare_ncc_template cgo call error")
-	ErrPrepareNCCTemplate       = errors.New("prepare_ncc_template cgo call error")
-  ErrPreparedMatchTemplateNCC = errors.New("prepated_match_template_ncc cgo call error")
+	ErrMatchTemplateSAD          = errors.New("match_template_sad cgo call error")
+	ErrMatchTemplateSSD          = errors.New("match_template_ssd cgo call error")
+	ErrMatchTemplateNCC          = errors.New("match_template_ncc cgo call error")
+	ErrMatchTemplateZNCC         = errors.New("match_template_zncc cgo call error")
+	ErrCreatePrepareNCCTemplate  = errors.New("create_prepare_ncc_template cgo call error")
+	ErrPrepareNCCTemplate        = errors.New("prepare_ncc_template cgo call error")
+	ErrPreparedMatchTemplateNCC  = errors.New("prepated_match_template_ncc cgo call error")
+	ErrCreatePrepareZNCCTemplate = errors.New("create_prepare_zncc_template cgo call error")
+	ErrPrepareZNCCTemplate       = errors.New("prepare_zncc_template cgo call error")
+	ErrPreparedMatchTemplateZNCC = errors.New("prepated_match_template_zncc cgo call error")
 )
 
 type PreparedNCCTpl struct {
-  prepared *C.prepared_ncc_template_t
+	prepared *C.prepared_ncc_template_t
+}
+
+type PreparedZNCCTpl struct {
+	prepared *C.prepared_zncc_template_t
 }
 
 type MatchTemplateIntScore struct {
@@ -194,36 +201,58 @@ func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]Ma
 func PrepareNCCTemplate(tpl *image.RGBA) (*PreparedNCCTpl, error) {
 	tplWidth, tplHeight := wh(tpl)
 
-  p := C.create_prepare_ncc_template(C.int(tplWidth), C.int(tplHeight));
-  if p == nil {
-    return nil, ErrCreatePrepareNCCTemplate
-  }
+	p := C.create_prepare_ncc_template(C.int(tplWidth), C.int(tplHeight))
+	if p == nil {
+		return nil, ErrCreatePrepareNCCTemplate
+	}
 
-  ret := C.libpreparencctpl(
-    (*C.uchar)(&tpl.Pix[0]),
-    p,
-  )
-  if ret != 0 {
-    return nil, ErrPrepareNCCTemplate
-  }
-  return &PreparedNCCTpl{prepared: p}, nil
+	ret := C.libprepare_ncc_tpl(
+		(*C.uchar)(&tpl.Pix[0]),
+		p,
+	)
+	if ret != 0 {
+		return nil, ErrPrepareNCCTemplate
+	}
+	return &PreparedNCCTpl{prepared: p}, nil
+}
+
+func PrepareZNCCTemplate(tpl *image.RGBA) (*PreparedZNCCTpl, error) {
+	tplWidth, tplHeight := wh(tpl)
+
+	p := C.create_prepare_zncc_template(C.int(tplWidth), C.int(tplHeight))
+	if p == nil {
+		return nil, ErrCreatePrepareZNCCTemplate
+	}
+
+	ret := C.libprepare_zncc_tpl(
+		(*C.uchar)(&tpl.Pix[0]),
+		p,
+	)
+	if ret != 0 {
+		return nil, ErrPrepareZNCCTemplate
+	}
+	return &PreparedZNCCTpl{prepared: p}, nil
 }
 
 func FreePreparedNCCTemplate(ptpl *PreparedNCCTpl) {
-  C.free_prepare_ncc_template(ptpl.prepared)
+	C.free_prepare_ncc_template(ptpl.prepared)
+}
+
+func FreePreparedZNCCTemplate(ptpl *PreparedZNCCTpl) {
+	C.free_prepare_zncc_template(ptpl.prepared)
 }
 
 func PreparedMatchTemplateNCC(img *image.RGBA, ptpl *PreparedNCCTpl, threshold float64) ([]MatchTemplateFloatScore, error) {
-  width, height := wh(img)
+	width, height := wh(img)
 
 	out := GetByteBuf(width * height * C.sizeof_double)
 	defer PutByteBuf(out)
 
-	ret := C.libprepated_mtncc(
+	ret := C.libprepared_mtncc(
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),
-    ptpl.prepared,
+		ptpl.prepared,
 		(*C.uchar)(&out[0]),
 	)
 	if int(ret) != 0 {
@@ -250,6 +279,25 @@ func MatchTemplateZNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]M
 	)
 	if int(ret) != 0 {
 		return nil, ErrMatchTemplateZNCC
+	}
+	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
+}
+
+func PreparedMatchTemplateZNCC(img *image.RGBA, ptpl *PreparedZNCCTpl, threshold float64) ([]MatchTemplateFloatScore, error) {
+	width, height := wh(img)
+
+	out := GetByteBuf(width * height * C.sizeof_double)
+	defer PutByteBuf(out)
+
+	ret := C.libprepared_mtzncc(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		ptpl.prepared,
+		(*C.uchar)(&out[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrPrepareZNCCTemplate
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }

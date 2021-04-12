@@ -282,6 +282,38 @@ for _, img := range images {
 }
 ```
 
+#### ZNCC
+
+```go
+scores, err := blurry.MatchTemplateZNCC(input, template, 0.1)
+```
+
+| filter                       | input                                            | template                                         | Result                                              |
+| :--------------------------: | :----------------------------------------------: | :----------------------------------------------: | :-------------------------------------------------: |
+| `none`                       | ![example](testdata/src.png)                     | ![example](testdata/tpl.png)                     | ![example](testdata/mt_zncc.png)                     |
+| `grayscale`                  | ![example](testdata/grayscale.png)               | ![example](testdata/tpl_gray.png)                | ![example](testdata/mt_zncc_gray.png)                |
+| `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_zncc_sobel.png)               |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_zncc_canny_morph_open_d3.png) |
+
+#### Prepared ZNCC
+
+Improve processing speed by pre-calculating part of ZNCC process.
+
+```go
+p, err := blurry.PrepareZNCCTemplate(template)
+if err != nil {
+  panic(err)
+}
+defer blurry.FreePreparedZNCCTemplate(p)
+
+for _, img := range images {
+  scores, err := blurry.PreparedMatchTemplateZNCC(img, p, 0.1)
+  if err != nil {
+    panic(err)
+  }
+}
+```
+
 ## CLI usage
 
 Run it via docker.  
@@ -309,7 +341,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.14.0
+   1.15.0
 
 COMMANDS:
      blockmozaic
@@ -351,38 +383,40 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.01866ms
-BenchmarkJIT/rotate0                       : 0.01959ms
-BenchmarkJIT/rotate90                      : 0.08530ms
-BenchmarkJIT/rotate180                     : 0.02128ms
-BenchmarkJIT/rotate270                     : 0.09410ms
-BenchmarkJIT/grayscale                     : 0.08568ms
-BenchmarkJIT/invert                        : 0.06168ms
-BenchmarkJIT/brightness                    : 0.06807ms
-BenchmarkJIT/gammacorrection               : 0.11157ms
-BenchmarkJIT/contrast                      : 0.06726ms
-BenchmarkJIT/boxblur                       : 0.22119ms
-BenchmarkJIT/gaussianblur                  : 0.18089ms
-BenchmarkJIT/blockmozaic                   : 0.31144ms
-BenchmarkJIT/erosion                       : 0.09030ms
-BenchmarkJIT/dilation                      : 0.09327ms
-BenchmarkJIT/morphology_open               : 0.13934ms
-BenchmarkJIT/morphology_close              : 0.13051ms
-BenchmarkJIT/morphology_gradient           : 0.07682ms
-BenchmarkJIT/emboss$1                      : 0.15839ms
-BenchmarkJIT/laplacian                     : 0.12597ms
-BenchmarkJIT/highpass                      : 0.12796ms
-BenchmarkJIT/gradient                      : 0.12204ms
-BenchmarkJIT/edge                          : 0.10505ms
-BenchmarkJIT/sobel                         : 0.10904ms
-BenchmarkJIT/canny                         : 0.63846ms
-BenchmarkJIT/canny_dilate                  : 0.62961ms
-BenchmarkJIT/canny_morphology_open         : 0.71912ms
-BenchmarkJIT/canny_morphology_close        : 0.71065ms
-BenchmarkJIT/match_template_sad            : 5.93616ms
-BenchmarkJIT/match_template_ssd            : 4.40269ms
-BenchmarkJIT/match_template_ncc            : 8.12906ms
-BenchmarkJIT/prepared_match_template_ncc   : 5.86860ms
+BenchmarkJIT/cloneimg                      : 0.01952ms
+BenchmarkJIT/rotate0                       : 0.01952ms
+BenchmarkJIT/rotate90                      : 0.08169ms
+BenchmarkJIT/rotate180                     : 0.02266ms
+BenchmarkJIT/rotate270                     : 0.09420ms
+BenchmarkJIT/grayscale                     : 0.08012ms
+BenchmarkJIT/invert                        : 0.06201ms
+BenchmarkJIT/brightness                    : 0.06828ms
+BenchmarkJIT/gammacorrection               : 0.11261ms
+BenchmarkJIT/contrast                      : 0.06815ms
+BenchmarkJIT/boxblur                       : 0.18756ms
+BenchmarkJIT/gaussianblur                  : 0.16728ms
+BenchmarkJIT/blockmozaic                   : 0.31110ms
+BenchmarkJIT/erosion                       : 0.10399ms
+BenchmarkJIT/dilation                      : 0.09312ms
+BenchmarkJIT/morphology_open               : 0.13103ms
+BenchmarkJIT/morphology_close              : 0.12874ms
+BenchmarkJIT/morphology_gradient           : 0.07516ms
+BenchmarkJIT/emboss$1                      : 0.15934ms
+BenchmarkJIT/laplacian                     : 0.13013ms
+BenchmarkJIT/highpass                      : 0.13032ms
+BenchmarkJIT/gradient                      : 0.12489ms
+BenchmarkJIT/edge                          : 0.10574ms
+BenchmarkJIT/sobel                         : 0.11102ms
+BenchmarkJIT/canny                         : 0.59503ms
+BenchmarkJIT/canny_dilate                  : 0.62175ms
+BenchmarkJIT/canny_morphology_open         : 0.72361ms
+BenchmarkJIT/canny_morphology_close        : 0.70342ms
+BenchmarkJIT/match_template_sad            : 5.26705ms
+BenchmarkJIT/match_template_ssd            : 4.14713ms
+BenchmarkJIT/match_template_ncc            : 8.03261ms
+BenchmarkJIT/prepared_match_template_ncc   : 5.83674ms
+BenchmarkJIT/match_template_zncc           : 11.69895ms
+BenchmarkJIT/prepared_match_template_zncc  : 10.88168ms
 ```
 
 ## AOT benchmarks

@@ -1167,14 +1167,14 @@ Func match_template_sad_fn(
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_at(match, ti)
+  in.compute_root()
     .unroll(y, 4)
-    .vectorize(x, 16);
-  t.compute_at(match, ti)
+    .vectorize(x, 32);
+  t.compute_root()
     .unroll(y, 4)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   return match;
 }
 
@@ -1206,12 +1206,12 @@ Func match_template_ssd_fn(
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_at(match, ti)
+  in.compute_root()
     .unroll(y, 4)
     .vectorize(x, 16);
-  t.compute_at(match, ti)
+  t.compute_root()
     .unroll(y, 4)
     .vectorize(x, 16);
   return match;
@@ -1243,7 +1243,7 @@ Func prepare_ncc_template_fn(
   return serialize;
 }
 
-Func prepated_match_template_ncc_fn(
+Func prepared_match_template_ncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func buf_tpl_val, Func buf_tpl_sum,
   Param<int32_t> tpl_width, Param<int32_t> tpl_height
@@ -1270,11 +1270,9 @@ Func prepated_match_template_ncc_fn(
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_at(match, ti)
-    .unroll(y, 4)
-    .vectorize(x, 16);
+  in.compute_root();
   buf_tpl_val.compute_root();
   buf_tpl_sum.compute_root();
   return match;
@@ -1320,36 +1318,109 @@ Func match_template_ncc_fn(
   return match;
 }
 
-Expr zncc_avg(Func in, RDom rd, Var x, Var y, Expr size) {
+Func zncc_avg(Func in, RDom rd, Expr size) {
+  Var x("x"), y("y");
+  Func avg = Func("zncc_avg");
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  Expr avg = cast<float>(sum(val) / size);
+  avg(x, y) = cast<float>(sum(val)) / size;
   return avg;
 }
 
-Expr zncc_avg_tpl(Func in, RDom rd, Expr size) {
+Func zncc_avg_tpl(Func in, RDom rd, Expr size) {
+  Func avg = Func("zncc_avg_tpl");
   Expr val = cast<float>(in(rd.x, rd.y));
-  Expr avg = cast<float>(sum(val) / size);
+  avg(_) = cast<float>(sum(val)) / size;
   return avg;
 }
 
-Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
-  Expr avg = zncc_avg(in, rd, x, y, size);
+Func zncc_stddev(Func in, RDom rd, Expr size, Func avg) {
+  Var x("x"), y("y");
+  Func stddev = Func("zncc_stddev");
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  Expr s = cast<float>(sum(val - avg));
-  return Tuple(
-    sqrt(s) / size,
-    avg
-  );
+  Expr s = sum(fast_pow(val - avg(x, y), 2));
+  stddev(x, y) = cast<float>(s);
+  return stddev;
 }
 
-Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
-  Expr avg = zncc_avg_tpl(in, rd, size);
+Func zncc_stddev_tpl(Func in, RDom rd, Expr size, Func avg) {
+  Func stddev = Func("zncc_stddev_tpl");
   Expr val = cast<float>(in(rd.x, rd.y));
-  Expr s = cast<float>(sum(val - avg));
-  return Tuple(
-    sqrt(s) / size,
-    avg
+  Expr s = sum(fast_pow(val - avg(_), 2));
+  stddev(_) = cast<float>(s);
+  return stddev;
+}
+
+Func prepare_zncc_template_fn(
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func serialize = Func("prepare_zncc_template");
+  Expr tpl_size = cast<float>(tpl_width * tpl_height);
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Func tpl_avg = zncc_avg_tpl(t, rd_template, tpl_size);
+  Func tpl_stddev = zncc_stddev_tpl(t, rd_template, tpl_size, tpl_avg);
+
+  serialize(x, y) = Tuple(
+    cast<float>(t(x, y) - tpl_avg(_)),
+    tpl_stddev(_)
   );
+
+  serialize.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 16);
+  return serialize;
+}
+
+Func prepared_match_template_zncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func buf_tpl_val, Func buf_tpl_stddev,
+  Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("prepared_match_template_zncc");
+  Expr tpl_size = cast<float>(tpl_width * tpl_height);
+  Func src_avg = zncc_avg(in, rd_template, tpl_size);
+  Func src_stddev = zncc_stddev(in, rd_template, tpl_size, src_avg);
+
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_avg(x, y);
+  Expr tpl_val = cast<float>(buf_tpl_val(rd_template.x, rd_template.y));
+  Expr s = cast<float>(sum(src_val * tpl_val));
+  Expr v = s / sqrt(src_stddev(x, y) * buf_tpl_stddev(0, 0));
+  match(x, y) = cast<double>(v);
+
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  src_avg.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  src_stddev.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  in.compute_root();
+  buf_tpl_val.compute_root();
+  buf_tpl_stddev.compute_root();
+  return match;
 }
 
 Func match_template_zncc_fn(
@@ -1370,25 +1441,31 @@ Func match_template_zncc_fn(
 
   Func match = Func("match_template_zncc");
   Expr tpl_size = cast<float>(tpl_width * tpl_height);
-  Tuple src_std = zncc_stddev(in, rd_template, x, y, tpl_size);
-  Tuple tpl_std = zncc_stddev_tpl(t, rd_template, tpl_size);
+  Func src_avg = zncc_avg(in, rd_template, tpl_size);
+  Func src_stddev = zncc_stddev(in, rd_template, tpl_size, src_avg);
+  Func tpl_avg = zncc_avg_tpl(t, rd_template, tpl_size);
+  Func tpl_stddev = zncc_stddev_tpl(t, rd_template, tpl_size, tpl_avg);
 
-  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_std[1];
-  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_std[1];
-  Expr s = sum(src_val * tpl_val);
-
-  match(x, y) = cast<double>(s / fast_pow(tpl_size, 2) * (src_std[0] * tpl_std[0]));
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_avg(x, y);
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_avg(_);
+  Expr s = cast<float>(sum(src_val * tpl_val));
+  Expr v = s / sqrt(src_stddev(x, y) * tpl_stddev(_));
+  match(x, y) = cast<double>(v);
 
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_at(match, ti)
-    .unroll(y, 4)
-    .vectorize(x, 16);
-  t.compute_at(match, ti)
-    .unroll(y, 4)
-    .vectorize(x, 16);
+  src_avg.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  src_stddev.compute_root()
+    .parallel(y)
+    .vectorize(x, 32);
+  tpl_avg.compute_root();
+  tpl_stddev.compute_root();
+  in.compute_root();
+  t.compute_root();
   return match;
 }

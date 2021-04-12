@@ -12,9 +12,9 @@ func matchTemplateAction(c *cli.Context) error {
 	}
 
 	cmd := "match_template_" + c.String("mode")
-  if c.Bool("prepared") {
-    cmd = "prepared_" + cmd
-  }
+	if c.Bool("prepared") {
+		cmd = "prepared_" + cmd
+	}
 	args := []string{
 		c.String("template"),
 	}
@@ -55,10 +55,10 @@ func init() {
 				Usage: "matching method: sad,ssd,ncc,zncc",
 				Value: "sad",
 			},
-      cli.BoolFlag{
-        Name: "p,prepared",
-        Usage: "use NCC prepared template",
-      },
+			cli.BoolFlag{
+				Name:  "p,prepared",
+				Usage: "use NCC or ZNCC prepared template",
+			},
 		},
 	})
 }

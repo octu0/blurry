@@ -475,9 +475,11 @@ BenchmarkEdge/blurry/Edge-8                	    9400	    129556 ns/op	  311479 B
 ```
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     202	   5693435 ns/op	 2196801 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     216	   5809142 ns/op	 2196756 B/op	      32 allocs/op
+BenchmarkSobel/libyuv/ARGBSobel
+BenchmarkSobel/libyuv/ARGBSobel-8   	   17019	     70557 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    5522	    220248 ns/op	  311479 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    6210	    199204 ns/op	  311488 B/op	       3 allocs/op
 ```
 
 ### Other Benchmarks

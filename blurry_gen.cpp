@@ -118,7 +118,7 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   double result = benchmark(10, 10, [&]() {
     fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
   });
-  printf("BenchmarkJIT/%-25s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
 }
 

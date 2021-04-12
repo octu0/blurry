@@ -1335,9 +1335,10 @@ Expr zncc_avg_tpl(Func in, RDom rd, Expr size) {
 Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
   Expr avg = zncc_avg(in, rd, x, y, size);
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  Expr s = cast<float>(sum(val - avg));
+  Expr s = sum(fast_pow(val - avg, 2));
+  Expr v = cast<float>(s);
   return Tuple(
-    sqrt(s) / size,
+    sqrt(v) / size,
     avg
   );
 }
@@ -1345,9 +1346,10 @@ Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
 Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
   Expr avg = zncc_avg_tpl(in, rd, size);
   Expr val = cast<float>(in(rd.x, rd.y));
-  Expr s = cast<float>(sum(val - avg));
+  Expr s = sum(fast_pow(val - avg, 2));
+  Expr v = cast<float>(s);
   return Tuple(
-    sqrt(s) / size,
+    sqrt(v) / size,
     avg
   );
 }
@@ -1376,8 +1378,8 @@ Func match_template_zncc_fn(
   Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_std[1];
   Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_std[1];
   Expr s = sum(src_val * tpl_val);
-
-  match(x, y) = cast<double>(s / fast_pow(tpl_size, 2) * (src_std[0] * tpl_std[0]));
+  Expr v = s / (fast_pow(tpl_size, 2) * (src_std[0] * tpl_std[0]));
+  match(x, y) = cast<double>(v);
 
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

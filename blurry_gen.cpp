@@ -1655,6 +1655,95 @@ int benchmark_match_template_ncc(
 }
 // }}} match_template_ncc
 
+// {{{ prepared_match_template_ncc
+void generate_prepared_match_template_ncc(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam tpl(type_of<uint8_t>(), 3);
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(src);
+  init_input_rgba(tpl);
+
+  Func fn = match_template_ncc_fn(
+    src.in(), width, height,
+    tpl.in(), tpl_width, tpl_height
+  );
+
+  init_output_array(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    tpl, tpl_width, tpl_height
+  }, fn.name());
+}
+
+int jit_prepared_match_template_ncc(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> buf_tpl = load_and_convert_image(argv[3]);
+  Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
+  Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
+
+  Buffer<double> out = jit_realize_double(match_template_ncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+  ), buf_src);
+
+  double *data = out.data();
+  int32_t w = out.extent(0);
+  int32_t h = out.extent(1);
+
+  std::vector<mt_score_float> vec;
+  printf("output w:%d, h:%d\n", w, h);
+  for(int y = 0; y < h; y += 1) {
+    for(int x = 0; x < w; x += 1) {
+      int idx = (y * w) + x;
+      double score = data[idx];
+      if(score < 0.1) {
+        continue; // threshold
+      }
+
+      vec.push_back({ x, y, score });
+    }
+  }
+  std::sort(vec.begin(), vec.end(), [](const mt_score_float a, const mt_score_float b) {
+    return a.score > b.score; // desc. best match is nearest to 1.0
+  });
+
+  int lim = 0;
+  for(const mt_score_float e : vec) {
+    if(10 < lim) { // top10
+      break;
+    }
+    printf("x:%d y:%d score:%2.5f\n", e.x, e.y, e.score);
+    lim += 1;
+  }
+  return 0;
+}
+
+int benchmark_prepared_match_template_ncc(
+  Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
+  Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+){
+  Func fn = prepare_ncc_template(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
+  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Buffer<float> buf_tpl_val = r[0];
+  Buffer<float> buf_tpl_sum = r[1];
+
+  return jit_benchmark(prepated_match_template_ncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
+    tpl_width, tpl_height
+  ), buf_src);
+}
+// }}} match_prepared_template_ncc
+
 // {{{ match_template_zncc
 void generate_match_template_zncc(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3);
@@ -1798,6 +1887,7 @@ void benchmark(char **argv) {
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
   printf("src %dx%d\n", width.get(), height.get());
+  /*
   benchmark_cloneimg(buf_src, width, height);
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
@@ -1826,9 +1916,11 @@ void benchmark(char **argv) {
   benchmark_canny_dilate(buf_src, width, height);
   benchmark_canny_morphology_open(buf_src, width, height);
   benchmark_canny_morphology_close(buf_src, width, height);
+  */
   benchmark_match_template_sad(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 

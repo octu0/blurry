@@ -97,21 +97,56 @@ Func kernel_gradient3x3() {
 }
 
 Func wrapFunc(Buffer<uint8_t> buf, const char* name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func f = Func(name);
   f(x, y, ch) = buf(x, y, ch);
   return f;
 }
 
+Func wrapFunc(Buffer<float> buf, const char* name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = buf(x, y, ch);
+  return f;
+}
+
+Func wrapFunc(Buffer<double> buf, const char* name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = buf(x, y, ch);
+  return f;
+}
+
+Func wrapFunc_xy(Buffer<uint8_t> buf, const char* name) {
+  Var x("x"), y("y");
+  Func f = Func(name);
+  f(x, y) = buf(x, y);
+  return f;
+}
+
+Func wrapFunc_xy(Buffer<float> buf, const char* name) {
+  Var x("x"), y("y");
+  Func f = Func(name);
+  f(x, y) = buf(x, y);
+  return f;
+}
+
+Func wrapFunc_xy(Buffer<double> buf, const char* name) {
+  Var x("x"), y("y");
+  Func f = Func(name);
+  f(x, y) = buf(x, y);
+  return f;
+}
+
 Func read(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = cast<int16_t>(clamped(x, y, ch));
   return read;
 }
 
 Func readUI8(Func clamped, const char *name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = cast<uint8_t>(clamped(x, y, ch));
   return read;
@@ -770,8 +805,6 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr radius = cast<int16_t>(ceil(sigma * 3));
-  Expr acos_v = -1;
-  Expr pi = acos(acos_v);
   Expr sig2 = 2 * sigma * sigma;
   Expr sigR = sigma * sqrt(2 * pi);
 
@@ -1134,13 +1167,14 @@ Func match_template_sad_fn(
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
-
-  in.compute_root();
-  t.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
+  in.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  t.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
   return match;
 }
 
@@ -1172,13 +1206,77 @@ Func match_template_ssd_fn(
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+  in.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  t.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  return match;
+}
 
-  in.compute_root();
-  t.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
+Func prepare_ncc_template_fn(
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func serialize = Func("prepare_ncc_template");
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
+  Expr serialize_sum = sum(fast_pow(tpl_val, 2));
+
+  serialize(x, y) = Tuple(cast<float>(t(x, y)), serialize_sum);
+
+  serialize.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 16);
+  return serialize;
+}
+
+Func prepated_match_template_ncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func buf_tpl_val, Func buf_tpl_sum,
+  Param<int32_t> tpl_width, Param<int32_t> tpl_height
+){
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("prepared_match_template_ncc");
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
+  Expr vector = sum(src_val * buf_tpl_val(rd_template.x, rd_template.y));
+  Expr src_mag = sum(fast_pow(src_val, 2));
+  Expr tpl_mag = buf_tpl_sum(0, 0);
+
+  match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
+
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti, 4)
+    .vectorize(xi, 32);
+  in.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  buf_tpl_val.compute_root();
+  buf_tpl_sum.compute_root();
   return match;
 }
 
@@ -1199,25 +1297,98 @@ Func match_template_ncc_fn(
   RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
 
   Func match = Func("match_template_ncc");
-  Expr src_val = cast<double>(in(x + rd_template.x, y + rd_template.y));
-  Expr tpl_val = cast<double>(t(rd_template.x, rd_template.y));
-  Expr vector  = sum(src_val * tpl_val);
-  Expr src_mag = sum(src_val * src_val);
-  Expr tpl_mag = sum(tpl_val * tpl_val);
-  Expr value = vector / sqrt(src_mag * tpl_mag);
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y));
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y));
 
-  match(x, y) = value;
- 
+  Expr vector = sum(src_val * tpl_val);
+  Expr src_mag = sum(fast_pow(src_val, 2));
+  Expr tpl_mag = sum(fast_pow(tpl_val, 2));
+
+  match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
+
   match.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+  in.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  t.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  return match;
+}
 
-  in.compute_root();
-  t.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
+Expr zncc_avg(Func in, RDom rd, Var x, Var y, Expr size) {
+  Expr val = cast<float>(in(x + rd.x, y + rd.y));
+  Expr avg = cast<float>(sum(val) / size);
+  return avg;
+}
 
+Expr zncc_avg_tpl(Func in, RDom rd, Expr size) {
+  Expr val = cast<float>(in(rd.x, rd.y));
+  Expr avg = cast<float>(sum(val) / size);
+  return avg;
+}
+
+Tuple zncc_stddev(Func in, RDom rd, Var x, Var y, Expr size) {
+  Expr avg = zncc_avg(in, rd, x, y, size);
+  Expr val = cast<float>(in(x + rd.x, y + rd.y));
+  Expr s = cast<float>(sum(val - avg));
+  return Tuple(
+    sqrt(s) / size,
+    avg
+  );
+}
+
+Tuple zncc_stddev_tpl(Func in, RDom rd, Expr size) {
+  Expr avg = zncc_avg_tpl(in, rd, size);
+  Expr val = cast<float>(in(rd.x, rd.y));
+  Expr s = cast<float>(sum(val - avg));
+  return Tuple(
+    sqrt(s) / size,
+    avg
+  );
+}
+
+Func match_template_zncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region tpl_bounds = {{0, tpl_width},{0, tpl_height},{0, 4}};
+  Func in = gray_xy_uint8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func t = gray_xy_uint8(BoundaryConditions::constant_exterior(tpl, 0, tpl_bounds), "tpl");
+
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  RDom rd_template = RDom(0, tpl_width, 0, tpl_height, "rd_template");
+
+  Func match = Func("match_template_zncc");
+  Expr tpl_size = cast<float>(tpl_width * tpl_height);
+  Tuple src_std = zncc_stddev(in, rd_template, x, y, tpl_size);
+  Tuple tpl_std = zncc_stddev_tpl(t, rd_template, tpl_size);
+
+  Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_std[1];
+  Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_std[1];
+  Expr s = sum(src_val * tpl_val);
+
+  match(x, y) = cast<double>(s / fast_pow(tpl_size, 2) * (src_std[0] * tpl_std[0]));
+
+  match.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti, 4)
+    .vectorize(xi, 32);
+  in.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
+  t.compute_at(match, ti)
+    .unroll(y, 4)
+    .vectorize(x, 16);
   return match;
 }

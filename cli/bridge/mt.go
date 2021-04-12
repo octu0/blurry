@@ -130,7 +130,31 @@ func matchTemplateAction(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		nccScores, err := blurry.MatchTemplateNCC(in, tpl, th)
+    var nccScores []blurry.MatchTemplateFloatScore
+    if c.Bool("prepared") {
+      p, err := blurry.PrepareNCCTemplate(tpl)
+      if err != nil {
+        return err
+      }
+      scores, err := blurry.PreparedMatchTemplateNCC(in, p, th)
+      if err != nil {
+        return err
+      }
+      nccScores = scores
+    } else {
+      scores, err := blurry.MatchTemplateNCC(in, tpl, th)
+      if err != nil {
+        return err
+      }
+      nccScores = scores
+    }
+    return logFloatScore(nccScores, in, tpl, c.Bool("render"))
+	case "zncc":
+		th, err := strconv.ParseFloat(threshold, 64)
+		if err != nil {
+			return err
+		}
+		nccScores, err := blurry.MatchTemplateZNCC(in, tpl, th)
 		if err != nil {
 			return err
 		}
@@ -167,6 +191,10 @@ func init() {
 				Name:  "threshold",
 				Usage: "filter threshold(sad and ssd to integer value, ncc float value)",
 				Value: "",
+			},
+			cli.BoolFlag{
+				Name:  "p,prepared",
+        Usage: "use NCC prepared template",
 			},
 		},
 	})

@@ -88,6 +88,11 @@ void init_input_rgba(ImageParam in) {
   in.dim(2).set_bounds(0, 4);
 }
 
+void init_input_array(ImageParam in, Param<int32_t> width, Param<int32_t> height) {
+  in.dim(0).set_stride(1);
+  in.dim(1).set_stride(width);
+}
+
 void init_output_rgba(OutputImageParam out) {
   out.dim(0).set_stride(4);
   out.dim(2).set_stride(1);
@@ -113,7 +118,7 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   double result = benchmark(10, 10, [&]() {
     fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
   });
-  printf("BenchmarkJIT/%-25s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
 }
 
@@ -144,7 +149,7 @@ Buffer<int32_t> jit_realize_int32_bounds(Func fn, int32_t width, int32_t height)
 Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
-  printf("realize(int32_t) %s...\n", fn.name().c_str());
+  printf("realize(double) %s...\n", fn.name().c_str());
   
   return fn.realize({width, height, 3});
 }
@@ -167,7 +172,7 @@ Buffer<double> jit_realize_double(Func fn, Buffer<uint8_t> src) {
 
 // {{{ cloneimg
 void generate_cloneimg(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -209,7 +214,7 @@ int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ rotate0
 void generate_rotate0(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -246,7 +251,7 @@ int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32
 
 // {{{ rotate180
 void generate_rotate180(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -281,7 +286,7 @@ int benchmark_rotate180(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 
 // {{{ rotate90
 void generate_rotate90(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -316,7 +321,7 @@ int benchmark_rotate90(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ rotate270
 void generate_rotate270(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -351,7 +356,7 @@ int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 
 // {{{ erosion
 void generate_erosion(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -396,7 +401,7 @@ int benchmark_erosion(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32
 
 // {{{ dilation
 void generate_dilation(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -441,7 +446,7 @@ int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ morphology_open
 void generate_morphology_open(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -481,7 +486,7 @@ int benchmark_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Par
 
 // {{{ morphology_close
 void generate_morphology_close(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -521,7 +526,7 @@ int benchmark_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Pa
 
 // {{{ morphology_gradient
 void generate_morphology_gradient(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -561,7 +566,7 @@ int benchmark_morphology_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width,
 
 // {{{ grayscale
 void generate_grayscale(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -603,7 +608,7 @@ int benchmark_grayscale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 
 // {{{ invert
 void generate_invert(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -645,7 +650,7 @@ int benchmark_invert(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_
 
 // {{{ brightness
 void generate_brightness(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -690,7 +695,7 @@ int benchmark_brightness(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<in
 
 // {{{ gammacorrection
 void generate_gammacorrection(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -735,7 +740,7 @@ int benchmark_gammacorrection(Buffer<uint8_t> buf_src, Param<int32_t> width, Par
 
 // {{{ contrast
 void generate_contrast(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -780,7 +785,7 @@ int benchmark_contrast(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ boxblur
 void generate_boxblur(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -825,7 +830,7 @@ int benchmark_boxblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32
 
 // {{{ gaussianblur
 void generate_gaussianblur(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -870,7 +875,7 @@ int benchmark_gaussianblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<
 
 // {{{ edge
 void generate_edge(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -912,7 +917,7 @@ int benchmark_edge(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t>
 
 // {{{ sobel
 void generate_sobel(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -954,7 +959,7 @@ int benchmark_sobel(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t
 
 // {{{ canny
 void generate_canny(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1006,7 +1011,7 @@ int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t
 
 // {{{ canny_dilate
 void generate_canny_dilate(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1065,7 +1070,7 @@ int benchmark_canny_dilate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<
 
 // {{{ canny_morphology_open
 void generate_canny_morphology_open(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1131,7 +1136,7 @@ int benchmark_canny_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> widt
 
 // {{{ canny_morphology_close
 void generate_canny_morphology_close(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1197,7 +1202,7 @@ int benchmark_canny_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> wid
 
 // {{{ emboss
 void generate_emboss(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1237,7 +1242,7 @@ int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_
 
 // {{{ laplacian
 void generate_laplacian(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1279,7 +1284,7 @@ int benchmark_laplacian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 
 // {{{ highpass
 void generate_highpass(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1321,7 +1326,7 @@ int benchmark_highpass(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ gradient
 void generate_gradient(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1363,7 +1368,7 @@ int benchmark_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 
 // {{{ blockmozaic
 void generate_blockmozaic(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1408,8 +1413,8 @@ int benchmark_blockmozaic(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<i
 
 // {{{ match_template_sad
 void generate_match_template_sad(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-  ImageParam tpl(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+  ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1491,8 +1496,8 @@ int benchmark_match_template_sad(
 
 // {{{ match_template_ssd
 void generate_match_template_ssd(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-  ImageParam tpl(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+  ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1574,8 +1579,8 @@ int benchmark_match_template_ssd(
 
 // {{{ match_template_ncc
 void generate_match_template_ncc(std::vector<Target::Feature> features) {
-  ImageParam src(type_of<uint8_t>(), 3);
-  ImageParam tpl(type_of<uint8_t>(), 3);
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+  ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
@@ -1655,6 +1660,206 @@ int benchmark_match_template_ncc(
 }
 // }}} match_template_ncc
 
+// {{{ prepare_ncc_template
+void generate_prepare_ncc_template(std::vector<Target::Feature> features) {
+  ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(tpl);
+
+  Func fn = prepare_ncc_template_fn(
+    tpl.in(), tpl_width, tpl_height
+  );
+
+  generate_static_link(features, fn, {
+    tpl, tpl_width, tpl_height
+  }, fn.name());
+}
+// }}} prepare_ncc_template
+
+// {{{ prepared_match_template_ncc
+void generate_prepared_match_template_ncc(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+  ImageParam buf_tpl_val(type_of<float>(), 2, "tpl_val");
+  ImageParam buf_tpl_sum(type_of<float>(), 2, "tpl_sum");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(src);
+  init_input_array(buf_tpl_val, tpl_width, tpl_height);
+  init_input_array(buf_tpl_val, tpl_width, tpl_height);
+
+  Func fn = prepated_match_template_ncc_fn(
+    src.in(), width, height,
+    buf_tpl_val.in(), buf_tpl_sum.in(),
+    tpl_width, tpl_height
+  );
+
+  init_output_array(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    buf_tpl_val, buf_tpl_sum,
+    tpl_width, tpl_height
+  }, fn.name());
+}
+
+int jit_prepared_match_template_ncc(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> buf_tpl = load_and_convert_image(argv[3]);
+  Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
+  Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
+
+  Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
+  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Buffer<float> buf_tpl_val = r[0];
+  Buffer<float> buf_tpl_sum = r[1];
+
+  Buffer<double> out = jit_realize_double(prepated_match_template_ncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
+    tpl_width, tpl_height
+  ), buf_src);
+
+  double *data = out.data();
+  int32_t w = out.extent(0);
+  int32_t h = out.extent(1);
+
+  std::vector<mt_score_float> vec;
+  printf("output w:%d, h:%d\n", w, h);
+  for(int y = 0; y < h; y += 1) {
+    for(int x = 0; x < w; x += 1) {
+      int idx = (y * w) + x;
+      double score = data[idx];
+      if(score < 0.1) {
+        continue; // threshold
+      }
+
+      vec.push_back({ x, y, score });
+    }
+  }
+  std::sort(vec.begin(), vec.end(), [](const mt_score_float a, const mt_score_float b) {
+    return a.score > b.score; // desc. best match is nearest to 1.0
+  });
+
+  int lim = 0;
+  for(const mt_score_float e : vec) {
+    if(10 < lim) { // top10
+      break;
+    }
+    printf("x:%d y:%d score:%2.5f\n", e.x, e.y, e.score);
+    lim += 1;
+  }
+  return 0;
+}
+
+int benchmark_prepared_match_template_ncc(
+  Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
+  Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+){
+  Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
+  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Buffer<float> buf_tpl_val = r[0];
+  Buffer<float> buf_tpl_sum = r[1];
+
+  return jit_benchmark(prepated_match_template_ncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
+    tpl_width, tpl_height
+  ), buf_src);
+}
+// }}} match_prepared_template_ncc
+
+// {{{ match_template_zncc
+void generate_match_template_zncc(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+  ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> tpl_width{"tpl_width", 60};
+  Param<int32_t> tpl_height{"tpl_height", 60};
+
+  init_input_rgba(src);
+  init_input_rgba(tpl);
+
+  Func fn = match_template_zncc_fn(
+    src.in(), width, height,
+    tpl.in(), tpl_width, tpl_height
+  );
+
+  init_output_array(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    tpl, tpl_width, tpl_height
+  }, fn.name());
+}
+
+int jit_match_template_zncc(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Buffer<uint8_t> buf_tpl = load_and_convert_image(argv[3]);
+  Param<int32_t> tpl_width{"tpl_width", buf_tpl.get()->width()};
+  Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
+
+  Buffer<double> out = jit_realize_double(match_template_zncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+  ), buf_src);
+
+  double *data = out.data();
+  int32_t w = out.extent(0);
+  int32_t h = out.extent(1);
+
+  std::vector<mt_score_float> vec;
+  printf("output w:%d, h:%d\n", w, h);
+  for(int y = 0; y < h; y += 1) {
+    for(int x = 0; x < w; x += 1) {
+      int idx = (y * w) + x;
+      double score = data[idx];
+      if(score < 0.1) {
+        continue; // threshold
+      }
+
+      vec.push_back({ x, y, score });
+    }
+  }
+  std::sort(vec.begin(), vec.end(), [](const mt_score_float a, const mt_score_float b) {
+    return a.score > b.score; // desc. best match is nearest to 1.0
+  });
+
+  int lim = 0;
+  for(const mt_score_float e : vec) {
+    if(10 < lim) { // top10
+      break;
+    }
+    printf("x:%d y:%d score:%2.5f\n", e.x, e.y, e.score);
+    lim += 1;
+  }
+  return 0;
+}
+
+int benchmark_match_template_zncc(
+  Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
+  Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+){
+  return jit_benchmark(match_template_zncc_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
+  ), buf_src);
+}
+// }}} match_template_zncc
+
 void generate(){
   printf("generate...\n");
 
@@ -1701,6 +1906,9 @@ void generate(){
   generate_match_template_sad(features);
   generate_match_template_ssd(features);
   generate_match_template_ncc(features);
+  generate_match_template_zncc(features);
+  generate_prepare_ncc_template(features);
+  generate_prepared_match_template_ncc(features);
 }
 
 void benchmark(char **argv) {
@@ -1745,6 +1953,9 @@ void benchmark(char **argv) {
   benchmark_match_template_sad(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  // too slow
+  //benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }
 
 int main(int argc, char **argv) {
@@ -1849,6 +2060,12 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "match_template_ncc") == 0) {
     return jit_match_template_ncc(argv);
+  }
+  if(strcmp(argv[1], "prepared_match_template_ncc") == 0) {
+    return jit_prepared_match_template_ncc(argv);
+  }
+  if(strcmp(argv[1], "match_template_zncc") == 0) {
+    return jit_match_template_zncc(argv);
   }
 
   printf("unknown command: %s\n", argv[1]);

@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int canny_dilate(struct halide_buffer_t *_p25_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _dilate, struct halide_buffer_t *_canny_dilate_buffer);
+int canny_dilate(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _dilate, struct halide_buffer_t *_canny_dilate_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int canny_dilate_argv(void **args);

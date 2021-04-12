@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int rotate180(struct halide_buffer_t *_p3_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_rotate180_buffer);
+int rotate180(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_rotate180_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int rotate180_argv(void **args);

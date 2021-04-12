@@ -24,6 +24,16 @@ Func kernel_gradient3x3();
 
 Func wrapFunc(Buffer<uint8_t> buf, const char* name);
 
+Func wrapFunc(Buffer<float> buf, const char* name);
+
+Func wrapFunc(Buffer<double> buf, const char* name);
+
+Func wrapFunc_xy(Buffer<uint8_t> buf, const char* name);
+
+Func wrapFunc_xy(Buffer<float> buf, const char* name);
+
+Func wrapFunc_xy(Buffer<double> buf, const char* name);
+
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height);
@@ -108,6 +118,21 @@ Func match_template_ssd_fn(
 );
 
 Func match_template_ncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
+
+Func prepare_ncc_template_fn(
+  Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
+
+Func prepated_match_template_ncc_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Func buf_tpl_val, Func buf_tpl_sum,
+  Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
+
+Func match_template_zncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );

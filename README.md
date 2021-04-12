@@ -263,6 +263,24 @@ scores, err := blurry.MatchTemplateNCC(input, template, 0.1)
 | `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_ncc_sobel.png)               |
 | `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_ncc_canny_morph_open_d3.png) |
 
+#### Prepared NCC
+
+Improve processing speed by pre-calculating part of NCC process.
+
+```go
+p, err := blurry.PrepareNCCTemplate(template)
+if err != nil {
+  panic(err)
+}
+defer blurry.FreePreparedNCCTemplate(p)
+
+for _, img := range images {
+  scores, err := blurry.PreparedMatchTemplateNCC(img, p, 0.1)
+  if err != nil {
+    panic(err)
+  }
+}
+```
 
 ## CLI usage
 
@@ -291,7 +309,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.13.0
+   1.14.0
 
 COMMANDS:
      blockmozaic
@@ -333,37 +351,38 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                 : 0.01862ms
-BenchmarkJIT/rotate0                  : 0.01951ms
-BenchmarkJIT/rotate90                 : 0.08718ms
-BenchmarkJIT/rotate180                : 0.02239ms
-BenchmarkJIT/rotate270                : 0.08980ms
-BenchmarkJIT/grayscale                : 0.08124ms
-BenchmarkJIT/invert                   : 0.06432ms
-BenchmarkJIT/brightness               : 0.06673ms
-BenchmarkJIT/gammacorrection          : 0.10340ms
-BenchmarkJIT/contrast                 : 0.06726ms
-BenchmarkJIT/boxblur                  : 0.18134ms
-BenchmarkJIT/gaussianblur             : 0.16342ms
-BenchmarkJIT/blockmozaic              : 0.31450ms
-BenchmarkJIT/erosion                  : 0.09010ms
-BenchmarkJIT/dilation                 : 0.09402ms
-BenchmarkJIT/morphology_open          : 0.08982ms
-BenchmarkJIT/morphology_close         : 0.09786ms
-BenchmarkJIT/morphology_gradient      : 0.09497ms
-BenchmarkJIT/emboss$1                 : 0.16786ms
-BenchmarkJIT/laplacian                : 0.13665ms
-BenchmarkJIT/highpass                 : 0.14077ms
-BenchmarkJIT/gradient                 : 0.14108ms
-BenchmarkJIT/edge                     : 0.10536ms
-BenchmarkJIT/sobel                    : 0.10951ms
-BenchmarkJIT/canny                    : 0.60258ms
-BenchmarkJIT/canny_dilate             : 0.63061ms
-BenchmarkJIT/canny_morphology_open    : 0.69504ms
-BenchmarkJIT/canny_morphology_close   : 0.69271ms
-BenchmarkJIT/match_template_sad       : 5.34206ms
-BenchmarkJIT/match_template_ssd       : 4.17693ms
-BenchmarkJIT/match_template_ncc       : 7.84047ms
+BenchmarkJIT/cloneimg                      : 0.01866ms
+BenchmarkJIT/rotate0                       : 0.01959ms
+BenchmarkJIT/rotate90                      : 0.08530ms
+BenchmarkJIT/rotate180                     : 0.02128ms
+BenchmarkJIT/rotate270                     : 0.09410ms
+BenchmarkJIT/grayscale                     : 0.08568ms
+BenchmarkJIT/invert                        : 0.06168ms
+BenchmarkJIT/brightness                    : 0.06807ms
+BenchmarkJIT/gammacorrection               : 0.11157ms
+BenchmarkJIT/contrast                      : 0.06726ms
+BenchmarkJIT/boxblur                       : 0.22119ms
+BenchmarkJIT/gaussianblur                  : 0.18089ms
+BenchmarkJIT/blockmozaic                   : 0.31144ms
+BenchmarkJIT/erosion                       : 0.09030ms
+BenchmarkJIT/dilation                      : 0.09327ms
+BenchmarkJIT/morphology_open               : 0.13934ms
+BenchmarkJIT/morphology_close              : 0.13051ms
+BenchmarkJIT/morphology_gradient           : 0.07682ms
+BenchmarkJIT/emboss$1                      : 0.15839ms
+BenchmarkJIT/laplacian                     : 0.12597ms
+BenchmarkJIT/highpass                      : 0.12796ms
+BenchmarkJIT/gradient                      : 0.12204ms
+BenchmarkJIT/edge                          : 0.10505ms
+BenchmarkJIT/sobel                         : 0.10904ms
+BenchmarkJIT/canny                         : 0.63846ms
+BenchmarkJIT/canny_dilate                  : 0.62961ms
+BenchmarkJIT/canny_morphology_open         : 0.71912ms
+BenchmarkJIT/canny_morphology_close        : 0.71065ms
+BenchmarkJIT/match_template_sad            : 5.93616ms
+BenchmarkJIT/match_template_ssd            : 4.40269ms
+BenchmarkJIT/match_template_ncc            : 8.12906ms
+BenchmarkJIT/prepared_match_template_ncc   : 5.86860ms
 ```
 
 ## AOT benchmarks

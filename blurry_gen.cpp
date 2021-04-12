@@ -1870,8 +1870,6 @@ int benchmark_match_template_zncc(
 }
 // }}} match_template_zncc
 
-
-
 // {{{ prepare_zncc_template
 void generate_prepare_zncc_template(std::vector<Target::Feature> features) {
   ImageParam tpl(type_of<uint8_t>(), 3, "tpl");
@@ -1979,17 +1977,15 @@ int benchmark_prepared_match_template_zncc(
   Func fn = prepare_zncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
   Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
   Buffer<float> buf_tpl_val = r[0];
-  Buffer<float> buf_tpl_sum = r[1];
+  Buffer<float> buf_tpl_stddev = r[1];
 
   return jit_benchmark(prepared_match_template_zncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
-    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
+    wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_stddev, "stddev"),
     tpl_width, tpl_height
   ), buf_src);
 }
 // }}} match_prepared_template_zncc
-
-
 
 void generate(){
   printf("generate...\n");
@@ -2040,6 +2036,8 @@ void generate(){
   generate_match_template_zncc(features);
   generate_prepare_ncc_template(features);
   generate_prepared_match_template_ncc(features);
+  generate_prepare_zncc_template(features);
+  generate_prepared_match_template_zncc(features);
 }
 
 void benchmark(char **argv) {
@@ -2053,7 +2051,6 @@ void benchmark(char **argv) {
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
   printf("src %dx%d\n", width.get(), height.get());
-  /*
   benchmark_cloneimg(buf_src, width, height);
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
@@ -2086,7 +2083,6 @@ void benchmark(char **argv) {
   benchmark_match_template_ssd(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
-  */
   benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
 }

@@ -1418,6 +1418,8 @@ Func prepared_match_template_zncc_fn(
     .parallel(y)
     .vectorize(x, 32);
   in.compute_root();
+  buf_tpl_val.compute_root();
+  buf_tpl_stddev.compute_root();
   return match;
 }
 

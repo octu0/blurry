@@ -98,7 +98,7 @@ func matchTemplateAction(c *cli.Context) error {
 		case "sad", "ssd":
 			log.Printf("error: --threshold must be specified, value is integer")
 			return nil
-		case "ncc":
+		case "ncc", "zncc":
 			log.Printf("error: --threshold must be specified, value is float")
 			return nil
 		}
@@ -130,35 +130,51 @@ func matchTemplateAction(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-    var nccScores []blurry.MatchTemplateFloatScore
-    if c.Bool("prepared") {
-      p, err := blurry.PrepareNCCTemplate(tpl)
-      if err != nil {
-        return err
-      }
-      scores, err := blurry.PreparedMatchTemplateNCC(in, p, th)
-      if err != nil {
-        return err
-      }
-      nccScores = scores
-    } else {
-      scores, err := blurry.MatchTemplateNCC(in, tpl, th)
-      if err != nil {
-        return err
-      }
-      nccScores = scores
-    }
-    return logFloatScore(nccScores, in, tpl, c.Bool("render"))
+
+		var nccScores []blurry.MatchTemplateFloatScore
+		if c.Bool("prepared") {
+			p, err := blurry.PrepareNCCTemplate(tpl)
+			if err != nil {
+				return err
+			}
+			scores, err := blurry.PreparedMatchTemplateNCC(in, p, th)
+			if err != nil {
+				return err
+			}
+			nccScores = scores
+		} else {
+			scores, err := blurry.MatchTemplateNCC(in, tpl, th)
+			if err != nil {
+				return err
+			}
+			nccScores = scores
+		}
+		return logFloatScore(nccScores, in, tpl, c.Bool("render"))
 	case "zncc":
 		th, err := strconv.ParseFloat(threshold, 64)
 		if err != nil {
 			return err
 		}
-		nccScores, err := blurry.MatchTemplateZNCC(in, tpl, th)
-		if err != nil {
-			return err
+
+		var znccScores []blurry.MatchTemplateFloatScore
+		if c.Bool("prepared") {
+			p, err := blurry.PrepareZNCCTemplate(tpl)
+			if err != nil {
+				return err
+			}
+			scores, err := blurry.PreparedMatchTemplateZNCC(in, p, th)
+			if err != nil {
+				return err
+			}
+			znccScores = scores
+		} else {
+			scores, err := blurry.MatchTemplateZNCC(in, tpl, th)
+			if err != nil {
+				return err
+			}
+			znccScores = scores
 		}
-		return logFloatScore(nccScores, in, tpl, c.Bool("render"))
+		return logFloatScore(znccScores, in, tpl, c.Bool("render"))
 	}
 	return nil
 }
@@ -194,7 +210,7 @@ func init() {
 			},
 			cli.BoolFlag{
 				Name:  "p,prepared",
-        Usage: "use NCC prepared template",
+				Usage: "use NCC prepared template",
 			},
 		},
 	})

@@ -1243,7 +1243,7 @@ Func prepare_ncc_template_fn(
   return serialize;
 }
 
-Func prepated_match_template_ncc_fn(
+Func prepared_match_template_ncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func buf_tpl_val, Func buf_tpl_sum,
   Param<int32_t> tpl_width, Param<int32_t> tpl_height

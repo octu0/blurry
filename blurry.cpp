@@ -1322,14 +1322,14 @@ Func zncc_avg(Func in, RDom rd, Expr size) {
   Var x("x"), y("y");
   Func avg = Func("zncc_avg");
   Expr val = cast<float>(in(x + rd.x, y + rd.y));
-  avg(x, y) = cast<float>(sum(val) / size);
+  avg(x, y) = cast<float>(sum(val)) / size;
   return avg;
 }
 
 Func zncc_avg_tpl(Func in, RDom rd, Expr size) {
   Func avg = Func("zncc_avg_tpl");
   Expr val = cast<float>(in(rd.x, rd.y));
-  avg(_) = cast<float>(sum(val) / size);
+  avg(_) = cast<float>(sum(val)) / size;
   return avg;
 }
 
@@ -1375,8 +1375,8 @@ Func match_template_zncc_fn(
 
   Expr src_val = cast<float>(in(x + rd_template.x, y + rd_template.y)) - src_avg(x, y);
   Expr tpl_val = cast<float>(t(rd_template.x, rd_template.y)) - tpl_avg(_);
-  Expr s = sum(src_val * tpl_val);
-  Expr v = s / (fast_pow(tpl_size, 2) * (src_stddev(x, y) * tpl_stddev(_)));
+  Expr s = cast<float>(sum(src_val * tpl_val));
+  Expr v = s / sqrt(src_stddev(x, y) * tpl_stddev(_));
   match(x, y) = cast<double>(v);
 
   match.compute_root()

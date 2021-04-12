@@ -295,6 +295,25 @@ scores, err := blurry.MatchTemplateZNCC(input, template, 0.1)
 | `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_zncc_sobel.png)               |
 | `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_zncc_canny_morph_open_d3.png) |
 
+#### Prepared ZNCC
+
+Improve processing speed by pre-calculating part of ZNCC process.
+
+```go
+p, err := blurry.PrepareZNCCTemplate(template)
+if err != nil {
+  panic(err)
+}
+defer blurry.FreePreparedZNCCTemplate(p)
+
+for _, img := range images {
+  scores, err := blurry.PreparedMatchTemplateZNCC(img, p, 0.1)
+  if err != nil {
+    panic(err)
+  }
+}
+```
+
 ## CLI usage
 
 Run it via docker.  

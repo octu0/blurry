@@ -4,6 +4,7 @@ package blurry
 #cgo CFLAGS: -I${SRCDIR}/include
 #cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -lmatch_template_zncc_osx -lprepare_ncc_template_osx -lprepared_match_template_ncc_osx -ldl -lm
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -lmatch_template_zncc_linux -lprepare_ncc_template_linux -lprepared_match_template_ncc_linux -ldl -lm
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mt.h"

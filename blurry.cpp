@@ -241,12 +241,15 @@ Func filter2d_gray(
   conv.compute_root()
     .vectorize(x, 32);
 
-  gradient.compute_root()
+  gradient.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
+  in.compute_root()
+    .unroll(y, 4)
+    .vectorize(x, 16);
   return gradient;
 }
 
@@ -461,6 +464,9 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func cloneimg = Func("cloneimg");
   cloneimg(x, y, ch) = in(x, y, ch);
 
+  cloneimg.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return cloneimg;
 }
 
@@ -474,6 +480,9 @@ Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate0");
   rotate(x, y, ch) = in(x, y, ch);
 
+  rotate.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return rotate;
 }
 
@@ -485,6 +494,9 @@ Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate90");
   rotate(x, y, ch) = in(y, (height - 1) - x, ch);
 
+  rotate.compute_at(in, x)
+    .unroll(x, 4)
+    .vectorize(y, 16);
   return rotate;
 }
 
@@ -496,6 +508,9 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate180");
   rotate(x, y, ch) = in((width - 1) - x, (height - 1) - y, ch);
 
+  rotate.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return rotate;
 }
 
@@ -507,6 +522,9 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate270");
   rotate(x, y, ch) = in((width - 1) - y, x, ch);
 
+  rotate.compute_at(in, x)
+    .unroll(x, 4)
+    .vectorize(y, 16);
   return rotate;
 }
 
@@ -524,11 +542,11 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(value);
 
-  erosion.compute_root()
+  erosion.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
   in.compute_root();
@@ -553,7 +571,7 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
   in.compute_root();
@@ -634,11 +652,11 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     cast<uint8_t>(value)
   );
 
-  grayscale.compute_root()
+  grayscale.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
   in.compute_root();
@@ -662,12 +680,14 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   );
   invert(x, y, ch) = value;
 
-  invert.compute_root()
+  invert.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+
+  in.compute_root();
 
   return invert;
 }
@@ -688,12 +708,14 @@ Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Para
 
   brightness(x, y, ch) = cast<uint8_t>(value);
 
-  brightness.compute_root()
+  brightness.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+
+  in.compute_root();
 
   return brightness;
 }
@@ -719,12 +741,14 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
     cast<uint8_t>(value)
   );
 
-  gammacorrection.compute_root()
+  gammacorrection.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+
+  in.compute_root();
 
   return gammacorrection;
 }
@@ -749,12 +773,14 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
   contrast(x, y, ch) = cast<uint8_t>(value);
 
-  contrast.compute_root()
+  contrast.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
+
+  in.compute_root();
 
   return contrast;
 }
@@ -788,12 +814,11 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
     .parallel(y, 8)
     .vectorize(x, 32);
 
-  boxblur.compute_root()
-    .async()
+  boxblur.compute_at(in, x)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 8)
+    .parallel(ti)
     .vectorize(xi, 32);
 
   in.compute_root();
@@ -865,7 +890,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Func gx = Func("gx");
   gx(x, y) = (in(x + 1, y) - in(x - 1, y)) / 2;
 
-  Func edge = Func("edge");
+  Func edge = Func("edgedetect");
   Expr pow_gy = fast_pow(gy(x, y), 2);
   Expr pow_gx = fast_pow(gx(x, y), 2);
   Expr magnitude = pow_gy + pow_gx;
@@ -884,6 +909,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   edge.compute_root()
     .parallel(ch);
 
+  in.compute_root();
   return edge;
 }
 

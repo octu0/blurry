@@ -22,6 +22,8 @@ github.com/octu0/blurry v1.8.2-0.20210405095037-6d0cb9047d7d h1:HSq09GbTjpsNQNkR
 github.com/octu0/blurry v1.8.2-0.20210405095037-6d0cb9047d7d/go.mod h1:GPH1m9IKMVvQ8WBXzY+uWAdNxiKyy+J5TFCJvR38Ptc=
 github.com/octu0/blurry v1.11.0 h1:1EIF7xRE+ctm7yhuZ3o74t9ZkWhHLe5lqs32uHuwvMo=
 github.com/octu0/blurry v1.11.0/go.mod h1:GPH1m9IKMVvQ8WBXzY+uWAdNxiKyy+J5TFCJvR38Ptc=
+github.com/octu0/blurry v1.15.2-0.20210412121453-e6d7fd5426d0 h1:jkafpq0WxsbmgTO6f7IZqpqeYsJUgi7eIFE7VSJtuL4=
+github.com/octu0/blurry v1.15.2-0.20210412121453-e6d7fd5426d0/go.mod h1:GPH1m9IKMVvQ8WBXzY+uWAdNxiKyy+J5TFCJvR38Ptc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=

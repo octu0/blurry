@@ -282,6 +282,19 @@ for _, img := range images {
 }
 ```
 
+#### ZNCC
+
+```go
+scores, err := blurry.MatchTemplateZNCC(input, template, 0.1)
+```
+
+| filter                       | input                                            | template                                         | Result                                              |
+| :--------------------------: | :----------------------------------------------: | :----------------------------------------------: | :-------------------------------------------------: |
+| `none`                       | ![example](testdata/src.png)                     | ![example](testdata/tpl.png)                     | ![example](testdata/mt_zncc.png)                     |
+| `grayscale`                  | ![example](testdata/grayscale.png)               | ![example](testdata/tpl_gray.png)                | ![example](testdata/mt_zncc_gray.png)                |
+| `sobel`                      | ![example](testdata/sobel.png)                   | ![example](testdata/tpl_sobel.png)               | ![example](testdata/mt_zncc_sobel.png)               |
+| `canny dilate:3  morph:open` | ![example](testdata/src_canny_morph_open_d3.png) | ![example](testdata/tpl_canny_morph_open_d3.png) | ![example](testdata/mt_zncc_canny_morph_open_d3.png) |
+
 ## CLI usage
 
 Run it via docker.  

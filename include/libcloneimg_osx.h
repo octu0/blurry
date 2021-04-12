@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int cloneimg(struct halide_buffer_t *_p0_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_cloneimg_buffer);
+int cloneimg(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_cloneimg_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int cloneimg_argv(void **args);

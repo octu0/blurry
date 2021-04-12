@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int brightness(struct halide_buffer_t *_p7_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_brightness_buffer);
+int brightness(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_brightness_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int brightness_argv(void **args);

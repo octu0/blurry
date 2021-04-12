@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int match_template_zncc(struct halide_buffer_t *_p34_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_p35_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_match_template_zncc_buffer);
+int match_template_zncc(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_tpl_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_match_template_zncc_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int match_template_zncc_argv(void **args);

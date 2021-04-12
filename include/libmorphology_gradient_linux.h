@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int morphology_gradient(struct halide_buffer_t *_p17_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_gradient_buffer);
+int morphology_gradient(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_gradient_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int morphology_gradient_argv(void **args);

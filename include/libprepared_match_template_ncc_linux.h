@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int prepared_match_template_ncc(struct halide_buffer_t *_p37_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_p38_buffer, struct halide_buffer_t *_p39_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_prepared_match_template_ncc_buffer);
+int prepared_match_template_ncc(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_tpl_val_buffer, struct halide_buffer_t *_tpl_sum_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_prepared_match_template_ncc_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int prepared_match_template_ncc_argv(void **args);

@@ -5,7 +5,7 @@ import (
 
 	"github.com/anthonynsimon/bild/adjust"
 	"github.com/disintegration/imaging"
-  "github.com/octu0/blurry"
+	"github.com/octu0/blurry"
 )
 
 func BenchmarkContrast(b *testing.B) {
@@ -21,11 +21,11 @@ func BenchmarkContrast(b *testing.B) {
 	})
 	b.Run("blurry/Contrast", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
-      img, err := blurry.Contrast(testImg, 0.525)
-      if err != nil {
-        tb.Fatalf(err.Error())
-      }
-      blurry.PutRGBA(img)
+			img, err := blurry.Contrast(testImg, 0.525)
+			if err != nil {
+				tb.Fatalf(err.Error())
+			}
+			blurry.PutRGBA(img)
 		}
 	})
 	b.Run("blurry/Contrast/D", func(tb *testing.B) {
@@ -34,11 +34,11 @@ func BenchmarkContrast(b *testing.B) {
 
 		tb.ResetTimer()
 		for i := 0; i < tb.N; i += 1 {
-      img, err := blurry.Contrast(testImg, 0.525)
-      if err != nil {
-        tb.Fatalf(err.Error())
-      }
-      blurry.PutRGBA(img)
+			img, err := blurry.Contrast(testImg, 0.525)
+			if err != nil {
+				tb.Fatalf(err.Error())
+			}
+			blurry.PutRGBA(img)
 		}
 	})
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/anthonynsimon/bild/effect"
-  "github.com/octu0/blurry"
+	"github.com/octu0/blurry"
 )
 
 func BenchmarkEdge(b *testing.B) {

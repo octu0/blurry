@@ -5,7 +5,7 @@ import (
 
 	"github.com/anthonynsimon/bild/adjust"
 	"github.com/disintegration/imaging"
-  "github.com/octu0/blurry"
+	"github.com/octu0/blurry"
 )
 
 func BenchmarkGamma(b *testing.B) {

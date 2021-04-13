@@ -222,7 +222,7 @@ img, err := blurry.MorphologyCannyWithDilate(input, 250, 100, mode, morph_size, 
 
 ### Template Matching
 
-SAD(Sum of Absolute Difference), SSD(Sum of Squared Difference) AND NCC(Normalized Cross Correlation) methods are available for template matching.
+SAD(Sum of Absolute Difference), SSD(Sum of Squared Difference), NCC(Normalized Cross Correlation) AND ZNCC(Zero means Normalized Cross Correlation) methods are available for template matching.
 
 #### SAD
 
@@ -341,7 +341,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.15.0
+   1.15.2
 
 COMMANDS:
      blockmozaic

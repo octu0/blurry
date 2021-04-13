@@ -18,8 +18,8 @@ import (
 //              int width,
 //              int height);
 func ARGBSobel(src *image.RGBA) (*image.RGBA, error) {
-  b := src.Bounds()
-  width, height := b.Max.X, b.Max.Y
+	b := src.Bounds()
+	width, height := b.Max.X, b.Max.Y
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	stride := width * 4

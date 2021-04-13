@@ -23,8 +23,8 @@ import (
 //             int radius);
 //
 func ARGBBlur(src *image.RGBA, radius int) (*image.RGBA, error) {
-  b := src.Bounds()
-  width, height := b.Max.X, b.Max.Y
+	b := src.Bounds()
+	width, height := b.Max.X, b.Max.Y
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	cumsum := make([]int, width*(height+1)*16)

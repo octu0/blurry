@@ -12,8 +12,8 @@ func benchmarkAction(c *cli.Context) error {
 	}
 
 	args := []string{
-    c.String("template"),
-  }
+		c.String("template"),
+	}
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "benchmark", args); err != nil {
 		return err
 	}

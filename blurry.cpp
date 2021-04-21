@@ -679,7 +679,7 @@ Func blend_diff_fn(
   );
 }
 
-Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -688,7 +688,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_rode");
+  RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_erode");
   Func erosion = Func("erosion");
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(value);
@@ -704,7 +704,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   return erosion;
 }
 
-Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 

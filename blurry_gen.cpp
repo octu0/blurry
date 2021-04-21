@@ -675,13 +675,11 @@ void generate_erosion(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<uint8_t> size{"size", 8};
+  Param<int32_t> size{"size", 8};
 
   init_input_rgba(src);
 
-  Func fn = erosion_fn(
-    src.in(), width, height, size
-  );
+  Func fn = erosion_fn(src.in(), width, height, size);
 
   init_output_rgba(fn.output_buffer());
 
@@ -695,7 +693,7 @@ int jit_erosion(char **argv) {
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
 
   Buffer<uint8_t> out = jit_realize_uint8(erosion_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
@@ -707,7 +705,7 @@ int jit_erosion(char **argv) {
 }
 
 int benchmark_erosion(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 5};
+  Param<int32_t> size{"size", 5};
   return jit_benchmark(erosion_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);
@@ -724,13 +722,11 @@ void generate_dilation(std::vector<Target::Feature> features) {
 
   Param<int32_t> width{"width", 1920};
   Param<int32_t> height{"height", 1080};
-  Param<uint8_t> size{"size", 8};
+  Param<int32_t> size{"size", 8};
 
   init_input_rgba(src);
 
-  Func fn = dilation_fn(
-    src.in(), width, height, size
-  );
+  Func fn = dilation_fn(src.in(), width, height, size);
 
   init_output_rgba(fn.output_buffer());
 
@@ -744,7 +740,7 @@ int jit_dilation(char **argv) {
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
-  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[3])};
+  Param<int32_t> size{"size", (int32_t) std::stoi(argv[3])};
 
   Buffer<uint8_t> out = jit_realize_uint8(dilation_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
@@ -756,7 +752,7 @@ int jit_dilation(char **argv) {
 }
 
 int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  Param<uint8_t> size{"size", 5};
+  Param<int32_t> size{"size", 5};
   return jit_benchmark(dilation_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
   ), buf_src);

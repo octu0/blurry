@@ -68,9 +68,9 @@ Func blend_diff_fn(
   Param<int32_t> px, Param<int32_t> py
 );
 
-Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
+Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 
-Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
+Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 
 Func morphology_open_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 

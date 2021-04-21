@@ -44,9 +44,33 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
-Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
+Func blend_normal_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+);
 
-Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size);
+Func blend_sub_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+);
+
+Func blend_add_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+);
+
+Func blend_diff_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+);
+
+Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
+
+Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 
 Func morphology_open_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size);
 

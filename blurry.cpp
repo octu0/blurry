@@ -528,6 +528,157 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return rotate;
 }
 
+Func blend(
+  Func source, Func blended,
+  Param<int32_t> width0, Param<int32_t> height0,
+  Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py,
+  const char *name
+) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Expr px_min = px;
+  Expr px_max = px + width1;
+  Expr py_min = py;
+  Expr py_max = py + height1;
+
+  Func f = Func(name);
+  Expr value = select(
+    px_min <= x && x <= px_max && py_min <= y && y <= py_max, blended(x, y, ch),
+    source(x, y, ch)
+  );
+  f(x, y, ch) = cast<uint8_t>(value);
+
+  f.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+
+  source.compute_at(f, xi)
+    .unroll(y, 8)
+    .vectorize(x, 32);
+  blended.compute_at(f, xi)
+    .unroll(y, 8)
+    .vectorize(x, 32);
+
+  return f;
+}
+
+Func blend_normal(Func in0, Func in1, Param<int32_t> px, Param<int32_t> py) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func("bld_normal");
+  f(x, y, ch) = in1(x - px, y - py, ch);
+  return f;
+}
+
+Func blend_sub(Func in0, Func in1, Param<int32_t> px, Param<int32_t> py) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func("bld_sub");
+  f(x, y, ch) = in0(x, y, ch) - in1(x - px, y - py, ch);
+  return f;
+}
+
+Func blend_add(Func in0, Func in1, Param<int32_t> px, Param<int32_t> py) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func("bld_add");
+  f(x, y, ch) = in0(x, y, ch) + in1(x - px, y - py, ch);
+  return f;
+}
+
+Func blend_diff(Func in0, Func in1, Param<int32_t> px, Param<int32_t> py) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func("bld_diff");
+  f(x, y, ch) = cast<uint8_t>(abs(in0(x, y, ch) - in1(x - px, y - py, ch)));
+  return f;
+}
+
+Func blend_normal_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+) {
+  Region src0_bounds = {{0, width0},{0, height0},{0, 4}};
+  Region src1_bounds = {{0, width1},{0, height1},{0, 4}};
+
+  Func in0 = readUI8(BoundaryConditions::repeat_edge(src0, src0_bounds), "in0");
+  Func in1 = readUI8(BoundaryConditions::repeat_edge(src1, src1_bounds), "in1");
+
+  return blend(
+    in0, blend_normal(in0, in1, px, py),
+    width0, height0,
+    width1, height1,
+    px, py,
+    "blend_normal"
+  );
+}
+
+Func blend_sub_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+) {
+  Region src0_bounds = {{0, width0},{0, height0},{0, 4}};
+  Region src1_bounds = {{0, width1},{0, height1},{0, 4}};
+
+  Func in0 = readUI8(BoundaryConditions::repeat_edge(src0, src0_bounds), "in0");
+  Func in1 = readUI8(BoundaryConditions::repeat_edge(src1, src1_bounds), "in1");
+
+  return blend(
+    in0, blend_sub(in0, in1, px, py),
+    width0, height0,
+    width1, height1,
+    px, py,
+    "blend_sub"
+  );
+}
+
+Func blend_add_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+) {
+  Region src0_bounds = {{0, width0},{0, height0},{0, 4}};
+  Region src1_bounds = {{0, width1},{0, height1},{0, 4}};
+
+  Func in0 = readUI8(BoundaryConditions::repeat_edge(src0, src0_bounds), "in0");
+  Func in1 = readUI8(BoundaryConditions::repeat_edge(src1, src1_bounds), "in1");
+
+  return blend(
+    in0, blend_add(in0, in1, px, py),
+    width0, height0,
+    width1, height1,
+    px, py,
+    "blend_add"
+  );
+}
+
+Func blend_diff_fn(
+  Func src0, Param<int32_t> width0, Param<int32_t> height0,
+  Func src1, Param<int32_t> width1, Param<int32_t> height1,
+  Param<int32_t> px, Param<int32_t> py
+) {
+  Region src0_bounds = {{0, width0},{0, height0},{0, 4}};
+  Region src1_bounds = {{0, width1},{0, height1},{0, 4}};
+
+  Func c0 = BoundaryConditions::repeat_edge(src0, src0_bounds);
+  Func c1 = BoundaryConditions::repeat_edge(src1, src1_bounds);
+  Func in0 = read(c0, "in0");
+  Func in1 = read(c1, "in1");
+
+  return blend(
+    readUI8(c0, "in0_u8"), blend_diff(in0, in1, px, py),
+    width0, height0,
+    width1, height1,
+    px, py,
+    "blend_diff"
+  );
+}
+
 Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");

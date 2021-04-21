@@ -30,9 +30,9 @@ rotation 0/90/180/270 clockwise
 img, err := blurry.Rotate(input, blurry.Rotate90)
 ```
 
-| `blurry.RotationMode` | Result   |
-| :-------------------: | :------: |
-| `blurry.Rotate90`     | ![example](testdata/rotate90.png) |
+| `blurry.RotationMode` | Result                             |
+| :-------------------: | :--------------------------------: |
+| `blurry.Rotate90`     | ![example](testdata/rotate90.png)  |
 | `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
 | `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
 
@@ -313,6 +313,21 @@ for _, img := range images {
   }
 }
 ```
+
+### Blend
+
+Blend input1 on input1.
+
+```go
+img, err := blurry.Blend(input0, input1, image.Pt(76, 36), blurry.BlendNormal)
+```
+
+| `blurry.BlendMode`    | Result                                |
+| :-------------------: | :-----------------------------------: |
+| `blurry.BlendNormal`  | ![example](testdata/blend_normal.png) |
+| `blurry.BlendSub`     | ![example](testdata/blend_sub.png)    |
+| `blurry.BlendAdd`     | ![example](testdata/blend_add.png)    |
+| `blurry.BlendDiff`    | ![example](testdata/blend_diff.png)   |
 
 ## CLI usage
 

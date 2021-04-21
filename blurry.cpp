@@ -537,7 +537,7 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd = RDom(0,size, 0,size, "erode");
+  RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_rode");
   Func erosion = Func("erosion");
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(value);
@@ -562,7 +562,7 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   Var yo("yo"), yi("yi");
   Var ti("ti");
 
-  RDom rd = RDom(0,size, 0,size, "dilate");
+  RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_dilate");
   Func dilation = Func("dilation");
   Expr value = in(x + rd.x, y + rd.y, ch);
   dilation(x, y, ch) = maximum(value);
@@ -589,7 +589,10 @@ Func morphology_open_fn(
 
   Func f = morphology_open(in, size);
   Func morph = Func("morphology_open");
-  morph(x, y, ch) = f(x, y);
+  morph(x, y, ch) = select(
+    ch == 3, 255,
+    f(x, y)
+  );
 
   return morph;
 }
@@ -605,7 +608,10 @@ Func morphology_close_fn(
 
   Func f = morphology_close(in, size);
   Func morph = Func("morphology_close");
-  morph(x, y, ch) = f(x, y);
+  morph(x, y, ch) = select(
+    ch == 3, 255,
+    f(x, y)
+  );
 
   return morph;
 }

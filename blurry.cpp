@@ -547,6 +547,7 @@ Func blend(
 
   Func f = Func(name);
   Expr value = select(
+    ch == 3, 255,
     px_min <= x && x <= px_max && py_min <= y && y <= py_max, blended(x, y, ch),
     source(x, y, ch)
   );

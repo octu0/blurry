@@ -215,5 +215,3 @@ BenchmarkSobel/libyuv/ARGBSobel-8   	   15313	     73065 ns/op	  311361 B/op	   
 BenchmarkSobel/blurry/Sobel
 BenchmarkSobel/blurry/Sobel-8       	    5816	    204196 ns/op	  311489 B/op	       3 allocs/op
 ```
-
-

@@ -241,7 +241,7 @@ Func filter2d_gray(
   conv.compute_root()
     .vectorize(x, 32);
 
-  gradient.compute_at(in, x)
+  gradient.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti, 4)
@@ -1258,13 +1258,15 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   conv.compute_root()
     .vectorize(x, 32);
 
-  emboss.compute_root()
+  emboss.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 4)
+    .vectorize(x, 16);
 
   return emboss;
 }

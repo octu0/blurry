@@ -1650,7 +1650,7 @@ Func match_template_zncc_fn(
   Expr v = s / sqrt(src_stddev(x, y) * tpl_stddev(_));
   match(x, y) = cast<double>(v);
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
@@ -1663,7 +1663,11 @@ Func match_template_zncc_fn(
     .vectorize(x, 32);
   tpl_avg.compute_root();
   tpl_stddev.compute_root();
-  in.compute_root();
-  t.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  t.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return match;
 }

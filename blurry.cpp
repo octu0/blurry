@@ -350,7 +350,6 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   gaussian(x, y) += cast<uint8_t>(val / center_val);
 
   gaussian.compute_root()
-    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
@@ -1035,7 +1034,6 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
     .unroll(x, 8);
 
   gaussianblur.compute_at(in, ti)
-    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1045,6 +1043,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   in.compute_root()
     .unroll(y, 8)
     .vectorize(x, 16);
+
   return gaussianblur;
 }
 
@@ -1071,15 +1070,18 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   gy.compute_at(edge, x)
     .parallel(y)
-    .vectorize(x, 3);
+    .vectorize(x, 8);
   gx.compute_at(edge, x)
     .parallel(x)
-    .vectorize(y, 3);
+    .vectorize(y, 8);
 
   edge.compute_root()
-    .parallel(ch);
+    .parallel(ch)
+    .parallel(y, 8);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return edge;
 }
 

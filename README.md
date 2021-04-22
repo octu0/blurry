@@ -316,7 +316,7 @@ for _, img := range images {
 
 ### Blend
 
-Blend input1 on input1.
+Blend input1 on input0.
 
 ```go
 img, err := blurry.Blend(input0, input1, image.Pt(76, 36), blurry.BlendNormal)
@@ -356,9 +356,10 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.15.2
+   1.16.0
 
 COMMANDS:
+     blend
      blockmozaic
      boxblur
      brightness
@@ -398,44 +399,44 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.01084ms
-BenchmarkJIT/rotate0                       : 0.01100ms
-BenchmarkJIT/rotate90                      : 0.06134ms
-BenchmarkJIT/rotate180                     : 0.01108ms
-BenchmarkJIT/rotate270                     : 0.05951ms
-BenchmarkJIT/blend_normal                  : 0.09122ms
-BenchmarkJIT/blend_sub                     : 0.09315ms
-BenchmarkJIT/blend_add                     : 0.09274ms
-BenchmarkJIT/blend_diff                    : 0.09509ms
-BenchmarkJIT/grayscale                     : 0.05529ms
-BenchmarkJIT/invert                        : 0.04806ms
-BenchmarkJIT/brightness                    : 0.05806ms
-BenchmarkJIT/gammacorrection               : 0.09471ms
-BenchmarkJIT/contrast                      : 0.06430ms
-BenchmarkJIT/boxblur                       : 0.23152ms
-BenchmarkJIT/gaussianblur                  : 0.16729ms
-BenchmarkJIT/blockmozaic                   : 0.32307ms
-BenchmarkJIT/erosion                       : 0.12049ms
-BenchmarkJIT/dilation                      : 0.12283ms
-BenchmarkJIT/morphology_open               : 0.14558ms
-BenchmarkJIT/morphology_close              : 0.14775ms
-BenchmarkJIT/morphology_gradient           : 0.07914ms
-BenchmarkJIT/emboss$1                      : 0.16784ms
-BenchmarkJIT/laplacian                     : 0.09918ms
-BenchmarkJIT/highpass                      : 0.10990ms
-BenchmarkJIT/gradient                      : 0.09890ms
-BenchmarkJIT/edgedetect                    : 0.12807ms
-BenchmarkJIT/sobel                         : 0.11119ms
-BenchmarkJIT/canny                         : 0.60603ms
-BenchmarkJIT/canny_dilate                  : 0.63058ms
-BenchmarkJIT/canny_morphology_open         : 0.72353ms
-BenchmarkJIT/canny_morphology_close        : 0.70167ms
-BenchmarkJIT/match_template_sad            : 5.59385ms
-BenchmarkJIT/match_template_ssd            : 4.38091ms
-BenchmarkJIT/match_template_ncc            : 8.52987ms
-BenchmarkJIT/prepared_match_template_ncc   : 6.09026ms
-BenchmarkJIT/match_template_zncc           : 12.31389ms
-BenchmarkJIT/prepared_match_template_zncc  : 11.51862ms
+BenchmarkJIT/cloneimg                      : 0.01170ms
+BenchmarkJIT/rotate0                       : 0.01106ms
+BenchmarkJIT/rotate90                      : 0.06281ms
+BenchmarkJIT/rotate180                     : 0.01115ms
+BenchmarkJIT/rotate270                     : 0.06121ms
+BenchmarkJIT/blend_normal                  : 0.09182ms
+BenchmarkJIT/blend_sub                     : 0.09193ms
+BenchmarkJIT/blend_add                     : 0.09163ms
+BenchmarkJIT/blend_diff                    : 0.09576ms
+BenchmarkJIT/grayscale                     : 0.05667ms
+BenchmarkJIT/invert                        : 0.04925ms
+BenchmarkJIT/brightness                    : 0.05612ms
+BenchmarkJIT/gammacorrection               : 0.08894ms
+BenchmarkJIT/contrast                      : 0.05773ms
+BenchmarkJIT/boxblur                       : 0.13224ms
+BenchmarkJIT/gaussianblur                  : 0.15382ms
+BenchmarkJIT/blockmozaic                   : 0.24911ms
+BenchmarkJIT/erosion                       : 0.11815ms
+BenchmarkJIT/dilation                      : 0.12230ms
+BenchmarkJIT/morphology_open               : 0.13795ms
+BenchmarkJIT/morphology_close              : 0.13667ms
+BenchmarkJIT/morphology_gradient           : 0.08031ms
+BenchmarkJIT/emboss$1                      : 0.14375ms
+BenchmarkJIT/laplacian                     : 0.10031ms
+BenchmarkJIT/highpass                      : 0.10279ms
+BenchmarkJIT/gradient                      : 0.10152ms
+BenchmarkJIT/edgedetect                    : 0.10309ms
+BenchmarkJIT/sobel                         : 0.11264ms
+BenchmarkJIT/canny                         : 0.52737ms
+BenchmarkJIT/canny_dilate                  : 0.56953ms
+BenchmarkJIT/canny_morphology_open         : 0.61919ms
+BenchmarkJIT/canny_morphology_close        : 0.61472ms
+BenchmarkJIT/match_template_sad            : 5.56696ms
+BenchmarkJIT/match_template_ssd            : 4.42042ms
+BenchmarkJIT/match_template_ncc            : 8.58278ms
+BenchmarkJIT/prepared_match_template_ncc   : 6.34826ms
+BenchmarkJIT/match_template_zncc           : 12.16301ms
+BenchmarkJIT/prepared_match_template_zncc  : 11.66600ms
 ```
 
 ## AOT benchmarks

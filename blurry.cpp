@@ -241,7 +241,7 @@ Func filter2d_gray(
   conv.compute_root()
     .vectorize(x, 32);
 
-  gradient.compute_at(in, x)
+  gradient.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti, 4)
@@ -350,7 +350,6 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   gaussian(x, y) += cast<uint8_t>(val / center_val);
 
   gaussian.compute_root()
-    .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
@@ -494,8 +493,8 @@ Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate90");
   rotate(x, y, ch) = in(y, (height - 1) - x, ch);
 
-  rotate.compute_at(in, x)
-    .unroll(x, 4)
+  rotate.compute_at(in, y)
+    .unroll(x, 8)
     .vectorize(y, 16);
   return rotate;
 }
@@ -522,8 +521,8 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate270");
   rotate(x, y, ch) = in((width - 1) - y, x, ch);
 
-  rotate.compute_at(in, x)
-    .unroll(x, 4)
+  rotate.compute_at(in, y)
+    .unroll(x, 8)
     .vectorize(y, 16);
   return rotate;
 }
@@ -870,14 +869,16 @@ Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Para
 
   brightness(x, y, ch) = cast<uint8_t>(value);
 
-  brightness.compute_at(in, x)
+  brightness.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return brightness;
 }
@@ -903,14 +904,16 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
     cast<uint8_t>(value)
   );
 
-  gammacorrection.compute_at(in, x)
+  gammacorrection.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return gammacorrection;
 }
@@ -935,14 +938,16 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
   contrast(x, y, ch) = cast<uint8_t>(value);
 
-  contrast.compute_at(in, x)
+  contrast.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return contrast;
 }
@@ -972,18 +977,20 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   blur_x.compute_root()
     .parallel(y, 8)
     .vectorize(x, 32);
-  blur_y.compute_root()
+  blur_y.compute_at(boxblur, yi)
     .parallel(y, 8)
     .vectorize(x, 32);
 
-  boxblur.compute_at(in, x)
+  boxblur.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_at(blur_x, y)
+    .unroll(y, 8)
+    .vectorize(x, 32);
   return boxblur;
 }
 
@@ -1021,22 +1028,22 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
-    .parallel(x)
-    .vectorize(x, 32);
+    .unroll(x, 4);
 
-  sum_kernel.compute_root()
-    .parallel(x)
-    .vectorize(x, 32);
+  sum_kernel.compute_at(gaussianblur, ti)
+    .unroll(x, 8);
 
-  gaussianblur.compute_root()
-    .async()
+  gaussianblur.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 16)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
+
   return gaussianblur;
 }
 
@@ -1063,15 +1070,18 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   gy.compute_at(edge, x)
     .parallel(y)
-    .vectorize(x, 3);
+    .vectorize(x, 8);
   gx.compute_at(edge, x)
     .parallel(x)
-    .vectorize(y, 3);
+    .vectorize(y, 8);
 
   edge.compute_root()
-    .parallel(ch);
+    .parallel(ch)
+    .parallel(y, 8);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return edge;
 }
 
@@ -1250,13 +1260,15 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   conv.compute_root()
     .vectorize(x, 32);
 
-  emboss.compute_root()
+  emboss.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ti, 4)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 4)
+    .vectorize(x, 16);
 
   return emboss;
 }
@@ -1312,17 +1324,19 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   blockmozaic(x, y, ch) = cast<uint8_t>(avg_val);
 
   avg_color.compute_root()
-    .parallel(y)
+    .parallel(y, 8)
     .vectorize(x, 32);
 
-  blockmozaic.compute_root()
-    .async()
+  blockmozaic.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ch)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_at(avg_color, y)
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return blockmozaic;
 }
@@ -1455,14 +1469,20 @@ Func prepared_match_template_ncc_fn(
 
   match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root();
-  buf_tpl_val.compute_root();
-  buf_tpl_sum.compute_root();
+  in.compute_at(match, ti)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  buf_tpl_val.compute_at(match, ti)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  buf_tpl_sum.compute_at(match, ti)
+    .unroll(y)
+    .parallel(x);
   return match;
 }
 
@@ -1492,13 +1512,13 @@ Func match_template_ncc_fn(
 
   match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
-    .unroll(y, 4)
+    .unroll(y, 8)
     .vectorize(x, 16);
   t.compute_at(match, ti)
     .unroll(y, 4)
@@ -1640,7 +1660,7 @@ Func match_template_zncc_fn(
   Expr v = s / sqrt(src_stddev(x, y) * tpl_stddev(_));
   match(x, y) = cast<double>(v);
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
@@ -1653,7 +1673,11 @@ Func match_template_zncc_fn(
     .vectorize(x, 32);
   tpl_avg.compute_root();
   tpl_stddev.compute_root();
-  in.compute_root();
-  t.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  t.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return match;
 }

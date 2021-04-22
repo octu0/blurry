@@ -1465,14 +1465,20 @@ Func prepared_match_template_ncc_fn(
 
   match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root();
-  buf_tpl_val.compute_root();
-  buf_tpl_sum.compute_root();
+  in.compute_at(match, ti)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  buf_tpl_val.compute_at(match, ti)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  buf_tpl_sum.compute_at(match, ti)
+    .unroll(y)
+    .parallel(x);
   return match;
 }
 
@@ -1502,13 +1508,13 @@ Func match_template_ncc_fn(
 
   match(x, y) = cast<double>(vector / sqrt(src_mag * tpl_mag));
 
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
-    .unroll(y, 4)
+    .unroll(y, 8)
     .vectorize(x, 16);
   t.compute_at(match, ti)
     .unroll(y, 4)

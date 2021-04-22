@@ -316,7 +316,7 @@ for _, img := range images {
 
 ### Blend
 
-Blend input1 on input1.
+Blend input1 on input0.
 
 ```go
 img, err := blurry.Blend(input0, input1, image.Pt(76, 36), blurry.BlendNormal)
@@ -356,9 +356,10 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.15.2
+   1.16.0
 
 COMMANDS:
+     blend
      blockmozaic
      boxblur
      brightness

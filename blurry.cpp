@@ -870,14 +870,16 @@ Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Para
 
   brightness(x, y, ch) = cast<uint8_t>(value);
 
-  brightness.compute_at(in, x)
+  brightness.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return brightness;
 }
@@ -903,14 +905,16 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
     cast<uint8_t>(value)
   );
 
-  gammacorrection.compute_at(in, x)
+  gammacorrection.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return gammacorrection;
 }
@@ -935,14 +939,16 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
   contrast(x, y, ch) = cast<uint8_t>(value);
 
-  contrast.compute_at(in, x)
+  contrast.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return contrast;
 }
@@ -972,18 +978,20 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   blur_x.compute_root()
     .parallel(y, 8)
     .vectorize(x, 32);
-  blur_y.compute_root()
+  blur_y.compute_at(boxblur, yi)
     .parallel(y, 8)
     .vectorize(x, 32);
 
-  boxblur.compute_at(in, x)
+  boxblur.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_at(blur_x, y)
+    .unroll(y, 8)
+    .vectorize(x, 32);
   return boxblur;
 }
 
@@ -1021,22 +1029,22 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
-    .parallel(x)
-    .vectorize(x, 32);
+    .unroll(x, 4);
 
-  sum_kernel.compute_root()
-    .parallel(x)
-    .vectorize(x, 32);
+  sum_kernel.compute_at(gaussianblur, ti)
+    .unroll(x, 8);
 
-  gaussianblur.compute_root()
+  gaussianblur.compute_at(in, ti)
     .async()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 16)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
   return gaussianblur;
 }
 
@@ -1312,17 +1320,19 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   blockmozaic(x, y, ch) = cast<uint8_t>(avg_val);
 
   avg_color.compute_root()
-    .parallel(y)
+    .parallel(y, 8)
     .vectorize(x, 32);
 
-  blockmozaic.compute_root()
-    .async()
+  blockmozaic.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti)
+    .parallel(ch)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_at(avg_color, y)
+    .unroll(y, 8)
+    .vectorize(x, 16);
 
   return blockmozaic;
 }

@@ -494,8 +494,8 @@ Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate90");
   rotate(x, y, ch) = in(y, (height - 1) - x, ch);
 
-  rotate.compute_at(in, x)
-    .unroll(x, 4)
+  rotate.compute_at(in, y)
+    .unroll(x, 8)
     .vectorize(y, 16);
   return rotate;
 }
@@ -522,8 +522,8 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func rotate = Func("rotate270");
   rotate(x, y, ch) = in((width - 1) - y, x, ch);
 
-  rotate.compute_at(in, x)
-    .unroll(x, 4)
+  rotate.compute_at(in, y)
+    .unroll(x, 8)
     .vectorize(y, 16);
   return rotate;
 }

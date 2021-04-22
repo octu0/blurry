@@ -13,36 +13,79 @@ import (
 //go:embed testdata/src.png
 var testImgData []byte
 
-var testImg *image.RGBA
-var testImgARGB *image.RGBA
+//go:embed testdata/src320x240.png
+var blendImgData []byte
+
+var (
+	testImg     *image.RGBA
+	testImgARGB *image.RGBA
+)
+
+var (
+	blendImg     *image.RGBA
+	blendImgARGB *image.RGBA
+)
 
 func init() {
-	img, err := png.Decode(bytes.NewReader(testImgData))
+	if img, err := pngToRGBA(testImgData); err != nil {
+		panic(err.Error())
+	} else {
+		testImg = img
+	}
+
+	if img, err := pngToRGBA(blendImgData); err != nil {
+		panic(err.Error())
+	} else {
+		blendImg = img
+	}
+
+	if argb, err := RGBAToARGB(testImg); err != nil {
+		panic(err.Error())
+	} else {
+		testImgARGB = argb
+	}
+
+	if argb, err := RGBAToARGB(blendImg); err != nil {
+		panic(err.Error())
+	} else {
+		blendImgARGB = argb
+	}
+}
+
+func pngToRGBA(data []byte) (*image.RGBA, error) {
+	img, err := png.Decode(bytes.NewReader(data))
 	if err != nil {
-		panic("test img data load error:" + err.Error())
+		return nil, err
 	}
 	if i, ok := img.(*image.RGBA); ok {
-		testImg = i
-		return
+		return i, nil
 	}
 
 	b := img.Bounds()
-	testImg = image.NewRGBA(b)
+	rgba := image.NewRGBA(b)
 	for y := b.Min.Y; y < b.Max.Y; y += 1 {
 		for x := b.Min.X; x < b.Max.X; x += 1 {
 			c := color.RGBAModel.Convert(img.At(x, y)).(color.RGBA)
-			testImg.Set(x, y, c)
+			rgba.Set(x, y, c)
 		}
 	}
-
-	argb, err := RGBAToARGB(testImg)
-	if err != nil {
-		panic("testImg RGBA to ARGB error:" + err.Error())
-	}
-	testImgARGB = argb
+	return rgba, nil
 }
 
 func saveImage(img *image.RGBA) (string, error) {
+	out, err := ioutil.TempFile("/tmp", "out*.png")
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	if err := png.Encode(out, img); err != nil {
+		return "", err
+	}
+	return out.Name(), nil
+}
+
+func saveImageImage(img image.Image) (string, error) {
 	out, err := ioutil.TempFile("/tmp", "out*.png")
 	if err != nil {
 		return "", err

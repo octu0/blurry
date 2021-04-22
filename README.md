@@ -10,7 +10,171 @@
 `blurry` provides image processing algorithms with [halide-lang](https://halide-lang.org/) backend.  
 implements optimized processor for amd64 CPUs on Linux/macos
 
-## Installation
+# Benchmarks
+
+## Halide JIT benchmarks
+
+This is the result of using halide's [benchamrk](https://github.com/halide/Halide/blob/master/tools/halide_benchmark.h).  
+darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+
+```
+src 320x240
+BenchmarkJIT/cloneimg                      : 0.01170ms
+BenchmarkJIT/rotate0                       : 0.01106ms
+BenchmarkJIT/rotate90                      : 0.06281ms
+BenchmarkJIT/rotate180                     : 0.01115ms
+BenchmarkJIT/rotate270                     : 0.06121ms
+BenchmarkJIT/blend_normal                  : 0.09182ms
+BenchmarkJIT/blend_sub                     : 0.09193ms
+BenchmarkJIT/blend_add                     : 0.09163ms
+BenchmarkJIT/blend_diff                    : 0.09576ms
+BenchmarkJIT/grayscale                     : 0.05667ms
+BenchmarkJIT/invert                        : 0.04925ms
+BenchmarkJIT/brightness                    : 0.05612ms
+BenchmarkJIT/gammacorrection               : 0.08894ms
+BenchmarkJIT/contrast                      : 0.05773ms
+BenchmarkJIT/boxblur                       : 0.13224ms
+BenchmarkJIT/gaussianblur                  : 0.15382ms
+BenchmarkJIT/blockmozaic                   : 0.24911ms
+BenchmarkJIT/erosion                       : 0.11815ms
+BenchmarkJIT/dilation                      : 0.12230ms
+BenchmarkJIT/morphology_open               : 0.13795ms
+BenchmarkJIT/morphology_close              : 0.13667ms
+BenchmarkJIT/morphology_gradient           : 0.08031ms
+BenchmarkJIT/emboss$1                      : 0.14375ms
+BenchmarkJIT/laplacian                     : 0.10031ms
+BenchmarkJIT/highpass                      : 0.10279ms
+BenchmarkJIT/gradient                      : 0.10152ms
+BenchmarkJIT/edgedetect                    : 0.10309ms
+BenchmarkJIT/sobel                         : 0.11264ms
+BenchmarkJIT/canny                         : 0.52737ms
+BenchmarkJIT/canny_dilate                  : 0.56953ms
+BenchmarkJIT/canny_morphology_open         : 0.61919ms
+BenchmarkJIT/canny_morphology_close        : 0.61472ms
+BenchmarkJIT/match_template_sad            : 5.56696ms
+BenchmarkJIT/match_template_ssd            : 4.42042ms
+BenchmarkJIT/match_template_ncc            : 8.58278ms
+BenchmarkJIT/prepared_match_template_ncc   : 6.34826ms
+BenchmarkJIT/match_template_zncc           : 12.16301ms
+BenchmarkJIT/prepared_match_template_zncc  : 11.66600ms
+```
+
+## AOT benchmarks
+
+Calling a library compiled by AOT(ahead-of-time) via cgo.  
+In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
+more complex operations will be optimized for CPU and become faster.  
+Also, the execution speed may be reduced by the overhead of multiple calls.
+
+### Blur
+
+`/D` is [DisablePool](https://pkg.go.dev/github.com/octu0/blurry#DisablePool), i.e. the benchmark when BufferPool is off.
+
+![graph](benchmark/testdata/blur_bench.png)
+
+
+```
+goos: darwin
+goarch: amd64
+pkg: github.com/octu0/blurry
+cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+BenchmarkBlur
+BenchmarkBlur/bild/blur/Box
+BenchmarkBlur/bild/blur/Box-8         	     145	   8279131 ns/op	  640336 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Gaussian
+BenchmarkBlur/bild/blur/Gaussian-8    	     325	   3742126 ns/op	 1262508 B/op	      21 allocs/op
+BenchmarkBlur/imaging/Blur
+BenchmarkBlur/imaging/Blur-8          	     762	   1551078 ns/op	  793695 B/op	      45 allocs/op
+BenchmarkBlur/stackblur-go
+BenchmarkBlur/stackblur-go-8          	     236	   5098631 ns/op	  925933 B/op	  153609 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1783	    668378 ns/op	10182723 B/op	       3 allocs/op
+BenchmarkBlur/blurry/Boxblur
+BenchmarkBlur/blurry/Boxblur-8        	    5790	    220296 ns/op	     141 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur
+BenchmarkBlur/blurry/Gaussianblur-8   	    4273	    263072 ns/op	     161 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D
+BenchmarkBlur/blurry/Boxblur/D-8      	    5108	    235602 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    4250	    284221 ns/op	  311361 B/op	       2 allocs/op
+```
+
+### Edge
+
+![graph](benchmark/testdata/edge_bench.png)
+
+```
+goos: darwin
+goarch: amd64
+pkg: github.com/octu0/blurry/benchmark
+cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+BenchmarkEdge
+BenchmarkEdge/bild/EdgeDetection
+BenchmarkEdge/bild/EdgeDetection-8         	     618	   2018322 ns/op	  631294 B/op	      10 allocs/op
+BenchmarkEdge/blurry/Edge
+BenchmarkEdge/blurry/Edge-8                	    7792	    140375 ns/op	  311488 B/op	       3 allocs/op
+```
+
+## Rotate
+
+![graph](benchmark/testdata/rotate_bench.png)
+
+```
+goos: darwin
+goarch: amd64
+pkg: github.com/octu0/blurry/benchmark
+cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+BenchmarkRotate
+BenchmarkRotate/bild/Rotate/90
+BenchmarkRotate/bild/Rotate/90-8         	     582	   2230286 ns/op	 1237036 B/op	  115685 allocs/op
+BenchmarkRotate/bild/Rotate/180
+BenchmarkRotate/bild/Rotate/180-8        	     493	   2484821 ns/op	 1540310 B/op	  153605 allocs/op
+BenchmarkRotate/bild/Rotate/270
+BenchmarkRotate/bild/Rotate/270-8        	     526	   2135527 ns/op	 1236930 B/op	  115685 allocs/op
+BenchmarkRotate/imaging/90
+BenchmarkRotate/imaging/90-8             	    7626	    136134 ns/op	  314182 B/op	       6 allocs/op
+BenchmarkRotate/imaging/180
+BenchmarkRotate/imaging/180-8            	    9528	    127362 ns/op	  313541 B/op	       6 allocs/op
+BenchmarkRotate/imaging/270
+BenchmarkRotate/imaging/270-8            	    7866	    174405 ns/op	  314164 B/op	       6 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/90
+BenchmarkRotate/libyuv/ARGBRotate/90-8   	   13598	     83944 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/180
+BenchmarkRotate/libyuv/ARGBRotate/180-8  	   33970	     33696 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/270
+BenchmarkRotate/libyuv/ARGBRotate/270-8  	   14926	     80698 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkRotate/blurry/Rotate/90
+BenchmarkRotate/blurry/Rotate/90-8       	    5629	    224277 ns/op	  311489 B/op	       3 allocs/op
+BenchmarkRotate/blurry/Rotate/180
+BenchmarkRotate/blurry/Rotate/180-8      	    7006	    178531 ns/op	  311489 B/op	       3 allocs/op
+BenchmarkRotate/blurry/Rotate/270
+BenchmarkRotate/blurry/Rotate/270-8      	    5060	    244755 ns/op	  311489 B/op	       3 allocs/op
+```
+
+### Sobel
+
+![graph](benchmark/testdata/sobel_bench.png)
+
+```
+goos: darwin
+goarch: amd64
+pkg: github.com/octu0/blurry/benchmark
+cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
+BenchmarkSobel
+BenchmarkSobel/bild/Sobel
+BenchmarkSobel/bild/Sobel-8         	     201	   6093924 ns/op	 2196805 B/op	      32 allocs/op
+BenchmarkSobel/libyuv/ARGBSobel
+BenchmarkSobel/libyuv/ARGBSobel-8   	   15313	     73065 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkSobel/blurry/Sobel
+BenchmarkSobel/blurry/Sobel-8       	    5816	    204196 ns/op	  311489 B/op	       3 allocs/op
+```
+
+### Other Benchmarks
+
+See [benchmark](https://github.com/octu0/blurry/tree/master/benchmark) for benchmarks of other methods and performance comparison with [libyuv](https://chromium.googlesource.com/libyuv/libyuv/).
+
+
+# Installation
 
 ```shell
 $ go get github.com/octu0/blurry
@@ -389,122 +553,6 @@ GLOBAL OPTIONS:
    --help, -h     show help
    --version, -v  print the version
 ```
-
-# Benchmarks
-
-## Halide JIT benchmarks
-
-This is the result of using halide's [benchamrk](https://github.com/halide/Halide/blob/master/tools/halide_benchmark.h).  
-darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-
-```
-src 320x240
-BenchmarkJIT/cloneimg                      : 0.01170ms
-BenchmarkJIT/rotate0                       : 0.01106ms
-BenchmarkJIT/rotate90                      : 0.06281ms
-BenchmarkJIT/rotate180                     : 0.01115ms
-BenchmarkJIT/rotate270                     : 0.06121ms
-BenchmarkJIT/blend_normal                  : 0.09182ms
-BenchmarkJIT/blend_sub                     : 0.09193ms
-BenchmarkJIT/blend_add                     : 0.09163ms
-BenchmarkJIT/blend_diff                    : 0.09576ms
-BenchmarkJIT/grayscale                     : 0.05667ms
-BenchmarkJIT/invert                        : 0.04925ms
-BenchmarkJIT/brightness                    : 0.05612ms
-BenchmarkJIT/gammacorrection               : 0.08894ms
-BenchmarkJIT/contrast                      : 0.05773ms
-BenchmarkJIT/boxblur                       : 0.13224ms
-BenchmarkJIT/gaussianblur                  : 0.15382ms
-BenchmarkJIT/blockmozaic                   : 0.24911ms
-BenchmarkJIT/erosion                       : 0.11815ms
-BenchmarkJIT/dilation                      : 0.12230ms
-BenchmarkJIT/morphology_open               : 0.13795ms
-BenchmarkJIT/morphology_close              : 0.13667ms
-BenchmarkJIT/morphology_gradient           : 0.08031ms
-BenchmarkJIT/emboss$1                      : 0.14375ms
-BenchmarkJIT/laplacian                     : 0.10031ms
-BenchmarkJIT/highpass                      : 0.10279ms
-BenchmarkJIT/gradient                      : 0.10152ms
-BenchmarkJIT/edgedetect                    : 0.10309ms
-BenchmarkJIT/sobel                         : 0.11264ms
-BenchmarkJIT/canny                         : 0.52737ms
-BenchmarkJIT/canny_dilate                  : 0.56953ms
-BenchmarkJIT/canny_morphology_open         : 0.61919ms
-BenchmarkJIT/canny_morphology_close        : 0.61472ms
-BenchmarkJIT/match_template_sad            : 5.56696ms
-BenchmarkJIT/match_template_ssd            : 4.42042ms
-BenchmarkJIT/match_template_ncc            : 8.58278ms
-BenchmarkJIT/prepared_match_template_ncc   : 6.34826ms
-BenchmarkJIT/match_template_zncc           : 12.16301ms
-BenchmarkJIT/prepared_match_template_zncc  : 11.66600ms
-```
-
-## AOT benchmarks
-
-Calling a library compiled by AOT(ahead-of-time) via cgo.  
-In [cgo](https://golang.org/cmd/cgo/), due to the overhead of ffi calls([e.g.](https://about.sourcegraph.com/go/gophercon-2018-adventures-in-cgo-performance/)), 
-more complex operations will be optimized for CPU and become faster.  
-Also, the execution speed may be reduced by the overhead of multiple calls.
-
-### Blur
-
-/D is [DisablePool](https://pkg.go.dev/github.com/octu0/blurry#DisablePool), i.e. the benchmark when BufferPool is off.
-
-```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-BenchmarkBlur
-BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     150	   7792666 ns/op	  640322 B/op	      11 allocs/op
-BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     338	   3317723 ns/op	 1262513 B/op	      21 allocs/op
-BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     801	   1482781 ns/op	  793696 B/op	      45 allocs/op
-BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     242	   4989647 ns/op	  925932 B/op	  153609 allocs/op
-BenchmarkBlur/libyuv/ARGBBlur
-BenchmarkBlur/libyuv/ARGBBlur-8       	    1843	    638517 ns/op	10182723 B/op	       3 allocs/op
-BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    3666	    355664 ns/op	     173 B/op	       2 allocs/op
-BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    5731	    216902 ns/op	     142 B/op	       2 allocs/op
-BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    3114	    367782 ns/op	  311361 B/op	       2 allocs/op
-BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    5107	    235022 ns/op	  311361 B/op	       2 allocs/op
-```
-
-### Edge
-
-```
-goos: darwin
-goarch: amd64
-pkg: github.com/octu0/blurry
-cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
-BenchmarkEdge
-BenchmarkEdge/bild/EdgeDetection
-BenchmarkEdge/bild/EdgeDetection-8         	     679	   1794476 ns/op	  631299 B/op	      10 allocs/op
-BenchmarkEdge/blurry/Edge
-BenchmarkEdge/blurry/Edge-8                	    9400	    129556 ns/op	  311479 B/op	       3 allocs/op
-```
-
-### Sobel
-
-```
-BenchmarkSobel
-BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     216	   5809142 ns/op	 2196756 B/op	      32 allocs/op
-BenchmarkSobel/libyuv/ARGBSobel
-BenchmarkSobel/libyuv/ARGBSobel-8   	   17019	     70557 ns/op	  311361 B/op	       2 allocs/op
-BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    6210	    199204 ns/op	  311488 B/op	       3 allocs/op
-```
-
-### Other Benchmarks
-
-See [benchmark](https://github.com/octu0/blurry/tree/master/benchmark) for benchmarks of other methods and performance comparison with [libyuv](https://chromium.googlesource.com/libyuv/libyuv/).
 
 # Build
 

@@ -9,6 +9,13 @@ const uint8_t GRAY_R = 76, GRAY_G = 152, GRAY_B = 28;
 const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
+const Expr ui8_0 = cast<uint8_t>(0);
+const Expr ui8_255 = cast<uint8_t>(255);
+const Expr float255 = cast<float>(255.f);
+const Expr degree0 = cast<uint8_t>(0);
+const Expr degree45 = cast<uint8_t>(45);
+const Expr degree90 = cast<uint8_t>(90);
+const Expr degree135 = cast<uint8_t>(135);
 
 const Func kernel_sobel_x = kernel_sobel3x3_x();
 const Func kernel_sobel_y = kernel_sobel3x3_y();
@@ -234,8 +241,8 @@ Func filter2d_gray(
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(conv(x, y) & 128)
+    ch < 3, likely(cast<uint8_t>(conv(x, y) & 128)),
+    ui8_255
   );
 
   conv.compute_root()
@@ -389,27 +396,27 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   Func nms = Func("nonmax_supression");
   Expr angle = (atan2(gy(x, y), gx(x, y)) * 180) / pi;
   Expr approx = select(
-    angle >=  -22.5f && angle <  22.5f,    0,
-    angle >=  157.5f && angle <  180.0f,   0,
-    angle >=  180.0f && angle < -157.5f,   0,
-    angle >=   22.5f && angle <   67.5f,  45,
-    angle >= -157.5f && angle < -112.5f,  45,
-    angle >=   67.5f && angle <  112.5f,  90,
-    angle >= -112.5f && angle <  -67.5f,  90,
-    angle >=  112.5f && angle <  157.5f, 135,
-    angle >=  -67.5f && angle <  -22.5f, 135,
-    0
+    angle >=  -22.5f && angle <  22.5f,  degree0,
+    angle >=  157.5f && angle <  180.0f, degree0,
+    angle >=  180.0f && angle < -157.5f, degree0,
+    angle >=   22.5f && angle <   67.5f, degree45,
+    angle >= -157.5f && angle < -112.5f, degree45,
+    angle >=   67.5f && angle <  112.5f, degree90,
+    angle >= -112.5f && angle <  -67.5f, degree90,
+    angle >=  112.5f && angle <  157.5f, degree135,
+    angle >=  -67.5f && angle <  -22.5f, degree135,
+    likely(degree0)
   );
   nms(x, y) = select(
-    approx ==  0 && sobel(x, y) < sobel(x + 1, y), 0,
-    approx ==  0 && sobel(x, y) < sobel(x - 1, y), 0,
-    approx == 45 && sobel(x, y) < sobel(x + 1, y - 1), 0,
-    approx == 45 && sobel(x, y) < sobel(x - 1, y + 1), 0,
-    approx == 90 && sobel(x, y) < sobel(x, y + 1), 0,
-    approx == 90 && sobel(x, y) < sobel(x, y - 1), 0,
-    sobel(x, y) < sobel(x + 1, y + 1), 0,
-    sobel(x, y) < sobel(x - 1, y - 1), 0,
-    sobel(x, y)
+    approx == degree0  && sobel(x, y) < sobel(x + 1, y),     ui8_0,
+    approx == degree0  && sobel(x, y) < sobel(x - 1, y),     ui8_0,
+    approx == degree45 && sobel(x, y) < sobel(x + 1, y - 1), ui8_0,
+    approx == degree45 && sobel(x, y) < sobel(x - 1, y + 1), ui8_0,
+    approx == degree90 && sobel(x, y) < sobel(x, y + 1),     ui8_0,
+    approx == degree90 && sobel(x, y) < sobel(x, y - 1),     ui8_0,
+    sobel(x, y) < sobel(x + 1, y + 1), ui8_0,
+    sobel(x, y) < sobel(x - 1, y - 1), ui8_0,
+    cast<uint8_t>(sobel(x, y))
   );
 
   //
@@ -420,9 +427,9 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   Expr value = nms(x, y);
   Expr nb_val = maximum(nms(x + rd_nb.x, y + rd_nb.y));
   Expr th_val = select(
-    value  < threshold_min, 0,
-    value  > threshold_max, 255,
-    nb_val > threshold_max, 255,
+    value  < threshold_min, ui8_0,
+    value  > threshold_max, ui8_255,
+    nb_val > threshold_max, ui8_255,
     value
   );
   hy(x, y) = th_val;
@@ -805,8 +812,8 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
 
   grayscale(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(value)
+    ch < 3, likely(cast<uint8_t>(value)),
+    ui8_255
   );
 
   grayscale.compute_at(in, xi)
@@ -833,11 +840,10 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var ti("ti");
 
   Func invert = Func("invert");
-  Expr value = select(
-    ch == 3, in(x, y, ch), // alpha
-    255 - in(x, y, ch)     // r g b
+  invert(x, y, ch) = select(
+    ch < 3, likely(ui8_255 - in(x, y, ch)),
+    ui8_255
   );
-  invert(x, y, ch) = value;
 
   invert.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -900,8 +906,8 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
   value = fast_pow(value / 255.0f, e) * 255.0f;
 
   gammacorrection(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(value)
+    ch < 3, likely(cast<uint8_t>(value)),
+    ui8_255
   );
 
   gammacorrection.compute_at(in, xi)
@@ -1064,8 +1070,8 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(gx(x, y), 2);
   Expr magnitude = pow_gy + pow_gx;
   edge(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(magnitude)
+    ch < 3, likely(cast<uint8_t>(magnitude)),
+    ui8_255
   );
 
   gy.compute_at(edge, x)
@@ -1106,8 +1112,8 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(abs(gx(x, y)), 2);
   Expr magnitude = ceil(sqrt(pow_gy + pow_gx));
   sobel(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(magnitude)
+    ch < 3, likely(cast<uint8_t>(magnitude)),
+    ui8_255
   );
 
   gy.compute_at(sobel, x)
@@ -1139,8 +1145,8 @@ Func canny_fn(
   Expr hysteresis = hy(x, y);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis)
+    ch < 3, likely(cast<uint8_t>(hysteresis)),
+    ui8_255
   );
 
   canny.compute_root()
@@ -1167,8 +1173,8 @@ Func canny_dilate_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
+    ui8_255
   );
 
   canny.compute_root()
@@ -1198,8 +1204,8 @@ Func canny_morphology_open_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
+    ui8_255
   );
 
   canny.compute_root()
@@ -1229,8 +1235,8 @@ Func canny_morphology_close_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
+    ui8_255
   );
 
   canny.compute_root()
@@ -1253,8 +1259,8 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Func emboss = Func("emboss");
   emboss(x, y, ch) = select(
-    ch == 3, 255,
-    clamp(conv(x, y, ch) + 128, 0, 255)
+    ch < 3, likely(clamp(conv(x, y, ch) + 128, 0, 255)),
+    ui8_255
   );
 
   conv.compute_root()
@@ -1315,8 +1321,8 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
 
   Func avg_color = Func("avg_color");
   avg_color(x, y, ch) = select(
-    ch == 3, 255,
-    block_color(x, y, ch) / base
+    ch < 3, likely(block_color(x, y, ch) / base),
+    float255
   );
 
   Func blockmozaic = Func("blockmozaic");
@@ -1366,15 +1372,15 @@ Func match_template_sad_fn(
   Func match = Func("match_template_sad");
   match(x, y) = cast<uint16_t>(sad(x, y));
   
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root()
+  in.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
-  t.compute_root()
+  t.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
   return match;
@@ -1405,15 +1411,15 @@ Func match_template_ssd_fn(
   Func match = Func("match_template_ssd");
   match(x, y) = cast<int32_t>(ssd(x, y));
  
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root()
+  in.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 16);
-  t.compute_root()
+  t.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 16);
   return match;
@@ -1477,12 +1483,8 @@ Func prepared_match_template_ncc_fn(
   in.compute_at(match, ti)
     .unroll(y, 8)
     .vectorize(x, 16);
-  buf_tpl_val.compute_at(match, ti)
-    .unroll(y, 8)
-    .vectorize(x, 16);
-  buf_tpl_sum.compute_at(match, ti)
-    .unroll(y)
-    .parallel(x);
+  buf_tpl_val.compute_root();
+  buf_tpl_sum.compute_root();
   return match;
 }
 
@@ -1518,7 +1520,7 @@ Func match_template_ncc_fn(
     .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
-    .unroll(y, 8)
+    .unroll(y, 4)
     .vectorize(x, 16);
   t.compute_at(match, ti)
     .unroll(y, 4)

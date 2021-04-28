@@ -52,6 +52,7 @@ func generate(runtimePath, blurryPath string) (string, error) {
 	genArgs := []string{
 		"g++",
 		"-g",
+		"-O2",
 		"-I" + runtimePath + "/include",
 		"-I" + runtimePath + "/share/Halide/tools",
 		"-L" + runtimePath + "/lib",

@@ -241,8 +241,8 @@ Func filter2d_gray(
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(conv(x, y) & 128)),
-    ui8_255
+    ch < 3, cast<uint8_t>(conv(x, y) & 128),
+    likely(ui8_255)
   );
 
   conv.compute_root()
@@ -812,8 +812,8 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
 
   grayscale(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(value)),
-    ui8_255
+    ch < 3, cast<uint8_t>(value),
+    likely(ui8_255)
   );
 
   grayscale.compute_at(in, xi)
@@ -841,8 +841,8 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 
   Func invert = Func("invert");
   invert(x, y, ch) = select(
-    ch < 3, likely(ui8_255 - in(x, y, ch)),
-    ui8_255
+    ch < 3, ui8_255 - in(x, y, ch),
+    likely(ui8_255)
   );
 
   invert.compute_at(in, xi)
@@ -906,8 +906,8 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
   value = fast_pow(value / 255.0f, e) * 255.0f;
 
   gammacorrection(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(value)),
-    ui8_255
+    ch < 3, cast<uint8_t>(value),
+    likely(ui8_255)
   );
 
   gammacorrection.compute_at(in, xi)
@@ -1070,8 +1070,8 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(gx(x, y), 2);
   Expr magnitude = pow_gy + pow_gx;
   edge(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(magnitude)),
-    ui8_255
+    ch < 3, cast<uint8_t>(magnitude),
+    likely(ui8_255)
   );
 
   gy.compute_at(edge, x)
@@ -1112,8 +1112,8 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(abs(gx(x, y)), 2);
   Expr magnitude = ceil(sqrt(pow_gy + pow_gx));
   sobel(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(magnitude)),
-    ui8_255
+    ch < 3, cast<uint8_t>(magnitude),
+    likely(ui8_255)
   );
 
   gy.compute_at(sobel, x)
@@ -1145,8 +1145,8 @@ Func canny_fn(
   Expr hysteresis = hy(x, y);
 
   canny(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(hysteresis)),
-    ui8_255
+    ch < 3, cast<uint8_t>(hysteresis),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1173,8 +1173,8 @@ Func canny_dilate_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
-    ui8_255
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1204,8 +1204,8 @@ Func canny_morphology_open_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
-    ui8_255
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1235,8 +1235,8 @@ Func canny_morphology_close_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch < 3, likely(cast<uint8_t>(hysteresis_dilate)),
-    ui8_255
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1259,8 +1259,8 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Func emboss = Func("emboss");
   emboss(x, y, ch) = select(
-    ch < 3, likely(clamp(conv(x, y, ch) + 128, 0, 255)),
-    ui8_255
+    ch < 3, clamp(conv(x, y, ch) + 128, 0, 255),
+    likely(ui8_255)
   );
 
   conv.compute_root()
@@ -1321,8 +1321,8 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
 
   Func avg_color = Func("avg_color");
   avg_color(x, y, ch) = select(
-    ch < 3, likely(block_color(x, y, ch) / base),
-    float255
+    ch < 3, block_color(x, y, ch) / base,
+    likely(float255)
   );
 
   Func blockmozaic = Func("blockmozaic");

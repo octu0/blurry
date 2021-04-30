@@ -21,6 +21,14 @@ func Command() []cli.Command {
 	return commands
 }
 
+var (
+	benchmarkOpt bool = false
+)
+
+func useBenchmarkOpt() {
+	benchmarkOpt = true
+}
+
 func generate(runtimePath, blurryPath string) (string, error) {
 	realRuntimePath, err := filepath.Abs(runtimePath)
 	if err != nil {
@@ -48,10 +56,16 @@ func generate(runtimePath, blurryPath string) (string, error) {
 	libpngFlags := strings.TrimSpace(string(libpngCfg))
 	libpngFlags = strings.ReplaceAll(libpngFlags, "\n", " ")
 
+	benchmarkOptFlag := ""
+	if benchmarkOpt {
+		benchmarkOptFlag = "-O2"
+	}
+
 	// strip symbol
 	genArgs := []string{
 		"g++",
 		"-g",
+		benchmarkOptFlag,
 		"-I" + runtimePath + "/include",
 		"-I" + runtimePath + "/share/Halide/tools",
 		"-L" + runtimePath + "/lib",

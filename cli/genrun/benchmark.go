@@ -6,6 +6,7 @@ import (
 
 func benchmarkAction(c *cli.Context) error {
 	runtimePath := c.String("runtime")
+	useBenchmarkOpt()
 	generateOutFilePath, err := generate(runtimePath, c.String("file"))
 	if err != nil {
 		return err

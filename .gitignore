@@ -2,7 +2,7 @@
 .DS_Store
 
 *.out
-/Halide-Runtime
+/Halide-Runtime*
 
 benchmark/include/libyuv/*
 benchmark/lib/libyuv/*

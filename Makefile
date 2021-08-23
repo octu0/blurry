@@ -24,10 +24,14 @@ setup-halide-runtime:
 ifeq ($(shell [ -d ./Halide-Runtime ] && echo "1"),1)
 	@echo "./Halide-Runtime exists"
 else
-	curl -O -sSL https://github.com/halide/Halide/releases/download/v11.0.1/Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
-	tar xzf Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
-	mv Halide-11.0.1-x86-64-osx ./Halide-Runtime
-	rm Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
+	#curl -O -sSL https://github.com/halide/Halide/releases/download/v11.0.1/Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
+	#tar xzf Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
+	#mv Halide-11.0.1-x86-64-osx ./Halide-Runtime
+	#rm Halide-11.0.1-x86-64-osx-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz
+	curl -O -sSL https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
+	tar xzf Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
+	mv Halide-12.0.1-x86-64-osx ./Halide-Runtime
+	rm Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
 endif
 endif
 

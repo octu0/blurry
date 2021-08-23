@@ -2,6 +2,7 @@ package benchmark
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -19,6 +20,7 @@ var blendImgData []byte
 var (
 	testImg     *image.RGBA
 	testImgARGB *image.RGBA
+	testImgABGR *image.RGBA
 )
 
 var (
@@ -49,6 +51,12 @@ func init() {
 		panic(err.Error())
 	} else {
 		blendImgARGB = argb
+	}
+
+	if abgr, err := ARGBToABGR(testImgARGB); err != nil {
+		panic(err.Error())
+	} else {
+		testImgABGR = abgr
 	}
 }
 
@@ -104,4 +112,20 @@ func saveImageFromARGB(img *image.RGBA) (string, error) {
 		return "", err
 	}
 	return saveImage(rgba)
+}
+
+func saveData(img *image.RGBA, prefix string) (string, error) {
+	b := img.Bounds()
+	w, h := b.Max.X, b.Max.Y
+
+	out, err := ioutil.TempFile("/tmp", fmt.Sprintf("%s_%dx%d_*.raw", prefix, w, h))
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	if _, err := out.Write(img.Pix); err != nil {
+		return "", err
+	}
+	return out.Name(), nil
 }

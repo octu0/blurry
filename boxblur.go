@@ -6,12 +6,13 @@ package blurry
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lboxblur_linux -ldl -lm
 #include <stdlib.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "libboxblur_osx.h"
 #elif __linux__
 #include "libboxblur_linux.h"
 #endif
+
+#include "buffer.h"
 
 int libboxblur(unsigned char *src, int32_t width, int32_t height, uint8_t size, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);

@@ -6,12 +6,13 @@ package blurry
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lcontrast_linux -ldl -lm
 #include <stdlib.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "libcontrast_osx.h"
 #elif __linux__
 #include "libcontrast_linux.h"
 #endif
+
+#include "buffer.h"
 
 int libcontrast(unsigned char *src, int32_t width, int32_t height, float factor, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);

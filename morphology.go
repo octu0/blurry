@@ -7,7 +7,6 @@ package blurry
 #include <stdlib.h>
 #include <string.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "libmorphology_open_osx.h"
 #include "libmorphology_close_osx.h"
@@ -17,6 +16,8 @@ package blurry
 #include "libmorphology_close_linux.h"
 #include "libmorphology_gradient_linux.h"
 #endif
+
+#include "buffer.h"
 
 int call_morphology(
   unsigned char mode,

@@ -6,7 +6,6 @@ package blurry
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lblend_normal_linux -lblend_sub_linux -lblend_add_linux -lblend_diff_linux -ldl -lm
 #include <stdlib.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "libblend_normal_osx.h"
 #include "libblend_add_osx.h"
@@ -18,6 +17,8 @@ package blurry
 #include "libblend_sub_linux.h"
 #include "libblend_diff_linux.h"
 #endif
+
+#include "buffer.h"
 
 int call_blend(
   uint8_t mode,

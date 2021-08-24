@@ -6,7 +6,6 @@ package blurry
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lrotate0_linux -lrotate90_linux -lrotate180_linux -lrotate270_linux -ldl -lm
 #include <stdlib.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "librotate0_osx.h"
 #include "librotate90_osx.h"
@@ -18,6 +17,8 @@ package blurry
 #include "librotate180_linux.h"
 #include "librotate270_linux.h"
 #endif
+
+#include "buffer.h"
 
 int call_rotate(
   int16_t rotation,

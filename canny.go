@@ -6,7 +6,6 @@ package blurry
 #cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lcanny_linux -lcanny_dilate_linux -lcanny_morphology_open_linux -lcanny_morphology_close_linux -ldl -lm
 #include <stdlib.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "libcanny_osx.h"
 #include "libcanny_dilate_osx.h"
@@ -18,6 +17,8 @@ package blurry
 #include "libcanny_morphology_open_linux.h"
 #include "libcanny_morphology_close_linux.h"
 #endif
+
+#include "buffer.h"
 
 int call_canny(
   unsigned char mode,

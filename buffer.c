@@ -5,7 +5,7 @@
 #endif
 
 #include <stdlib.h>
-#include "bridge.h"
+#include "buffer.h"
 
 const struct halide_type_t halide_int16_t = { halide_type_int,  16, 1 };
 const struct halide_type_t halide_int32_t = { halide_type_int, 32, 1 };

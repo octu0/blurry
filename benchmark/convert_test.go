@@ -20,4 +20,9 @@ func BenchmarkConvert(b *testing.B) {
 			_, _ = ARGBToABGR(testImgARGB)
 		}
 	})
+	b.Run("libyuv/ARGBToBGRA", func(tb *testing.B) {
+		for i := 0; i < tb.N; i += 1 {
+			_, _ = ARGBToBGRA(testImgARGB)
+		}
+	})
 }

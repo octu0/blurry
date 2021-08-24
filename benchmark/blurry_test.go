@@ -21,6 +21,7 @@ var (
 	testImg     *image.RGBA
 	testImgARGB *image.RGBA
 	testImgABGR *image.RGBA
+	testImgBGRA *image.RGBA
 )
 
 var (
@@ -57,6 +58,12 @@ func init() {
 		panic(err.Error())
 	} else {
 		testImgABGR = abgr
+	}
+
+	if bgra, err := ARGBToBGRA(testImgARGB); err != nil {
+		panic(err.Error())
+	} else {
+		testImgBGRA = bgra
 	}
 }
 

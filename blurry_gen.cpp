@@ -227,6 +227,214 @@ int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int3
 //
 
 //
+// {{{ convert_from_argb
+//
+void generate_convert_from_argb(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_from_argb_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_convert_from_argb(char **argv) {
+  FILE *const f = fopen(argv[2], "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
+  Buffer<uint8_t> out = jit_realize_uint8(convert_from_argb_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_convert_from_argb(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(convert_from_argb_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+//
+// }}} convert_from_argb
+//
+
+//
+// {{{ convert_from_abgr
+//
+void generate_convert_from_abgr(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_from_abgr_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_convert_from_abgr(char **argv) {
+  FILE *const f = fopen(argv[2], "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
+  Buffer<uint8_t> out = jit_realize_uint8(convert_from_abgr_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_convert_from_abgr(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(convert_from_abgr_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+//
+// }}} convert_from_abgr
+//
+
+//
+// {{{ convert_from_bgra
+//
+void generate_convert_from_bgra(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_from_bgra_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_convert_from_bgra(char **argv) {
+  FILE *const f = fopen(argv[2], "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
+  Buffer<uint8_t> out = jit_realize_uint8(convert_from_bgra_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_convert_from_bgra(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(convert_from_abgr_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+//
+// }}} convert_from_bgra
+//
+
+//
+// {{{ convert_from_rabg
+//
+void generate_convert_from_rabg(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_from_rabg_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+  }, fn.name());
+}
+
+int jit_convert_from_rabg(char **argv) {
+  FILE *const f = fopen(argv[2], "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
+  Buffer<uint8_t> out = jit_realize_uint8(convert_from_rabg_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int benchmark_convert_from_rabg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  return jit_benchmark(convert_from_rabg_fn(
+    wrapFunc(buf_src, "buf_src"), width, height
+  ), buf_src);
+}
+//
+// }}} convert_from_rabg
+//
+
+//
 // {{{ rotate0
 //
 void generate_rotate0(std::vector<Target::Feature> features) {
@@ -2530,6 +2738,18 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
   } 
+  if(strcmp(argv[1], "convertargb") == 0) {
+    return jit_convert_from_argb(argv);
+  }
+  if(strcmp(argv[1], "convertabgr") == 0) {
+    return jit_convert_from_abgr(argv);
+  }
+  if(strcmp(argv[1], "convertbgra") == 0) {
+    return jit_convert_from_bgra(argv);
+  }
+  if(strcmp(argv[1], "convertrabg") == 0) {
+    return jit_convert_from_rabg(argv);
+  }
   if(strcmp(argv[1], "rotate0") == 0) {
     return jit_rotate0(argv);
   } 

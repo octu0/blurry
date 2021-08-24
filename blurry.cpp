@@ -185,6 +185,19 @@ Func read_from_argb(Func in, const char *name) {
   return f;
 }
 
+// RABG to RGBA
+Func read_from_rabg(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 0), // R
+    ch == 1, in(x, y, 3), // A
+    ch == 2, in(x, y, 2), // B
+    likely(in(x, y, 1))   // G
+  );
+  return f;
+}
+
 // BGRA to RGBA
 Func read_from_bgra(Func in, const char *name) {
   Var x("x"), y("y"), ch("ch");
@@ -516,11 +529,9 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func convert_from(Func in, Param<int32_t> width, Param<int32_t> height, const char *name) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-
   Var x("x"), y("y"), ch("ch");
 
-  Func convert = Func(nam);
+  Func convert = Func(name);
   convert(x, y, ch) = in(x, y, ch);
 
   convert.compute_at(in, x)
@@ -529,35 +540,44 @@ Func convert_from(Func in, Param<int32_t> width, Param<int32_t> height, const ch
   return convert;
 }
 
+// ABGR
+Func convert_from_abgr_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_abgr(input, "in"),
+    width,
+    height,
+    "convert_from_argb"
+  );
+}
+
+// ARGB
 Func convert_from_argb_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read_from_argb(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
-
-  Func convert = Func("convert_from_argb");
-  convert(x, y, ch) = in(x, y, ch);
-
-  convert.compute_at(in, x)
-    .unroll(y, 8)
-    .vectorize(x, 16);
-  return convert;
+  return convert_from(
+    read_from_argb(input, "in"),
+    width,
+    height,
+    "convert_from_argb"
+  );
 }
 
-// BGRA little endian (argb in memory) to ARGB
+// BGRA
 Func convert_from_bgra_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read_from_bgra(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+  return convert_from(
+    read_from_bgra(input, "in"),
+    width,
+    height,
+    "convert_from_bgra"
+  );
+}
 
-  Var x("x"), y("y"), ch("ch");
-
-  Func convert = Func("convert_from_bgra");
-  convert(x, y, ch) = in(x, y, ch);
-
-  convert.compute_at(in, x)
-    .unroll(y, 8)
-    .vectorize(x, 16);
-  return convert;
+// BGRA little endian (argb in memory) at libyuv
+Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_rabg(input, "in"),
+    width,
+    height,
+    "convert_from_rabg"
+  );
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {

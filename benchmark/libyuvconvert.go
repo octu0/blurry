@@ -89,3 +89,27 @@ func RGBAToARGB(src *image.RGBA) (*image.RGBA, error) {
 		return C.RGBAToARGB(s, srcStride, d, dstStride, width, height)
 	}, "RGBAToARGB")
 }
+
+//int BGRAToARGB(const uint8_t* src_bgra,
+//               int src_stride_bgra,
+//               uint8_t* dst_argb,
+//               int dst_stride_argb,
+//               int width,
+//               int height);
+func BGRAToARGB(src *image.RGBA) (*image.RGBA, error) {
+	return convertFrom(src, func(s *C.uchar, srcStride C.int, d *C.uchar, dstStride C.int, width, height C.int) C.int {
+		return C.BGRAToARGB(s, srcStride, d, dstStride, width, height)
+	}, "BGRAToARGB")
+}
+
+//int ARGBToBGRA(const uint8_t* src_argb,
+//               int src_stride_argb,
+//               uint8_t* dst_bgra,
+//               int dst_stride_bgra,
+//               int width,
+//               int height);
+func ARGBToBGRA(src *image.RGBA) (*image.RGBA, error) {
+	return convertFrom(src, func(s *C.uchar, srcStride C.int, d *C.uchar, dstStride C.int, width, height C.int) C.int {
+		return C.ARGBToBGRA(s, srcStride, d, dstStride, width, height)
+	}, "ARGBToBGRA")
+}

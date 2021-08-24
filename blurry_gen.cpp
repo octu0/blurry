@@ -269,7 +269,18 @@ int jit_convert_from_argb(char **argv) {
   return 0;
 }
 
-int benchmark_convert_from_argb(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+int benchmark_convert_from_argb() {
+  FILE *const f = fopen("./testdata/argb_320x240.raw", "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
   return jit_benchmark(convert_from_argb_fn(
     wrapFunc(buf_src, "buf_src"), width, height
   ), buf_src);
@@ -321,7 +332,18 @@ int jit_convert_from_abgr(char **argv) {
   return 0;
 }
 
-int benchmark_convert_from_abgr(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+int benchmark_convert_from_abgr() {
+  FILE *const f = fopen("./testdata/abgr_320x240.raw", "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
   return jit_benchmark(convert_from_abgr_fn(
     wrapFunc(buf_src, "buf_src"), width, height
   ), buf_src);
@@ -373,7 +395,18 @@ int jit_convert_from_bgra(char **argv) {
   return 0;
 }
 
-int benchmark_convert_from_bgra(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+int benchmark_convert_from_bgra() {
+  FILE *const f = fopen("./testdata/rabg_le_bgra_320x240.raw", "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
   return jit_benchmark(convert_from_abgr_fn(
     wrapFunc(buf_src, "buf_src"), width, height
   ), buf_src);
@@ -425,7 +458,18 @@ int jit_convert_from_rabg(char **argv) {
   return 0;
 }
 
-int benchmark_convert_from_rabg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+int benchmark_convert_from_rabg() {
+  FILE *const f = fopen("./testdata/rabg_le_bgra_320x240.raw", "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  uint8_t *data = (uint8_t *) calloc(320 * 240 * 4, sizeof(uint8_t));
+  fread(data, 1, 320 * 240 * 4, f);
+  fclose(f);
+  Buffer<uint8_t> buf_src = Buffer<uint8_t>::make_interleaved(data, 320, 240, 4);
+  Param<int32_t> width{"width", 320};
+  Param<int32_t> height{"height", 240};
+
   return jit_benchmark(convert_from_rabg_fn(
     wrapFunc(buf_src, "buf_src"), width, height
   ), buf_src);
@@ -2633,6 +2677,10 @@ void generate(){
 
   generate_runtime(features);
   generate_cloneimg(features);
+  generate_convert_from_argb(features);
+  generate_convert_from_abgr(features);
+  generate_convert_from_bgra(features);
+  generate_convert_from_rabg(features);
   generate_rotate0(features);
   generate_rotate90(features);
   generate_rotate180(features);
@@ -2686,6 +2734,10 @@ void benchmark(char **argv) {
 
   printf("src %dx%d\n", width.get(), height.get());
   benchmark_cloneimg(buf_src, width, height);
+  benchmark_convert_from_argb();
+  benchmark_convert_from_abgr();
+  benchmark_convert_from_bgra();
+  benchmark_convert_from_rabg();
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);

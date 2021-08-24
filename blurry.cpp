@@ -159,6 +159,45 @@ Func readUI8(Func clamped, const char *name) {
   return read;
 }
 
+// ABGR to RGBA
+Func read_from_abgr(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 3), // A
+    ch == 1, in(x, y, 2), // B
+    ch == 2, in(x, y, 1), // G
+    likely(in(x, y, 0))   // R
+  );
+  return f;
+}
+
+// ARGB to RGBA
+Func read_from_argb(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 3), // A
+    ch == 1, in(x, y, 0), // R
+    ch == 2, in(x, y, 1), // G
+    likely(in(x, y, 2))   // B
+  );
+  return f;
+}
+
+// BGRA to RGBA
+Func read_from_bgra(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 2), // B
+    ch == 1, in(x, y, 1), // G
+    ch == 2, in(x, y, 0), // R
+    likely(in(x, y, 3))   // A
+  );
+  return f;
+}
+
 Func gray_xy(Func in) {
   Var x("x"), y("y");
 
@@ -474,6 +513,51 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     .unroll(y, 8)
     .vectorize(x, 16);
   return cloneimg;
+}
+
+Func convert_from(Func in, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func convert = Func(nam);
+  convert(x, y, ch) = in(x, y, ch);
+
+  convert.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  return convert;
+}
+
+Func convert_from_argb_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read_from_argb(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func convert = Func("convert_from_argb");
+  convert(x, y, ch) = in(x, y, ch);
+
+  convert.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  return convert;
+}
+
+// BGRA little endian (argb in memory) to ARGB
+Func convert_from_bgra_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read_from_bgra(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+
+  Func convert = Func("convert_from_bgra");
+  convert(x, y, ch) = in(x, y, ch);
+
+  convert.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  return convert;
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {

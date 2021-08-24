@@ -546,7 +546,7 @@ Func convert_from_abgr_fn(Func input, Param<int32_t> width, Param<int32_t> heigh
     read_from_abgr(input, "in"),
     width,
     height,
-    "convert_from_argb"
+    "convert_from_abgr"
   );
 }
 

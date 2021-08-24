@@ -20,11 +20,14 @@ halide_buffer_t *create_rgba_buffer(unsigned char *data, int32_t width, int32_t 
   if(buffer == NULL) {
     return NULL;
   }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
   halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
   if(dim == NULL) {
-    free(buffer);
+    free_buf(buffer);
     return NULL;
   }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_rgba_dim(dim, width, height);
   init_rgba_buf(buffer, dim, data, dimensions);
@@ -38,11 +41,14 @@ halide_buffer_t *create_uint16_array_buffer(unsigned char *data, int32_t width, 
   if(buffer == NULL) {
     return NULL;
   }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
   halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
   if(dim == NULL) {
-    free(buffer);
+    free_buf(buffer);
     return NULL;
   }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_array_dim(dim, width, height);
   init_uint16_buf(buffer, dim, data, dimensions);
@@ -56,11 +62,14 @@ halide_buffer_t *create_int32_array_buffer(unsigned char *data, int32_t width, i
   if(buffer == NULL) {
     return NULL;
   }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
   halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
   if(dim == NULL) {
-    free(buffer);
+    free_buf(buffer);
     return NULL;
   }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_array_dim(dim, width, height);
   init_int32_buf(buffer, dim, data, dimensions);
@@ -74,11 +83,14 @@ halide_buffer_t *create_float_array_buffer(unsigned char *data, int32_t width, i
   if(buffer == NULL) {
     return NULL;
   }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
   halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
   if(dim == NULL) {
-    free(buffer);
+    free_buf(buffer);
     return NULL;
   }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_array_dim(dim, width, height);
   init_float_buf(buffer, dim, data, dimensions);
@@ -92,11 +104,14 @@ halide_buffer_t *create_double_array_buffer(unsigned char *data, int32_t width, 
   if(buffer == NULL) {
     return NULL;
   }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
   halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
   if(dim == NULL) {
-    free(buffer);
+    free_buf(buffer);
     return NULL;
   }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_array_dim(dim, width, height);
   init_double_buf(buffer, dim, data, dimensions);
@@ -138,53 +153,37 @@ void init_array_dim(halide_dimension_t *dim, int32_t width, int32_t height) {
   dim[1].flags = 0;
 }
 
-void init_rgba_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
+void init_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
   buffer->dimensions = dimensions;
   buffer->dim = dim;
   buffer->device = 0;
   buffer->device_interface = NULL;
   buffer->host = data;
   buffer->flags = halide_buffer_flag_host_dirty;
+}
+
+void init_rgba_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
+  init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_uint8_t;
 }
 
 void init_uint16_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
-  buffer->dimensions = dimensions;
-  buffer->dim = dim;
-  buffer->device = 0;
-  buffer->device_interface = NULL;
-  buffer->host = data;
-  buffer->flags = halide_buffer_flag_host_dirty;
+  init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_uint16_t;
 }
 
 void init_int32_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
-  buffer->dimensions = dimensions;
-  buffer->dim = dim;
-  buffer->device = 0;
-  buffer->device_interface = NULL;
-  buffer->host = data;
-  buffer->flags = halide_buffer_flag_host_dirty;
+  init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_int32_t;
 }
 
 void init_float_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
-  buffer->dimensions = dimensions;
-  buffer->dim = dim;
-  buffer->device = 0;
-  buffer->device_interface = NULL;
-  buffer->host = data;
-  buffer->flags = halide_buffer_flag_host_dirty;
+  init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_float_t;
 }
 
 void init_double_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
-  buffer->dimensions = dimensions;
-  buffer->dim = dim;
-  buffer->device = 0;
-  buffer->device_interface = NULL;
-  buffer->host = data;
-  buffer->flags = halide_buffer_flag_host_dirty;
+  init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_double_t;
 }
 

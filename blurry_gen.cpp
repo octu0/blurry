@@ -116,7 +116,7 @@ int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(10, 10, [&]() {
-    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 4});
   });
   printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
@@ -126,7 +126,7 @@ int jit_benchmark_once(Func fn, Buffer<uint8_t> buf_src) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(1, 1, [&]() {
-    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 3});
+    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 4});
   });
   printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
@@ -145,7 +145,7 @@ Buffer<uint16_t> jit_realize_uint16_bounds(Func fn, int32_t width, int32_t heigh
 
   printf("realize(uint16_t) %s...\n", fn.name().c_str());
   
-  return fn.realize({width, height, 3});
+  return fn.realize({width, height, 4});
 }
 
 Buffer<int32_t> jit_realize_int32_bounds(Func fn, int32_t width, int32_t height) {
@@ -153,7 +153,7 @@ Buffer<int32_t> jit_realize_int32_bounds(Func fn, int32_t width, int32_t height)
 
   printf("realize(int32_t) %s...\n", fn.name().c_str());
   
-  return fn.realize({width, height, 3});
+  return fn.realize({width, height, 4});
 }
 
 Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height) {
@@ -161,7 +161,7 @@ Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height)
 
   printf("realize(double) %s...\n", fn.name().c_str());
   
-  return fn.realize({width, height, 3});
+  return fn.realize({width, height, 4});
 }
 
 Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {
@@ -2388,7 +2388,7 @@ int jit_prepared_match_template_ncc(char **argv) {
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
   Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_sum = r[1];
 
@@ -2435,7 +2435,7 @@ int benchmark_prepared_match_template_ncc(
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
   Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_sum = r[1];
 
@@ -2600,7 +2600,7 @@ int jit_prepared_match_template_zncc(char **argv) {
   Param<int32_t> tpl_height{"tpl_height", buf_tpl.get()->height()};
 
   Func fn = prepare_zncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_stddev = r[1];
 
@@ -2647,7 +2647,7 @@ int benchmark_prepared_match_template_zncc(
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
   Func fn = prepare_zncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize(buf_tpl.get()->width(), buf_tpl.get()->height(), 3);
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_stddev = r[1];
 

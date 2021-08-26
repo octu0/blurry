@@ -213,30 +213,100 @@ Func read_from_bgra(Func in, const char *name) {
   return f;
 }
 
+std::vector<Expr> i420_bt601_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y)) * 1.164f;
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
+
+  Expr r = yf(x, y) + (1.596f * vf(x, y));
+  Expr g = yf(x, y) - (0.391f * uf(x, y)) - (0.813f * vf(x, y));
+  Expr b = yf(x, y) + (2.018f * uf(x, y));
+  return {r, g, b};
+}
+
+std::vector<Expr> i420_bt601_fullrange(Func in_y, Func in_u, Func in_v, Var x, Var y) {
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
+
+  Expr r = yf(x, y) + (1.40200f * vf(x, y));
+  Expr g = yf(x, y) - (0.34414f * uf(x, y)) - (0.71414f * vf(x, y));
+  Expr b = yf(x, y) + (1.77200f * uf(x, y));
+  return {r, g, b};
+}
+
+std::vector<Expr> i420_bt709_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164f;
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
+
+  Expr r = yf(x, y) + (1.793f * vf(x, y));
+  Expr g = yf(x, y) - (0.213f * uf(x, y)) - (0.533f * vf(x, y));
+  Expr b = yf(x, y) + (2.112f * uf(x, y));
+  return {r, g, b};
+}
+
+std::tuple<Expr, Expr, Expr> i420_bt2020_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164384f;
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
+
+  Expr r = yf(x, y) + (1.67867f * vf(x, y));
+  Expr g = yf(x, y) - (0.187326f * uf(x, y)) - (0.65042f * vf(x, y));
+  Expr b = yf(x, y) + (2.14177f * uf(x, y));
+  return {r, g, b};
+}
+
+std::tuple<Expr, Expr, Expr> i420_bt2020_fullrange(Func in_y, Func in_u, Func in_v, Var x, Var y) {
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
+
+  Expr r = yf(x, y) + (1.474600f * vf(x, y));
+  Expr g = yf(x, y) - (0.164553f * uf(x, y)) - (0.571353f * vf(x, y));
+  Expr b = yf(x, y) + (1.881400f * uf(x, y));
+  return {r, g, b};
+}
+
 Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   Var x("x"), y("y"), ch("ch");
 
+  // BT.2020 limited range
   Func yf = Func("y_float");
-  yf(x, y) = cast<float>(in_y(x, y) & 0xff);
+  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164384f;
   Func uf = Func("u_float");
-  uf(x, y) = cast<float>((in_u(x / 2, y / 2) & 0xff) - float_128);
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
   Func vf = Func("v_float");
-  vf(x, y) = cast<float>((in_v(x / 2, y / 2) & 0xff) - float_128);
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
 
   Func f = Func(name);
-
-  Expr r = yf(x, y) + (1.370705f * vf(x, y));
-  Expr g = yf(x, y) - (0.698001f * vf(x, y)) - (0.337633f * uf(x, y));
-  Expr b = yf(x, y) + (1.732446f * uf(x, y));
+  Expr r = yf(x, y) + (1.67867f * vf(x, y));
+  Expr g = yf(x, y) - (0.187326f * uf(x, y)) - (0.65042f * vf(x, y));
+  Expr b = yf(x, y) + (2.14177f * uf(x, y));
 
   Expr rr = clamp(r, float_0, float_255);
   Expr gg = clamp(g, float_0, float_255);
   Expr bb = clamp(b, float_0, float_255);
 
   Expr v = select(
-    ch == 0, r,       // R
-    ch == 1, g,       // G
-    ch == 2, b,       // B
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
     likely(float_255)  // A always 0xff
   );
   f(x, y, ch) = cast<uint8_t>(v);

@@ -226,7 +226,7 @@ Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   Func f = Func(name);
 
   Expr r = yf(x, y) + (1.370705f * vf(x, y));
-  Expr g = yf(x, y) - ((0.698001f * vf(x, y)) - (0.71414f * uf(x, y)));
+  Expr g = yf(x, y) - (0.698001f * vf(x, y)) - (0.337633f * uf(x, y));
   Expr b = yf(x, y) + (1.732446f * uf(x, y));
 
   Expr rr = clamp(r, float_0, float_255);

@@ -11,6 +11,8 @@ const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 const Expr ui8_0 = cast<uint8_t>(0);
 const Expr ui8_255 = cast<uint8_t>(255);
+const Expr float0 = cast<float>(0.f);
+const Expr float128 = cast<float>(128.f);
 const Expr float255 = cast<float>(255.f);
 const Expr degree0 = cast<uint8_t>(0);
 const Expr degree45 = cast<uint8_t>(45);
@@ -208,6 +210,34 @@ Func read_from_bgra(Func in, const char *name) {
     ch == 2, in(x, y, 0), // R
     likely(in(x, y, 3))   // A
   );
+  return f;
+}
+
+Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func yf = Func("y_float");
+  yf(x, y) = cast<float>(in_y(x, y) & 0xff);
+  Func uf = Func("u_float");
+  uf(x, y) = cast<float>((in_u(x / 2, y / 2) & 0xff) - float128);
+  Func vf = Func("v_float");
+  vf(x, y) = cast<float>((in_v(x / 2, y / 2) & 0xff) - float128);
+
+  Func r = Func("r");
+  Func g = Func("g");
+  Func b = Func("b");
+  r(x, y) = yf(x, y) + (1.370705f * vf(x, y));
+  g(x, y) = yf(x, y) - ((0.698001f * vf(x, y)) - (0.71414f * uf(x, y)));
+  b(x, y) = yf(x, y) + (1.732446f * uf(x, y));
+
+  Func f = Func(name);
+  Expr v = select(
+    ch == 0, clamp(r(x, y), float0, float255), // R
+    ch == 1, clamp(g(x, y), float0, float255), // G
+    ch == 2, clamp(b(x, y), float0, float255), // B
+    likely(float255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
   return f;
 }
 
@@ -577,6 +607,15 @@ Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> heigh
     width,
     height,
     "convert_from_rabg"
+  );
+}
+
+Func convert_from_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_i420(in_y, in_u, in_v, "in"),
+    width,
+    height,
+    "convert_from_i420"
   );
 }
 

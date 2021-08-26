@@ -11,9 +11,9 @@ const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 const Expr ui8_0 = cast<uint8_t>(0);
 const Expr ui8_255 = cast<uint8_t>(255);
-const Expr float0 = cast<float>(0.f);
-const Expr float128 = cast<float>(128.f);
-const Expr float255 = cast<float>(255.f);
+const Expr float_0 = cast<float>(0.f);
+const Expr float_128 = cast<float>(128.f);
+const Expr float_255 = cast<float>(255.f);
 const Expr degree0 = cast<uint8_t>(0);
 const Expr degree45 = cast<uint8_t>(45);
 const Expr degree90 = cast<uint8_t>(90);
@@ -219,9 +219,9 @@ Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   Func yf = Func("y_float");
   yf(x, y) = cast<float>(in_y(x, y) & 0xff);
   Func uf = Func("u_float");
-  uf(x, y) = cast<float>((in_u(x / 2, y / 2) & 0xff) - float128);
+  uf(x, y) = cast<float>((in_u(x / 2, y / 2) & 0xff) - float_128);
   Func vf = Func("v_float");
-  vf(x, y) = cast<float>((in_v(x / 2, y / 2) & 0xff) - float128);
+  vf(x, y) = cast<float>((in_v(x / 2, y / 2) & 0xff) - float_128);
 
   Func f = Func(name);
 
@@ -229,15 +229,15 @@ Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   Expr g = yf(x, y) - ((0.698001f * vf(x, y)) - (0.71414f * uf(x, y)));
   Expr b = yf(x, y) + (1.732446f * uf(x, y));
 
-  Expr rr = clamp(r, float0, float255);
-  Expr gg = clamp(g, float0, float255);
-  Expr bb = clamp(b, float0, float255);
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
 
   Expr v = select(
     ch == 0, r,       // R
     ch == 1, g,       // G
     ch == 2, b,       // B
-    likely(float255)  // A always 0xff
+    likely(float_255)  // A always 0xff
   );
   f(x, y, ch) = cast<uint8_t>(v);
   return f;
@@ -1467,7 +1467,7 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
   Func avg_color = Func("avg_color");
   avg_color(x, y, ch) = select(
     ch < 3, block_color(x, y, ch) / base,
-    likely(float255)
+    likely(float_255)
   );
 
   Func blockmozaic = Func("blockmozaic");

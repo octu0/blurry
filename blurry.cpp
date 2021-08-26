@@ -223,18 +223,20 @@ Func read_from_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   Func vf = Func("v_float");
   vf(x, y) = cast<float>((in_v(x / 2, y / 2) & 0xff) - float128);
 
-  Func r = Func("r");
-  Func g = Func("g");
-  Func b = Func("b");
-  r(x, y) = yf(x, y) + (1.370705f * vf(x, y));
-  g(x, y) = yf(x, y) - ((0.698001f * vf(x, y)) - (0.71414f * uf(x, y)));
-  b(x, y) = yf(x, y) + (1.732446f * uf(x, y));
-
   Func f = Func(name);
+
+  Expr r = yf(x, y) + (1.370705f * vf(x, y));
+  Expr g = yf(x, y) - ((0.698001f * vf(x, y)) - (0.71414f * uf(x, y)));
+  Expr b = yf(x, y) + (1.732446f * uf(x, y));
+
+  Expr rr = clamp(r, float0, float255);
+  Expr gg = clamp(g, float0, float255);
+  Expr bb = clamp(b, float0, float255);
+
   Expr v = select(
-    ch == 0, clamp(r(x, y), float0, float255), // R
-    ch == 1, clamp(g(x, y), float0, float255), // G
-    ch == 2, clamp(b(x, y), float0, float255), // B
+    ch == 0, r,       // R
+    ch == 1, g,       // G
+    ch == 2, b,       // B
     likely(float255)  // A always 0xff
   );
   f(x, y, ch) = cast<uint8_t>(v);

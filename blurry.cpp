@@ -214,91 +214,18 @@ Func read_from_bgra(Func in, const char *name) {
   return f;
 }
 
-std::tuple<Expr, Expr, Expr> yuv_i420_bt601_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y)) * 1.164f;
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
-  Expr r = yf(x, y) + (1.596f * vf(x, y));
-  Expr g = yf(x, y) - (0.391f * uf(x, y)) - (0.813f * vf(x, y));
-  Expr b = yf(x, y) + (2.018f * uf(x, y));
-  return {r, g, b};
-}
-
-std::tuple<Expr, Expr, Expr> yuv_i420_bt601_fullrange(Func in_y, Func in_u, Func in_v, Var x, Var y) {
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y));
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
-  Expr r = yf(x, y) + (1.40200f * vf(x, y));
-  Expr g = yf(x, y) - (0.34414f * uf(x, y)) - (0.71414f * vf(x, y));
-  Expr b = yf(x, y) + (1.77200f * uf(x, y));
-  return {r, g, b};
-}
-
-std::tuple<Expr, Expr, Expr> yuv_i420_bt709_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164f;
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
-  Expr r = yf(x, y) + (1.793f * vf(x, y));
-  Expr g = yf(x, y) - (0.213f * uf(x, y)) - (0.533f * vf(x, y));
-  Expr b = yf(x, y) + (2.112f * uf(x, y));
-  return {r, g, b};
-}
-
-std::tuple<Expr, Expr, Expr> yuv_i420_bt2020_limited(Func in_y, Func in_u, Func in_v, Var x, Var y) {
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164384f;
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
-  Expr r = yf(x, y) + (1.67867f * vf(x, y));
-  Expr g = yf(x, y) - (0.187326f * uf(x, y)) - (0.65042f * vf(x, y));
-  Expr b = yf(x, y) + (2.14177f * uf(x, y));
-  return {r, g, b};
-}
-
-std::tuple<Expr, Expr, Expr> yuv_i420_bt2020_fullrange(Func in_y, Func in_u, Func in_v, Var x, Var y) {
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y));
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
-  Expr r = yf(x, y) + (1.474600f * vf(x, y));
-  Expr g = yf(x, y) - (0.164553f * uf(x, y)) - (0.571353f * vf(x, y));
-  Expr b = yf(x, y) + (1.881400f * uf(x, y));
-  return {r, g, b};
-}
-
-Func read_from_yuv_i420(Func in_y, Func in_u, Func in_v, const char *name) {
+// BT.601 limited range
+Func read_from_yuv_bt601_limited(Func yf, Func uf, Func vf, const char *name) {
   Var x("x"), y("y"), ch("ch");
 
-  // BT.2020 limited range
-  Func yf = Func("y_float");
-  Func uf = Func("u_float");
-  Func vf = Func("v_float");
-  yf(x, y) = cast<float>(in_y(x, y) - 16) * 1.164384f;
-  uf(x, y) = cast<float>(in_u(x / 2, y / 2)) - float_128;
-  vf(x, y) = cast<float>(in_v(x / 2, y / 2)) - float_128;
-
   Func f = Func(name);
-  Expr r = yf(x, y) + (1.67867f * vf(x, y));
-  Expr g = yf(x, y) - (0.187326f * uf(x, y)) - (0.65042f * vf(x, y));
-  Expr b = yf(x, y) + (2.14177f * uf(x, y));
+  Expr yy = (yf(x, y) - float_16) * 1.164f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.596f * vv);
+  Expr g = yy - (0.391f * uu) - (0.813f * vv);
+  Expr b = yy + (2.018f * uu);
 
   Expr rr = clamp(r, float_0, float_255);
   Expr gg = clamp(g, float_0, float_255);
@@ -314,8 +241,214 @@ Func read_from_yuv_i420(Func in_y, Func in_u, Func in_v, const char *name) {
   return f;
 }
 
-Func rgb_to_yuv444(Func in, const char *name) {
+// BT.601 full range
+Func read_from_yuv_bt601_fullrange(Func yf, Func uf, Func vf, const char *name) {
   Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = yf(x, y);
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.40200f * vv);
+  Expr g = yy - (0.34414f * uu) - (0.71414f * vv);
+  Expr b = yy + (1.77200f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.709 limited range
+Func read_from_yuv_bt709_limited(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = (yf(x, y) - float_16) * 1.164f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.793f * vv);
+  Expr g = yy - (0.213f * uu) - (0.533f * vv);
+  Expr b = yy + (2.112f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 full range
+Func read_from_yuv_bt2020_fullrange(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = yf(x, y);
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.474600f * vv);
+  Expr g = yy - (0.164553f * uu) - (0.571353f * vv);
+  Expr b = yy + (1.881400f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 limited range
+Func read_from_yuv_bt2020_limited(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = (yf(x, y) - float_16) * 1.164384f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.67867f * vv);
+  Expr g = yy - (0.187326f * uu) - (0.65042f * vv);
+  Expr b = yy + (2.14177f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+Func read_from_yuv_i444(Func in_y, Func in_u, Func in_v, const char *name) {
+  Var x("x"), y("y");
+
+  Func yf = Func("y_float");
+  Func uf = Func("u_float");
+  Func vf = Func("v_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  uf(x, y) = cast<float>(in_u(x, y));
+  vf(x, y) = cast<float>(in_v(x, y));
+
+  return read_from_yuv_bt2020_limited(yf, uf, vf, name);
+}
+
+Func read_from_yuv_i420(Func in_y, Func in_u, Func in_v, const char *name) {
+  Var x("x"), y("y");
+
+  Func yf = Func("y_float");
+  Func uf = Func("u_float");
+  Func vf = Func("v_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2));
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2));
+
+  return read_from_yuv_bt2020_limited(yf, uf, vf, name);
+}
+
+// BT.601
+Func rgb_to_yuv_bt601(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.257f) + (gf(x, y) * 0.504f) + (bf(x, y) * 0.098f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.148f) - (gf(x, y) * 0.291f) + (bf(x, y) * 0.439f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.439f) - (gf(x, y) * 0.368f) - (bf(x, y) * 0.071f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 full range
+Func rgb_to_yuv_bt2020_fullrange(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.26270f) + (gf(x, y) * 0.67800f) + (bf(x, y) * 0.05930f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.13963f) - (gf(x, y) * 0.36037f) + (bf(x, y) * 0.50000f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.50000f) - (gf(x, y) * 0.45979f) - (bf(x, y) * 0.04021f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 limited range
+Func rgb_to_yuv_bt2020_limited(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.22564f) + (gf(x, y) * 0.59558f) + (bf(x, y) * 0.05209f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.11992f) - (gf(x, y) * 0.31656f) + (bf(x, y) * 0.43922f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.42941f) - (gf(x, y) * 0.40389f) - (bf(x, y) * 0.03533f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+Func rgb_to_yuv444(Func in, const char *name) {
+  Var x("x"), y("y");
 
   Func rf = Func("r_float");
   Func gf = Func("g_float");
@@ -324,31 +457,7 @@ Func rgb_to_yuv444(Func in, const char *name) {
   gf(x, y) = cast<float>(in(x, y, 1));
   bf(x, y) = cast<float>(in(x, y, 2));
 
-  Func f = Func(name);
-  // BT.601
-  //Expr yuv_y = ((rf(x, y) * 0.257f) + (gf(x, y) * 0.504f) + (bf(x, y) * 0.098f)) + float_16;
-  //Expr yuv_u = ((rf(x, y) * -0.148f) - (gf(x, y) * 0.291f) + (bf(x, y) * 0.439f)) + float_128;
-  //Expr yuv_v = ((rf(x, y) * 0.439f) - (gf(x, y) * 0.368f) - (bf(x, y) * 0.071f)) + float_128;
-  // BT.2020 full range
-  //Expr yuv_y = ((rf(x, y) * 0.26270f) + (gf(x, y) * 0.67800f) + (bf(x, y) * 0.05930f)) + float_16;
-  //Expr yuv_u = ((rf(x, y) * -0.13963f) - (gf(x, y) * 0.36037f) + (bf(x, y) * 0.50000f)) + float_128;
-  //Expr yuv_v = ((rf(x, y) * 0.50000f) - (gf(x, y) * 0.45979f) - (bf(x, y) * 0.04021f)) + float_128;
-  // BT.2020 limited range
-  Expr yuv_y = ((rf(x, y) * 0.22564f) + (gf(x, y) * 0.59558f) + (bf(x, y) * 0.05209f)) + float_16;
-  Expr yuv_u = ((rf(x, y) * -0.11992f) - (gf(x, y) * 0.31656f) + (bf(x, y) * 0.43922f)) + float_128;
-  Expr yuv_v = ((rf(x, y) * 0.42941f) - (gf(x, y) * 0.40389f) - (bf(x, y) * 0.03533f)) + float_128;
-
-  Expr yy = clamp(yuv_y, float_0, float_255);
-  Expr uu = clamp(yuv_u, float_0, float_255);
-  Expr vv = clamp(yuv_v, float_0, float_255);
-  Expr v = select(
-    ch == 0, yy,
-    ch == 1, uu,
-    likely(vv)
-  );
-
-  f(x, y, ch) = cast<uint8_t>(v);
-  return f;
+  return rgb_to_yuv_bt2020_limited(rf, gf, bf, name);
 }
 
 Func gray_xy(Func in) {
@@ -720,6 +829,15 @@ Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> heigh
   );
 }
 
+Func convert_from_yuv_i444_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_yuv_i444(in_y, in_u, in_v, "in"),
+    width,
+    height,
+    "convert_from_yuv_i444"
+  );
+}
+
 Func convert_from_yuv_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
   return convert_from(
     read_from_yuv_i420(in_y, in_u, in_v, "in"),
@@ -731,20 +849,20 @@ Func convert_from_yuv_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> wi
 
 Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Expr y_max_w = width;
   Expr y_max_h = height;
-  Expr uv_max_h = y_max_h + (y_max_h / 2);
+  Expr uv_max_h = y_max_h + y_max_h;
 
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
   Func f = Func("convert_to_yuv_i444");
   f(x, y) = select(
     y < y_max_h,                  yuv(x, y, 0),
-    y_max_h <= y && y < uv_max_h, yuv(x, (y_max_h - y), 1),
-    uv_max_h <= y,                yuv(x, (uv_max_h - y), 2),
+    y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
+    uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
     ui8_0
   );
   return f;
@@ -752,7 +870,7 @@ Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> hei
 
 Func convert_to_yuv_i420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Expr y_max_w = width;

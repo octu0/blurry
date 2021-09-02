@@ -433,7 +433,7 @@ int benchmark_convert_from_bgra() {
   Param<int32_t> width{"width", 320};
   Param<int32_t> height{"height", 240};
 
-  return jit_benchmark(convert_from_abgr_fn(
+  return jit_benchmark(convert_from_bgra_fn(
     wrapFunc(buf_src, "buf_src"), width, height
   ), buf_src);
 }
@@ -600,6 +600,9 @@ int benchmark_convert_from_yuv_i420() {
     return 1;
   }
   uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
+  if(data_y == nullptr) {
+    return 1;
+  }
   fread(data_y, 1, ysize, y);
   fclose(y);
 
@@ -608,6 +611,9 @@ int benchmark_convert_from_yuv_i420() {
     return 1;
   }
   uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_u == nullptr) {
+    return 1;
+  }
   fread(data_u, 1, uvsize, u);
   fclose(u);
 
@@ -616,6 +622,9 @@ int benchmark_convert_from_yuv_i420() {
     return 1;
   }
   uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_v == nullptr) {
+    return 1;
+  }
   fread(data_v, 1, uvsize, v);
   fclose(v);
 
@@ -673,16 +682,19 @@ void generate_convert_to_yuv_i444(std::vector<Target::Feature> features) {
 int jit_convert_to_yuv_i444(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
-  Param<int32_t> width{"width", buf_src.get()->width()};
-  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> _width{"width", buf_src.get()->width()};
+  Param<int32_t> _height{"height", buf_src.get()->height()};
 
-  Func fn = convert_to_yuv_i420_fn(
+  int32_t width = buf_src.get()->width();
+  int32_t height = buf_src.get()->height();
+
+  Func fn = convert_to_yuv_i444_fn(
     wrapFunc(buf_src, "buf_src"),
-    width, height
+    _width, _height
   );
   init_output_yuv_i444(
     fn.output_buffer(),
-    width, height
+    _width, _height
   );
 
   fn.compile_jit(get_jit_target_from_environment());
@@ -698,15 +710,120 @@ int jit_convert_to_yuv_i444(char **argv) {
     y_height + uv_height + uv_height,
     2
   });
+  uint8_t *yuv = out.data();
 
-  uint8_t *data = out.data();
-  printf("v= %d\n", data[0]);
+  int32_t ysize = y_width * y_height;
+  int32_t uvsize = uv_width * uv_height;
+  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
+  if(data_y == nullptr) {
+    return 1;
+  }
+  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_u == nullptr) {
+    return 1;
+  }
+  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_v == nullptr) {
+    return 1;
+  }
 
+  int i = 0;
+  int ypos = 0;
+  for(int y = 0; y < y_height; y += 1) {
+    for(int x = 0; x < y_width; x += 1) {
+      //data_y[ypos] = yuv[(y * y_height) + x];
+      data_y[ypos] = yuv[i];
+      ypos += 1;
+      i += 1;
+    }
+  }
+  int upos = 0;
+  for(int y = 0; y < uv_height; y += 1) {
+    for(int x = 0; x < uv_width; x += 1) {
+      //data_u[upos] = yuv[(y * y_height) + x];
+      data_u[upos] = yuv[i];
+      upos += 1;
+      i += 1;
+    }
+  }
+  int vpos = 0;
+  for(int y = 0; y < uv_height; y += 1) {
+    for(int x = 0; x < uv_width; x += 1) {
+      //data_v[vpos] = yuv[(y * y_height) + x];
+      data_v[vpos] = yuv[i];
+      vpos += 1;
+      i += 1;
+    }
+  }
+
+  FILE *const y = fopen(argv[3], "wb");
+  if(y == nullptr) {
+    return 1;
+  }
+  fwrite(data_y, 1, ysize, y);
+  fclose(y);
+
+  FILE *const u = fopen(argv[4], "wb");
+  if(u == nullptr) {
+    return 1;
+  }
+  fwrite(data_u, 1, uvsize, u);
+  fclose(u);
+
+  FILE *const v = fopen(argv[5], "wb");
+  if(v == nullptr) {
+    return 1;
+  }
+  fwrite(data_v, 1, uvsize, v);
+  fclose(v);
+
+  printf("save to %s\n", argv[3]);
+  printf("save to %s\n", argv[4]);
+  printf("save to %s\n", argv[5]);
+
+  if(0){
+    Buffer<uint8_t> src_y = Buffer<uint8_t>::make_interleaved(data_y, y_width, y_height, 1);
+    Buffer<uint8_t> src_u = Buffer<uint8_t>::make_interleaved(data_u, y_width, uv_height, 1);
+    Buffer<uint8_t> src_v = Buffer<uint8_t>::make_interleaved(data_v, y_width, uv_height, 1);
+    src_y.raw_buffer()->dimensions = 2;
+    src_u.raw_buffer()->dimensions = 2;
+    src_u.raw_buffer()->dim[0].extent = width;
+    src_u.raw_buffer()->dim[0].stride = 1;
+    src_u.raw_buffer()->dim[1].extent = height;
+    src_u.raw_buffer()->dim[1].stride = width;
+    src_v.raw_buffer()->dimensions = 2;
+    src_v.raw_buffer()->dim[0].extent = width;
+    src_v.raw_buffer()->dim[0].stride = 1;
+    src_v.raw_buffer()->dim[1].extent = height;
+    src_v.raw_buffer()->dim[1].stride = width;
+
+    Buffer<uint8_t> out2 = jit_realize_uint8_bounds(convert_from_yuv_i444_fn(
+      wrapFunc_xy(src_y, "src_y"),
+      wrapFunc_xy(src_u, "src_u"),
+      wrapFunc_xy(src_v, "src_v"),
+      _width, _height
+    ), width, height);
+
+    save_image(out2, "/tmp/test.png");
+    printf("save to %s\n", "/tmp/test.png");
+  }
   return 0;
 }
 
-int benchmark_convert_to_yuv_i444(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  //return jit_benchmark(convert_to_yuv_i420_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+int benchmark_convert_to_yuv_i444() {
+  Buffer<uint8_t> buf_src = load_and_convert_image("./testdata/src.png");
+  Param<int32_t> _width{"width", buf_src.get()->width()};
+  Param<int32_t> _height{"height", buf_src.get()->height()};
+
+  int32_t y_width = buf_src.get()->width();
+  int32_t uv_width = buf_src.get()->width();
+  int32_t y_height = buf_src.get()->height();
+  int32_t uv_height = buf_src.get()->height();
+
+  return jit_benchmark_bounds(convert_to_yuv_i444_fn(
+    wrapFunc(buf_src, "buf_src"),
+    _width, _height
+  ), y_width, y_height + uv_height + uv_height);
 }
 //
 // }}} convert_to_yuv_i444
@@ -2973,6 +3090,7 @@ void benchmark(char **argv) {
   benchmark_convert_from_bgra();
   benchmark_convert_from_rabg();
   benchmark_convert_from_yuv_i420();
+  benchmark_convert_to_yuv_i444();
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);
@@ -3037,10 +3155,10 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "convertrabg") == 0) {
     return jit_convert_from_rabg(argv);
   }
-  if(strcmp(argv[1], "convert_from_yuvi420") == 0) {
+  if(strcmp(argv[1], "convert_from_yuv420") == 0) {
     return jit_convert_from_yuv_i420(argv);
   }
-  if(strcmp(argv[1], "convert_to_yuvi444") == 0) {
+  if(strcmp(argv[1], "convert_to_yuv444") == 0) {
     return jit_convert_to_yuv_i444(argv);
   }
   if(strcmp(argv[1], "rotate0") == 0) {

@@ -13,19 +13,19 @@ func convertToYUVAction(c *cli.Context) error {
 		return err
 	}
 
-	outY, err := ioutil.TempFile("/tmp", "out_y_*.png")
+	outY, err := ioutil.TempFile("/tmp", "out_y_*.raw")
 	if err != nil {
 		return err
 	}
 	defer outY.Close()
 
-	outU, err := ioutil.TempFile("/tmp", "out_u_*.png")
+	outU, err := ioutil.TempFile("/tmp", "out_u_*.raw")
 	if err != nil {
 		return err
 	}
 	defer outU.Close()
 
-	outV, err := ioutil.TempFile("/tmp", "out_v_*.png")
+	outV, err := ioutil.TempFile("/tmp", "out_v_*.raw")
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func convertToYUVAction(c *cli.Context) error {
 		outU.Name(),
 		outV.Name(),
 	}
-	cmd := "convert_to_yuvi444"
+	cmd := "convert_to_yuv444"
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, args); err != nil {
 		return err
 	}

@@ -17,7 +17,7 @@ func convertYUVAction(c *cli.Context) error {
 		c.String("input-v"),
 	}
 
-	cmd := "convert_from_yuvi420"
+	cmd := "convert_from_yuv420"
 	if err := runLocalInputFiles(runtimePath, generateOutFilePath, in, cmd, nil); err != nil {
 		return err
 	}

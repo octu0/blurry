@@ -44,6 +44,12 @@ Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> heigh
 
 Func convert_from_bgra_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
+Func convert_from_yuv_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_to_yuv_i420_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height);

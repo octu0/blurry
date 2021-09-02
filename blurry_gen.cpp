@@ -88,6 +88,18 @@ void init_input_rgba(ImageParam in) {
   in.dim(2).set_bounds(0, 4);
 }
 
+void init_input_yuv_i420(ImageParam in_y, ImageParam in_u, ImageParam in_v, Param<int32_t> width, Param<int32_t> height) {
+  in_u.dim(0).set_extent(width / 2);
+  in_u.dim(0).set_stride(1);
+  in_u.dim(1).set_extent(height / 2);
+  in_u.dim(1).set_stride(width / 2);
+
+  in_v.dim(0).set_extent(width / 2);
+  in_v.dim(0).set_stride(1);
+  in_v.dim(1).set_extent(height / 2);
+  in_v.dim(1).set_stride(width / 2);
+}
+
 void init_input_array(ImageParam in, Param<int32_t> width, Param<int32_t> height) {
   in.dim(0).set_stride(1);
   in.dim(1).set_stride(width);
@@ -97,6 +109,16 @@ void init_output_rgba(OutputImageParam out) {
   out.dim(0).set_stride(4);
   out.dim(2).set_stride(1);
   out.dim(2).set_bounds(0, 4);
+}
+
+void init_output_yuv_i444(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
+  out.dim(0).set_stride(1);
+  out.dim(1).set_stride(width);
+}
+
+void init_output_yuv_i420(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
+  out.dim(0).set_stride(1);
+  out.dim(1).set_stride(width);
 }
 
 void init_output_array(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
@@ -112,14 +134,18 @@ void generate_runtime(std::vector<Target::Feature> features) {
   generate_static_link_runtime(features, f, {}, "runtime");
 }
 
-int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
+int jit_benchmark_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(10, 10, [&]() {
-    fn.realize({buf_src.get()->width(), buf_src.get()->height(), 4});
+    fn.realize({width, height, 4});
   });
   printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
   return 0;
+}
+
+int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
+  return jit_benchmark_bounds(fn, buf_src.get()->width(), buf_src.get()->height());
 }
 
 int jit_benchmark_once(Func fn, Buffer<uint8_t> buf_src) {
@@ -137,7 +163,7 @@ Buffer<uint8_t> jit_realize_uint8_bounds(Func fn, int32_t width, int32_t height)
 
   printf("realize(uint8_t) %s...\n", fn.name().c_str());
   
-  return fn.realize({width, height, 3});
+  return fn.realize({width, height, 4});
 }
 
 Buffer<uint16_t> jit_realize_uint16_bounds(Func fn, int32_t width, int32_t height) {
@@ -476,6 +502,214 @@ int benchmark_convert_from_rabg() {
 }
 //
 // }}} convert_from_rabg
+//
+
+//
+// {{{ convert_from_yuv_i420
+//
+void generate_convert_from_yuv_i420(std::vector<Target::Feature> features) {
+  ImageParam yuv_y(type_of<uint8_t>(), 2, "yuv_y");
+  ImageParam yuv_u(type_of<uint8_t>(), 2, "yuv_u");
+  ImageParam yuv_v(type_of<uint8_t>(), 2, "yuv_v");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_yuv_i420(yuv_y, yuv_u, yuv_v, width, height);
+
+  Func fn = convert_from_yuv_i420_fn(yuv_y.in(), yuv_u.in(), yuv_v.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    yuv_y,
+    yuv_u,
+    yuv_v,
+    width, height,
+  }, fn.name());
+}
+
+int jit_convert_from_yuv_i420(char **argv) {
+  int32_t width = 320;
+  int32_t height = 240;
+  int32_t ysize = 320 * 240;
+  int32_t uvsize = ((width + 1) / 2) * ((height + 1)/ 2);
+
+  FILE *const y = fopen(argv[2], "rb");
+  if(y == nullptr) {
+    return 1;
+  }
+  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
+  fread(data_y, 1, ysize, y);
+  fclose(y);
+
+  FILE *const u = fopen(argv[3], "rb");
+  if(u == nullptr) {
+    return 1;
+  }
+  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  fread(data_u, 1, uvsize, u);
+  fclose(u);
+
+  FILE *const v = fopen(argv[4], "rb");
+  if(v == nullptr) {
+    return 1;
+  }
+  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  fread(data_v, 1, uvsize, v);
+  fclose(v);
+
+  Buffer<uint8_t> src_y = Buffer<uint8_t>::make_interleaved(data_y, width, height, 1);
+  Buffer<uint8_t> src_u = Buffer<uint8_t>::make_interleaved(data_u, (width / 2) + 1, height / 2, 1);
+  Buffer<uint8_t> src_v = Buffer<uint8_t>::make_interleaved(data_v, (width / 2) + 1, height / 2, 1);
+  src_y.raw_buffer()->dimensions = 2;
+  src_u.raw_buffer()->dimensions = 2;
+  src_u.raw_buffer()->dim[0].extent = width / 2;
+  src_u.raw_buffer()->dim[0].stride = 1;
+  src_u.raw_buffer()->dim[1].extent = height / 2;
+  src_u.raw_buffer()->dim[1].stride = width / 2;
+  src_v.raw_buffer()->dimensions = 2;
+  src_v.raw_buffer()->dim[0].extent = width / 2;
+  src_v.raw_buffer()->dim[0].stride = 1;
+  src_v.raw_buffer()->dim[1].extent = height / 2;
+  src_v.raw_buffer()->dim[1].stride = width / 2;
+
+  Param<int32_t> _width{"width", width};
+  Param<int32_t> _height{"height", height};
+
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(convert_from_yuv_i420_fn(
+    wrapFunc_xy(src_y, "src_y"),
+    wrapFunc_xy(src_u, "src_u"),
+    wrapFunc_xy(src_v, "src_v"),
+    _width, _height
+  ), width, height);
+
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_convert_from_yuv_i420() {
+  int32_t width = 320;
+  int32_t height = 240;
+  int32_t ysize = 320 * 240;
+  int32_t uvsize = ((width + 1) / 2) * ((height + 1)/ 2);
+
+  FILE *const y = fopen("./testdata/yuv_i420_y_320x240.raw", "rb");
+  if(y == nullptr) {
+    return 1;
+  }
+  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
+  fread(data_y, 1, ysize, y);
+  fclose(y);
+
+  FILE *const u = fopen("./testdata/yuv_i420_u_320x240.raw", "rb");
+  if(u == nullptr) {
+    return 1;
+  }
+  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  fread(data_u, 1, uvsize, u);
+  fclose(u);
+
+  FILE *const v = fopen("./testdata/yuv_i420_v_320x240.raw", "rb");
+  if(v == nullptr) {
+    return 1;
+  }
+  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  fread(data_v, 1, uvsize, v);
+  fclose(v);
+
+  Buffer<uint8_t> src_y = Buffer<uint8_t>::make_interleaved(data_y, width, height, 1);
+  Buffer<uint8_t> src_u = Buffer<uint8_t>::make_interleaved(data_u, (width / 2) + 1, height / 2, 1);
+  Buffer<uint8_t> src_v = Buffer<uint8_t>::make_interleaved(data_v, (width / 2) + 1, height / 2, 1);
+  src_y.raw_buffer()->dimensions = 2;
+  src_u.raw_buffer()->dimensions = 2;
+  src_u.raw_buffer()->dim[0].extent = width / 2;
+  src_u.raw_buffer()->dim[0].stride = 1;
+  src_u.raw_buffer()->dim[1].extent = height / 2;
+  src_u.raw_buffer()->dim[1].stride = width / 2;
+  src_v.raw_buffer()->dimensions = 2;
+  src_v.raw_buffer()->dim[0].extent = width / 2;
+  src_v.raw_buffer()->dim[0].stride = 1;
+  src_v.raw_buffer()->dim[1].extent = height / 2;
+  src_v.raw_buffer()->dim[1].stride = width / 2;
+
+  Param<int32_t> _width{"width", width};
+  Param<int32_t> _height{"height", height};
+
+  return jit_benchmark_bounds(convert_from_yuv_i420_fn(
+    wrapFunc_xy(src_y, "src_y"),
+    wrapFunc_xy(src_u, "src_u"),
+    wrapFunc_xy(src_v, "src_v"),
+    _width, _height
+  ), width, height);
+}
+//
+// }}} convert_from_yuv_i420
+//
+
+//
+// {{{ convert_to_yuv_i444
+//
+void generate_convert_to_yuv_i444(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_to_yuv_i420_fn(
+    src.in(),
+    width, height
+  );
+
+  generate_static_link(features, fn, {
+    src,
+    width, height
+  }, fn.name());
+}
+
+int jit_convert_to_yuv_i444(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = convert_to_yuv_i420_fn(
+    wrapFunc(buf_src, "buf_src"),
+    width, height
+  );
+  init_output_yuv_i444(
+    fn.output_buffer(),
+    width, height
+  );
+
+  fn.compile_jit(get_jit_target_from_environment());
+
+  int32_t y_width = buf_src.get()->width();
+  int32_t uv_width = buf_src.get()->width();
+  int32_t y_height = buf_src.get()->height();
+  int32_t uv_height = buf_src.get()->height();
+
+  printf("realize(uint8_t) %s...\n", fn.name().c_str());
+  Buffer<uint8_t> out = fn.realize({
+    y_width,
+    y_height + uv_height + uv_height,
+    2
+  });
+
+  uint8_t *data = out.data();
+  printf("v= %d\n", data[0]);
+
+  return 0;
+}
+
+int benchmark_convert_to_yuv_i444(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  //return jit_benchmark(convert_to_yuv_i420_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+}
+//
+// }}} convert_to_yuv_i444
 //
 
 //
@@ -2738,6 +2972,7 @@ void benchmark(char **argv) {
   benchmark_convert_from_abgr();
   benchmark_convert_from_bgra();
   benchmark_convert_from_rabg();
+  benchmark_convert_from_yuv_i420();
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);
@@ -2801,6 +3036,12 @@ int main(int argc, char **argv) {
   }
   if(strcmp(argv[1], "convertrabg") == 0) {
     return jit_convert_from_rabg(argv);
+  }
+  if(strcmp(argv[1], "convert_from_yuvi420") == 0) {
+    return jit_convert_from_yuv_i420(argv);
+  }
+  if(strcmp(argv[1], "convert_to_yuvi444") == 0) {
+    return jit_convert_to_yuv_i444(argv);
   }
   if(strcmp(argv[1], "rotate0") == 0) {
     return jit_rotate0(argv);

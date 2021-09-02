@@ -833,7 +833,7 @@ void generate_convert_to_yuv_i444(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = convert_to_yuv_i420_fn(
+  Func fn = convert_to_yuv_i444_fn(
     src.in(),
     width, height
   );

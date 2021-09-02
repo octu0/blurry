@@ -849,6 +849,10 @@ Func convert_from_yuv_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> wi
 
 Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
@@ -865,6 +869,13 @@ Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> hei
     uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
     ui8_0
   );
+
+  f.compute_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
   return f;
 }
 

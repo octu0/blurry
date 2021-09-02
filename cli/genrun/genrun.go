@@ -93,6 +93,28 @@ func generate(runtimePath, blurryPath string) (string, error) {
 
 type runArgs []string
 
+func runLocalInputFiles(runtimePath, generateOutFilePath string, inputFiles []string, commandName string, args runArgs) error {
+	inputs := make([]string, len(inputFiles))
+	for i, f := range inputFiles {
+		p, err := filepath.Abs(f)
+		if err != nil {
+			return err
+		}
+		inputs[i] = p
+	}
+
+	out, err := ioutil.TempFile("/tmp", "out*.png")
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	p := append([]string{commandName}, inputs...)
+	p = append(p, args...)
+	p = append(p, out.Name())
+	return runexec(runtimePath, generateOutFilePath, p)
+}
+
 func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandName string, args runArgs) error {
 	input, err := filepath.Abs(inputFilePath)
 	if err != nil {
@@ -104,6 +126,7 @@ func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandNam
 		return err
 	}
 	defer out.Close()
+	defer log.Printf("info: open %s", out.Name())
 
 	p := []string{
 		commandName,
@@ -112,7 +135,11 @@ func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandNam
 	p = append(p, args...)
 	p = append(p, out.Name())
 
-	cmd := exec.Command(generateOutFilePath, p...)
+	return runexec(runtimePath, generateOutFilePath, p)
+}
+
+func runexec(runtimePath, generateOutFilePath string, args []string) error {
+	cmd := exec.Command(generateOutFilePath, args...)
 	cmd.Env = append(os.Environ(), "DYLD_LIBRARY_PATH="+runtimePath+"/lib")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -121,6 +148,5 @@ func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandNam
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	log.Printf("info: open %s", out.Name())
 	return nil
 }

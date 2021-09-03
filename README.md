@@ -500,6 +500,60 @@ img, err := blurry.Blend(input0, input1, image.Pt(76, 36), blurry.BlendNormal)
 | `blurry.BlendAdd`     | ![example](testdata/blend_add.png)    |
 | `blurry.BlendDiff`    | ![example](testdata/blend_diff.png)   |
 
+### Convert
+
+blurry supports reading ARGB, ABGR, BGRA, YUV420 and YUV444.  
+It also supports YUV444 output.
+
+#### Read: RGBA Color Model
+
+```go
+img, err := blurry.ConvertFromARGB(input)
+```
+
+| ColorModel  | Method                                |
+| :---------: | :-----------------------------------: |
+| ARGB        | `blurry.ConvertFromARGB(*image.RGBA)` |
+| ABGR        | `blurry.ConvertFromABGR(*image.RGBA)` |
+| BGRA        | `blurry.ConvertFromBGRA(*image.RGBA)` |
+| RABG        | `blurry.ConvertFromRABG(*image.RGBA)` |
+
+#### Read: YUV Chroma Subsampling
+
+```go
+img, err := blurry.ConvertFromYUV420(ycbcr)
+```
+
+| Subsampling  | Method                                   |
+| :----------: | :--------------------------------------: |
+| 420          | `blurry.ConvertFromYUV420(*image.YCbCr)` |
+| 444          | `blurry.ConvertFromYUV444(*image.YCbCr)` |
+
+or byte slice can also be specified
+
+```go
+var y,u,v []byte
+var strideY,strideU,strideV int
+var width, height int
+
+img, err := blurry.ConvertFromYUV420Plane(y, u, v, strideY, strideU, strideV, width, height)
+```
+
+| Subsampling  | Method                                   |
+| :----------: | :--------------------------------------: |
+| 420          | `blurry.ConvertFromYUV420Plane(y,u,v []byte, int,int,int, w,h int)` |
+| 444          | `blurry.ConvertFromYUV444Plane(y,u,v []byte, int,int,int, w,h int)` |
+
+#### Write: YUV Chroma Subsampling
+
+```go
+ycbcr, err := blurry.ConvertToYUV444(rgba)
+```
+
+| Subsampling  | Method                                |
+| :----------: | :-----------------------------------: |
+| 444          | `blurry.ConvertToYUV420(*image.RGBA)` |
+
 ## CLI usage
 
 Run it via docker.  

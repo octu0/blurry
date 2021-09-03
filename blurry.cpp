@@ -349,7 +349,7 @@ Func read_from_yuv_bt2020_limited(Func yf, Func uf, Func vf, const char *name) {
   return f;
 }
 
-Func read_from_yuv_i444(Func in_y, Func in_u, Func in_v, const char *name) {
+Func read_from_yuv_444(Func in_y, Func in_u, Func in_v, const char *name) {
   Var x("x"), y("y");
 
   Func yf = Func("y_float");
@@ -362,7 +362,7 @@ Func read_from_yuv_i444(Func in_y, Func in_u, Func in_v, const char *name) {
   return read_from_yuv_bt2020_limited(yf, uf, vf, name);
 }
 
-Func read_from_yuv_i420(Func in_y, Func in_u, Func in_v, const char *name) {
+Func read_from_yuv_420(Func in_y, Func in_u, Func in_v, const char *name) {
   Var x("x"), y("y");
 
   Func yf = Func("y_float");
@@ -829,25 +829,25 @@ Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> heigh
   );
 }
 
-Func convert_from_yuv_i444_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+Func convert_from_yuv_444_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
   return convert_from(
-    read_from_yuv_i444(in_y, in_u, in_v, "in"),
+    read_from_yuv_444(in_y, in_u, in_v, "in"),
     width,
     height,
-    "convert_from_yuv_i444"
+    "convert_from_yuv_444"
   );
 }
 
-Func convert_from_yuv_i420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+Func convert_from_yuv_420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
   return convert_from(
-    read_from_yuv_i420(in_y, in_u, in_v, "in"),
+    read_from_yuv_420(in_y, in_u, in_v, "in"),
     width,
     height,
-    "convert_from_yuv_i420"
+    "convert_from_yuv_420"
   );
 }
 
-Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -862,7 +862,7 @@ Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> hei
 
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
-  Func f = Func("convert_to_yuv_i444");
+  Func f = Func("convert_to_yuv_444");
   f(x, y) = select(
     y < y_max_h,                  yuv(x, y, 0),
     y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
@@ -879,7 +879,7 @@ Func convert_to_yuv_i444_fn(Func input, Param<int32_t> width, Param<int32_t> hei
   return f;
 }
 
-Func convert_to_yuv_i420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
   Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
@@ -906,7 +906,7 @@ Func convert_to_yuv_i420_fn(Func input, Param<int32_t> width, Param<int32_t> hei
     yuv(kx + 1, ky + 1, ch)
   ) / 4;
 
-  Func f = Func("convert_to_yuv_i420");
+  Func f = Func("convert_to_yuv_420");
   f(x, y) = select(
     y < y_max_h,                 yuv(x, y, 0),
     y_max_h <= y && y < u_max_h, yuv444to420(x, y - y_max_h, 1),

@@ -41,11 +41,7 @@ func loadImage(inputFile string) (*image.RGBA, error) {
 	if err != nil {
 		return nil, err
 	}
-	return convertRGBA(img), nil
-}
-
-func loadData(path string) ([]byte, error) {
-	return os.ReadFile(path)
+	return imageRGBA(img), nil
 }
 
 func saveImage(img *image.RGBA) (string, error) {
@@ -56,6 +52,23 @@ func saveImage(img *image.RGBA) (string, error) {
 	defer out.Close()
 
 	if err := png.Encode(out, img); err != nil {
+		return "", err
+	}
+	return out.Name(), nil
+}
+
+func loadData(path string) ([]byte, error) {
+	return os.ReadFile(path)
+}
+
+func saveData(data []byte) (string, error) {
+	out, err := ioutil.TempFile("/tmp", "out*.raw")
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	if err := os.WriteFile(out.Name(), data, 0644); err != nil {
 		return "", err
 	}
 	return out.Name(), nil
@@ -80,7 +93,7 @@ func decode(data []byte, fileExt string) (image.Image, error) {
 	}
 }
 
-func convertRGBA(img image.Image) *image.RGBA {
+func imageRGBA(img image.Image) *image.RGBA {
 	if i, ok := img.(*image.RGBA); ok {
 		return i
 	}

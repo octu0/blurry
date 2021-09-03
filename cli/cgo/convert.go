@@ -10,7 +10,7 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func convert(colorModel string, data []byte, width int, height int) (*image.RGBA, error) {
+func convertRGBA(colorModel string, data []byte, width int, height int) (*image.RGBA, error) {
 	in := &image.RGBA{
 		Pix:    data,
 		Rect:   image.Rect(0, 0, width, height),
@@ -36,7 +36,7 @@ func convertAction(c *cli.Context) error {
 		return err
 	}
 
-	out, err := convert(c.String("model"), data, c.Int("width"), c.Int("height"))
+	out, err := convertRGBA(c.String("model"), data, c.Int("width"), c.Int("height"))
 	if err != nil {
 		return err
 	}

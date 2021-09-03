@@ -24,7 +24,14 @@ func DisablePool() {
 }
 
 func wh(img *image.RGBA) (int, int) {
-	b := img.Bounds()
+	return whFromBounds(img.Bounds())
+}
+
+func whYCbCr(img *image.YCbCr) (int, int) {
+	return whFromBounds(img.Bounds())
+}
+
+func whFromBounds(b image.Rectangle) (int, int) {
 	w := b.Max.X - b.Min.X
 	h := b.Max.Y - b.Min.Y
 	return w, h

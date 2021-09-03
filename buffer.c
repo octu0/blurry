@@ -30,7 +30,28 @@ halide_buffer_t *create_rgba_buffer(unsigned char *data, int32_t width, int32_t 
   memset(dim, 0, dimensions * sizeof(halide_dimension_t));
 
   init_rgba_dim(dim, width, height);
-  init_rgba_buf(buffer, dim, data, dimensions);
+  init_uint8_buf(buffer, dim, data, dimensions);
+
+  return buffer;
+}
+
+halide_buffer_t *create_yuv_plane_buffer(unsigned char *data, int32_t stride, int32_t width, int32_t height) {
+  int32_t dimensions = 2;
+  halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));
+  if(buffer == NULL) {
+    return NULL;
+  }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
+  halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
+  if(dim == NULL) {
+    free_buf(buffer);
+    return NULL;
+  }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
+
+  init_yuv_dim(dim, stride, width, height);
+  init_uint8_buf(buffer, dim, data, dimensions);
 
   return buffer;
 }
@@ -139,6 +160,20 @@ void init_rgba_dim(halide_dimension_t *dim, int32_t width, int32_t height) {
   dim[2].flags = 0;
 }
 
+void init_yuv_dim(halide_dimension_t *dim, int32_t stride, int32_t width, int32_t height) {
+  // width
+  dim[0].min = 0;
+  dim[0].extent = width;
+  dim[0].stride = 1;
+  dim[0].flags = 0;
+
+  // height
+  dim[1].min = 0;
+  dim[1].extent = height;
+  dim[1].stride = stride;
+  dim[1].flags = 0;
+}
+
 void init_array_dim(halide_dimension_t *dim, int32_t width, int32_t height) {
   // width
   dim[0].min = 0;
@@ -162,7 +197,7 @@ void init_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *d
   buffer->flags = halide_buffer_flag_host_dirty;
 }
 
-void init_rgba_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
+void init_uint8_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
   init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_uint8_t;
 }

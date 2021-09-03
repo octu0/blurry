@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func boxblurAction(c *cli.Context) error {
+func edgeAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Boxblur(in, uint8(c.Int("size")))
+	out, err := blurry.Edge(in)
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,13 @@ func boxblurAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "boxblur",
-		Action: boxblurAction,
+		Name:   "edge",
+		Action: edgeAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
-			},
-			cli.IntFlag{
-				Name:  "s,size",
-				Usage: "box size",
-				Value: 11,
 			},
 		},
 	})

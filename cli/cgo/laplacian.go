@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func highpassAction(c *cli.Context) error {
+func laplacianAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Highpass(in)
+	out, err := blurry.Laplacian(in)
 	if err != nil {
 		return err
 	}
@@ -29,8 +29,8 @@ func highpassAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "highpass",
-		Action: highpassAction,
+		Name:   "laplacian",
+		Action: laplacianAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

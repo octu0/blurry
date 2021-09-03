@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func dilationAction(c *cli.Context) error {
+func sobelAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Dilation(in, c.Int("size"))
+	out, err := blurry.Sobel(in)
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,13 @@ func dilationAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "dilation",
-		Action: dilationAction,
+		Name:   "sobel",
+		Action: sobelAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
-			},
-			cli.IntFlag{
-				Name:  "s,size",
-				Usage: "box size",
-				Value: 8,
 			},
 		},
 	})

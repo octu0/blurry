@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func blockmozaicAction(c *cli.Context) error {
+func gradientAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Blockmozaic(in, c.Int("block"))
+	out, err := blurry.Gradient(in)
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,13 @@ func blockmozaicAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "blockmozaic",
-		Action: blockmozaicAction,
+		Name:   "gradient",
+		Action: gradientAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
-			},
-			cli.IntFlag{
-				Name:  "b,block",
-				Usage: "block size",
-				Value: 10,
 			},
 		},
 	})

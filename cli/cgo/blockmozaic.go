@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func gammaAction(c *cli.Context) error {
+func blockmozaicAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Gamma(in, c.Float64("factor"))
+	out, err := blurry.Blockmozaic(in, c.Int("block"))
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,18 @@ func gammaAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "gamma",
-		Action: gammaAction,
+		Name:   "blockmozaic",
+		Action: blockmozaicAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
 			},
-			cli.Float64Flag{
-				Name:  "f,factor",
-				Usage: "brightness factor",
-				Value: 2.5,
+			cli.IntFlag{
+				Name:  "b,block",
+				Usage: "block size",
+				Value: 10,
 			},
 		},
 	})

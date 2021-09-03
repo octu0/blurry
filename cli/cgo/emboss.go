@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func edgeAction(c *cli.Context) error {
+func embossAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Edge(in)
+	out, err := blurry.Emboss(in)
 	if err != nil {
 		return err
 	}
@@ -29,8 +29,8 @@ func edgeAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "edge",
-		Action: edgeAction,
+		Name:   "emboss",
+		Action: embossAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

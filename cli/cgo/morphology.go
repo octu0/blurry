@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,15 +8,14 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func rotateAction(c *cli.Context) error {
+func morphologyAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	mode := blurry.RotationMode(c.Int("rotate"))
-
-	out, err := blurry.Rotate(in, mode)
+	mode := blurry.MorphologyMode(c.Int("mode"))
+	out, err := blurry.Morphology(in, mode, c.Int("size"), c.Int("count"))
 	if err != nil {
 		return err
 	}
@@ -31,8 +30,8 @@ func rotateAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "rotate",
-		Action: rotateAction,
+		Name:   "morphology",
+		Action: morphologyAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
@@ -40,9 +39,19 @@ func init() {
 				Value: "./testdata/src.png",
 			},
 			cli.IntFlag{
-				Name:  "r,rotate",
-				Usage: "rotation degrees(0 or 90 or 180 or 270)",
-				Value: 90,
+				Name:  "m,mode",
+				Usage: "morphology mode(1=open,2=close,3=gradient)",
+				Value: 1,
+			},
+			cli.IntFlag{
+				Name:  "s,size",
+				Usage: "box size",
+				Value: 3,
+			},
+			cli.IntFlag{
+				Name:  "c,count",
+				Usage: "iteration count",
+				Value: 5,
 			},
 		},
 	})

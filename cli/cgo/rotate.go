@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,15 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func gaussianblurAction(c *cli.Context) error {
+func rotateAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Gaussianblur(in, c.Float64("sigma"))
+	mode := blurry.RotationMode(c.Int("rotate"))
+
+	out, err := blurry.Rotate(in, mode)
 	if err != nil {
 		return err
 	}
@@ -29,18 +31,18 @@ func gaussianblurAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "gaussianblur",
-		Action: gaussianblurAction,
+		Name:   "rotate",
+		Action: rotateAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
 			},
-			cli.Float64Flag{
-				Name:  "s,sigma",
-				Usage: "sigma",
-				Value: 5.0,
+			cli.IntFlag{
+				Name:  "r,rotate",
+				Usage: "rotation degrees(0 or 90 or 180 or 270)",
+				Value: 90,
 			},
 		},
 	})

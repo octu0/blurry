@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func erosionAction(c *cli.Context) error {
+func contrastAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Erosion(in, c.Int("size"))
+	out, err := blurry.Contrast(in, c.Float64("factor"))
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,18 @@ func erosionAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "erosion",
-		Action: erosionAction,
+		Name:   "contrast",
+		Action: contrastAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
 			},
-			cli.IntFlag{
-				Name:  "s,size",
-				Usage: "box size",
-				Value: 5,
+			cli.Float64Flag{
+				Name:  "f,factor",
+				Usage: "brightness factor",
+				Value: 0.525,
 			},
 		},
 	})

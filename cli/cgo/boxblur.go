@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func brightnessAction(c *cli.Context) error {
+func boxblurAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Brightness(in, c.Float64("factor"))
+	out, err := blurry.Boxblur(in, uint8(c.Int("size")))
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,18 @@ func brightnessAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "brightness",
-		Action: brightnessAction,
+		Name:   "boxblur",
+		Action: boxblurAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
 			},
-			cli.Float64Flag{
-				Name:  "f,factor",
-				Usage: "brightness factor",
-				Value: 1.5,
+			cli.IntFlag{
+				Name:  "s,size",
+				Usage: "box size",
+				Value: 11,
 			},
 		},
 	})

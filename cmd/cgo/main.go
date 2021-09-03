@@ -8,7 +8,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/octu0/blurry"
-	"github.com/octu0/blurry/cli/bridge"
+	"github.com/octu0/blurry/cli/cgo"
 )
 
 func main() {

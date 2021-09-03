@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,14 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func morphologyAction(c *cli.Context) error {
+func erosionAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	mode := blurry.MorphologyMode(c.Int("mode"))
-	out, err := blurry.Morphology(in, mode, c.Int("size"), c.Int("count"))
+	out, err := blurry.Erosion(in, c.Int("size"))
 	if err != nil {
 		return err
 	}
@@ -30,8 +29,8 @@ func morphologyAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "morphology",
-		Action: morphologyAction,
+		Name:   "erosion",
+		Action: erosionAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
@@ -39,18 +38,8 @@ func init() {
 				Value: "./testdata/src.png",
 			},
 			cli.IntFlag{
-				Name:  "m,mode",
-				Usage: "morphology mode(1=open,2=close,3=gradient)",
-				Value: 1,
-			},
-			cli.IntFlag{
 				Name:  "s,size",
 				Usage: "box size",
-				Value: 3,
-			},
-			cli.IntFlag{
-				Name:  "c,count",
-				Usage: "iteration count",
 				Value: 5,
 			},
 		},

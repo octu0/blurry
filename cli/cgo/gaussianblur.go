@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func sobelAction(c *cli.Context) error {
+func gaussianblurAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Sobel(in)
+	out, err := blurry.Gaussianblur(in, c.Float64("sigma"))
 	if err != nil {
 		return err
 	}
@@ -29,13 +29,18 @@ func sobelAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "sobel",
-		Action: sobelAction,
+		Name:   "gaussianblur",
+		Action: gaussianblurAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",
 				Usage: "/path/to/input image",
 				Value: "./testdata/src.png",
+			},
+			cli.Float64Flag{
+				Name:  "s,sigma",
+				Usage: "sigma",
+				Value: 5.0,
 			},
 		},
 	})

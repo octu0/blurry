@@ -1,4 +1,4 @@
-package bridge
+package cgo
 
 import (
 	"log"
@@ -8,13 +8,13 @@ import (
 	"github.com/octu0/blurry"
 )
 
-func gradientAction(c *cli.Context) error {
+func grayscaleAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	out, err := blurry.Gradient(in)
+	out, err := blurry.Grayscale(in)
 	if err != nil {
 		return err
 	}
@@ -29,8 +29,8 @@ func gradientAction(c *cli.Context) error {
 
 func init() {
 	addCommand(cli.Command{
-		Name:   "gradient",
-		Action: gradientAction,
+		Name:   "grayscale",
+		Action: grayscaleAction,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "i,input",

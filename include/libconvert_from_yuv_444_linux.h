@@ -1,5 +1,5 @@
-#ifndef HALIDE__libconvert_from_yuv_i444_linux_h
-#define HALIDE__libconvert_from_yuv_i444_linux_h
+#ifndef HALIDE__libconvert_from_yuv_444_linux_h
+#define HALIDE__libconvert_from_yuv_444_linux_h
 #include <stdint.h>
 
 // Forward declarations of the types used in the interface
@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int convert_from_yuv_i444(struct halide_buffer_t *_yuv_y_buffer, struct halide_buffer_t *_yuv_u_buffer, struct halide_buffer_t *_yuv_v_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_convert_from_yuv_i444_buffer);
+int convert_from_yuv_444(struct halide_buffer_t *_yuv_y_buffer, struct halide_buffer_t *_yuv_u_buffer, struct halide_buffer_t *_yuv_v_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_convert_from_yuv_444_buffer);
 
 HALIDE_FUNCTION_ATTRS
-int convert_from_yuv_i444_argv(void **args);
+int convert_from_yuv_444_argv(void **args);
 
 HALIDE_FUNCTION_ATTRS
-const struct halide_filter_metadata_t *convert_from_yuv_i444_metadata();
+const struct halide_filter_metadata_t *convert_from_yuv_444_metadata();
 
 #ifdef __cplusplus
 }  // extern "C"

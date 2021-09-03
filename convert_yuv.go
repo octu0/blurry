@@ -2,18 +2,18 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_yuv_i420_osx -lconvert_from_yuv_i444_osx -lconvert_to_yuv_i444_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_yuv_i420_linux -lconvert_from_yuv_i444_linux -lconvert_to_yuv_i444_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_yuv_420_osx -lconvert_from_yuv_444_osx -lconvert_to_yuv_444_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_yuv_420_linux -lconvert_from_yuv_444_linux -lconvert_to_yuv_444_linux -ldl -lm
 #include <stdlib.h>
 
 #ifdef __APPLE__
-#include "libconvert_from_yuv_i420_osx.h"
-#include "libconvert_from_yuv_i444_osx.h"
-#include "libconvert_to_yuv_i444_osx.h"
+#include "libconvert_from_yuv_420_osx.h"
+#include "libconvert_from_yuv_444_osx.h"
+#include "libconvert_to_yuv_444_osx.h"
 #elif __linux__
-#include "libconvert_from_yuv_i420_linux.h"
-#include "libconvert_from_yuv_i444_linux.h"
-#include "libconvert_to_yuv_i444_linux.h"
+#include "libconvert_from_yuv_420_linux.h"
+#include "libconvert_from_yuv_444_linux.h"
+#include "libconvert_to_yuv_444_linux.h"
 #endif
 
 #include "buffer.h"
@@ -27,10 +27,10 @@ int call_convert_from_yuv(
   halide_buffer_t *out_buf
 ) {
   if(1 == mode) {
-    return convert_from_yuv_i420(in_y_buf, in_u_buf, in_v_buf, width, height, out_buf);
+    return convert_from_yuv_420(in_y_buf, in_u_buf, in_v_buf, width, height, out_buf);
   }
   if(2 == mode) {
-    return convert_from_yuv_i444(in_y_buf, in_u_buf, in_v_buf, width, height, out_buf);
+    return convert_from_yuv_444(in_y_buf, in_u_buf, in_v_buf, width, height, out_buf);
   }
   return 1;
 }
@@ -115,7 +115,7 @@ int libconvert_to_yuv444(
     return 1;
   }
 
-  int ret = convert_to_yuv_i444(src, width, height, out);
+  int ret = convert_to_yuv_444(src, width, height, out);
   free_buf(in_rgba_buf);
   free_buf(out_yuv444_buf);
   return ret;
@@ -129,103 +129,103 @@ import (
 
 type ConvertYUVMode uint8
 
-const(
-  ConvertFromI420 ConvertYUVMode = iota + 1
-  ConvertFromI444
+const (
+	ConvertFromYUV420 ConvertYUVMode = iota + 1
+	ConvertFromYUV444
 )
 
-var(
-  ErrConvertFromYUV = errors.New("convert_from cgo call error")
-  ErrConvertToYUV = errors.New("convert_to cgo call error")
-  ErrYUVSubsampleRateMustI420 = errors.New("image.YCbCr.SubsampleRatio must be 420")
-  ErrYUVSubsampleRateMustI444 = errors.New("image.YCbCr.SubsampleRatio must be 444")
+var (
+	ErrConvertFromYUV           = errors.New("convert_from cgo call error")
+	ErrConvertToYUV             = errors.New("convert_to cgo call error")
+	ErrYUVSubsampleRateMustI420 = errors.New("image.YCbCr.SubsampleRatio must be 420")
+	ErrYUVSubsampleRateMustI444 = errors.New("image.YCbCr.SubsampleRatio must be 444")
 )
 
 func ConvertFromYUV(img *image.YCbCr, mode ConvertYUVMode) (*image.RGBA, error) {
 	width, height := whYCbCr(img)
 	out := GetRGBA(width, height)
 
-  ret := C.libconvert_from_yuv(
-    (*C.uchar)(&img.Y[0]),
-    (*C.uchar)(&img.Cb[0]),
-    (*C.uchar)(&img.Cr[0]),
-    C.int(img.YStride),
-    C.int(img.CStride),
-    C.int(width),
-    C.int(height),
-    (*C.uchar)(&out.Pix[0]),
-  )
-  if int(ret) != 0 {
-    return nil, ErrConvertFromYUV
-  }
-  return out, nil
+	ret := C.libconvert_from_yuv(
+		(*C.uchar)(&img.Y[0]),
+		(*C.uchar)(&img.Cb[0]),
+		(*C.uchar)(&img.Cr[0]),
+		C.int(img.YStride),
+		C.int(img.CStride),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&out.Pix[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrConvertFromYUV
+	}
+	return out, nil
 }
 
-func ConvertFromI420(img *image.YCbCr) (*image.RGBA, error) {
-  if img.SubsampleRatio != image.YCbCrSubsampleRatio420 {
-    return nil, ErrYUVSubsampleRateMustI420
-  }
-  return ConvertFromYUV(img, ConvertFromI420)
+func ConvertFromYUV420(img *image.YCbCr) (*image.RGBA, error) {
+	if img.SubsampleRatio != image.YCbCrSubsampleRatio420 {
+		return nil, ErrYUVSubsampleRateMustI420
+	}
+	return ConvertFromYUV(img, ConvertFromYUV420)
 }
 
-func ConvertFromI444(img *image.YCbCr) (*image.RGBA, error) {
-  if img.SubsampleRatio != image.YCbCrSubsampleRatio444 {
-    return nil, ErrYUVSubsampleRateMustI444
-  }
-  return ConvertFromYUV(img, ConvertFromI444)
+func ConvertFromYUV444(img *image.YCbCr) (*image.RGBA, error) {
+	if img.SubsampleRatio != image.YCbCrSubsampleRatio444 {
+		return nil, ErrYUVSubsampleRateMustI444
+	}
+	return ConvertFromYUV(img, ConvertFromYUV444)
 }
 
-func ConvertFromI420Plane(y []byte, u []byte, v []byte, y_stride int, u stride int, v stride) (*image.RGBA, error) {
-  img := &image.YCbCr{
-    Y:       y,
-    Cb:      u,
-    Cr:      v,
-    Rect:    image.Rect(0, 0, width, height),
-    YStride: y_stride,
-    CStride: u_stride,
-    SubsampleRatio: image.YCbCrSubsampleRatio420,
-  }
-  return ConvertFromYUV(img, ConvertFromI420)
+func ConvertFromYUV420Plane(y, u, v []byte, y_stride, u_stride, v_stride int) (*image.RGBA, error) {
+	img := &image.YCbCr{
+		Y:              y,
+		Cb:             u,
+		Cr:             v,
+		Rect:           image.Rect(0, 0, width, height),
+		YStride:        y_stride,
+		CStride:        u_stride,
+		SubsampleRatio: image.YCbCrSubsampleRatio420,
+	}
+	return ConvertFromYUV(img, ConvertFromYUV420)
 }
 
-func ConvertFromI444Plane(y []byte, u []byte, v []byte, y_stride int, u stride int, v stride) (*image.RGBA, error) {
-  img := &image.YCbCr{
-    Y:       y,
-    Cb:      u,
-    Cr:      v,
-    Rect:    image.Rect(0, 0, width, height),
-    YStride: y_stride,
-    CStride: u_stride,
-    SubsampleRatio: image.YCbCrSubsampleRatio444,
-  }
-  return ConvertFromYUV(img, ConvertFromI444)
+func ConvertFromYUV444Plane(y, u, v []byte, y_stride, u_stride, v_stride int) (*image.RGBA, error) {
+	img := &image.YCbCr{
+		Y:              y,
+		Cb:             u,
+		Cr:             v,
+		Rect:           image.Rect(0, 0, width, height),
+		YStride:        y_stride,
+		CStride:        u_stride,
+		SubsampleRatio: image.YCbCrSubsampleRatio444,
+	}
+	return ConvertFromYUV(img, ConvertFromYUV444)
 }
 
-func ConvertToI444(img *image.RGBA) (*image.YCbCr, error) {
+func ConvertToYUV444(img *image.RGBA) (*image.YCbCr, error) {
 	width, height := wh(img)
-  ySize := width * height
-  uSize := width * height
-  vSize := width * height
+	ySize := width * height
+	uSize := width * height
+	vSize := width * height
 
-  buf := GetByteBuf(ySize + uSize + vSize)
+	buf := GetByteBuf(ySize + uSize + vSize)
 
-  ret := C.libconvert_to_yuv444(
-    (*C.uchar)(&img.Pix[0]),
-    C.int(width),
-    C.int(height),
-    (*C.uchar)(&buf[0]),
-  )
-  if int(ret) != 0 {
-    return nil, ErrConvertToYUV
-  }
+	ret := C.libconvert_to_yuv444(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&buf[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrConvertToYUV
+	}
 
-  out := &image.YCbCr{
-    Y:       buf[0            : ySize],
-    Cb:      buf[ySize        : ySize + uSize],
-    Cr:      buf[ySize + uSize: ySize + uSize + vSize],
-    YStride: width,
-    CStride: width,
-    SubsampleRatio: image.YCbCrSubsampleRatio444,
-  }
-  return out, nil
+	out := &image.YCbCr{
+		Y:              buf[0:ySize],
+		Cb:             buf[ySize : ySize+uSize],
+		Cr:             buf[ySize+uSize : ySize+uSize+vSize],
+		YStride:        width,
+		CStride:        width,
+		SubsampleRatio: image.YCbCrSubsampleRatio444,
+	}
+	return out, nil
 }

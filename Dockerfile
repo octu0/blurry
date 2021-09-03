@@ -27,7 +27,7 @@ ADD . /go/src/github.com/octu0/blurry/
 RUN set -eux && \
     cd /go/src/github.com/octu0/blurry && \
     GOOS=linux GOARCH=amd64 go build -o /build/blurry \
-      cmd/bridge/main.go \
+      cmd/cgo/main.go \
       && \
     /build/blurry --version
 

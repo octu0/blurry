@@ -5,10 +5,10 @@ WORKDIR /halide
 RUN set -eux && \
   apt update && \
   apt install -y wget && \
-  wget https://github.com/halide/Halide/releases/download/v11.0.1/Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
-  tar xzf Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
-  rm Halide-11.0.1-x86-64-linux-85c1b91c47ce15aab0d9502d955e48615f3bcee0.tar.gz && \
-  mv Halide-11.0.1-x86-64-linux Halide-Runtime
+  wget https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz && \
+  tar xzf Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz && \
+  rm Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz && \
+  mv Halide-12.0.1-x86-64-linux Halide-Runtime
 
 RUN set -eux && \
   apt update && \

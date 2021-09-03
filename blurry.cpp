@@ -9,6 +9,16 @@ const uint8_t GRAY_R = 76, GRAY_G = 152, GRAY_B = 28;
 const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
+const Expr ui8_0 = cast<uint8_t>(0);
+const Expr ui8_255 = cast<uint8_t>(255);
+const Expr float_0 = cast<float>(0.f);
+const Expr float_16 = cast<float>(16.f);
+const Expr float_128 = cast<float>(128.f);
+const Expr float_255 = cast<float>(255.f);
+const Expr degree0 = cast<uint8_t>(0);
+const Expr degree45 = cast<uint8_t>(45);
+const Expr degree90 = cast<uint8_t>(90);
+const Expr degree135 = cast<uint8_t>(135);
 
 const Func kernel_sobel_x = kernel_sobel3x3_x();
 const Func kernel_sobel_y = kernel_sobel3x3_y();
@@ -152,6 +162,304 @@ Func readUI8(Func clamped, const char *name) {
   return read;
 }
 
+// ABGR to RGBA
+Func read_from_abgr(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 3), // A
+    ch == 1, in(x, y, 2), // B
+    ch == 2, in(x, y, 1), // G
+    likely(in(x, y, 0))   // R
+  );
+  return f;
+}
+
+// ARGB to RGBA
+Func read_from_argb(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 3), // A
+    ch == 1, in(x, y, 0), // R
+    ch == 2, in(x, y, 1), // G
+    likely(in(x, y, 2))   // B
+  );
+  return f;
+}
+
+// RABG to RGBA
+Func read_from_rabg(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 0), // R
+    ch == 1, in(x, y, 3), // A
+    ch == 2, in(x, y, 2), // B
+    likely(in(x, y, 1))   // G
+  );
+  return f;
+}
+
+// BGRA to RGBA
+Func read_from_bgra(Func in, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func f = Func(name);
+  f(x, y, ch) = select(
+    ch == 0, in(x, y, 2), // B
+    ch == 1, in(x, y, 1), // G
+    ch == 2, in(x, y, 0), // R
+    likely(in(x, y, 3))   // A
+  );
+  return f;
+}
+
+// BT.601 limited range
+Func read_from_yuv_bt601_limited(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = (yf(x, y) - float_16) * 1.164f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.596f * vv);
+  Expr g = yy - (0.391f * uu) - (0.813f * vv);
+  Expr b = yy + (2.018f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.601 full range
+Func read_from_yuv_bt601_fullrange(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = yf(x, y);
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.40200f * vv);
+  Expr g = yy - (0.34414f * uu) - (0.71414f * vv);
+  Expr b = yy + (1.77200f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.709 limited range
+Func read_from_yuv_bt709_limited(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = (yf(x, y) - float_16) * 1.164f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.793f * vv);
+  Expr g = yy - (0.213f * uu) - (0.533f * vv);
+  Expr b = yy + (2.112f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 full range
+Func read_from_yuv_bt2020_fullrange(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = yf(x, y);
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.474600f * vv);
+  Expr g = yy - (0.164553f * uu) - (0.571353f * vv);
+  Expr b = yy + (1.881400f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 limited range
+Func read_from_yuv_bt2020_limited(Func yf, Func uf, Func vf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yy = (yf(x, y) - float_16) * 1.164384f;
+  Expr uu = uf(x, y) - float_128;
+  Expr vv = vf(x, y) - float_128;
+
+  Expr r = yy + (1.67867f * vv);
+  Expr g = yy - (0.187326f * uu) - (0.65042f * vv);
+  Expr b = yy + (2.14177f * uu);
+
+  Expr rr = clamp(r, float_0, float_255);
+  Expr gg = clamp(g, float_0, float_255);
+  Expr bb = clamp(b, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, rr,       // R
+    ch == 1, gg,       // G
+    ch == 2, bb,       // B
+    likely(float_255)  // A always 0xff
+  );
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+Func read_from_yuv_444(Func in_y, Func in_u, Func in_v, const char *name) {
+  Var x("x"), y("y");
+
+  Func yf = Func("y_float");
+  Func uf = Func("u_float");
+  Func vf = Func("v_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  uf(x, y) = cast<float>(in_u(x, y));
+  vf(x, y) = cast<float>(in_v(x, y));
+
+  return read_from_yuv_bt2020_limited(yf, uf, vf, name);
+}
+
+Func read_from_yuv_420(Func in_y, Func in_u, Func in_v, const char *name) {
+  Var x("x"), y("y");
+
+  Func yf = Func("y_float");
+  Func uf = Func("u_float");
+  Func vf = Func("v_float");
+  yf(x, y) = cast<float>(in_y(x, y));
+  uf(x, y) = cast<float>(in_u(x / 2, y / 2));
+  vf(x, y) = cast<float>(in_v(x / 2, y / 2));
+
+  return read_from_yuv_bt2020_limited(yf, uf, vf, name);
+}
+
+// BT.601
+Func rgb_to_yuv_bt601(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.257f) + (gf(x, y) * 0.504f) + (bf(x, y) * 0.098f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.148f) - (gf(x, y) * 0.291f) + (bf(x, y) * 0.439f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.439f) - (gf(x, y) * 0.368f) - (bf(x, y) * 0.071f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 full range
+Func rgb_to_yuv_bt2020_fullrange(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.26270f) + (gf(x, y) * 0.67800f) + (bf(x, y) * 0.05930f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.13963f) - (gf(x, y) * 0.36037f) + (bf(x, y) * 0.50000f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.50000f) - (gf(x, y) * 0.45979f) - (bf(x, y) * 0.04021f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+// BT.2020 limited range
+Func rgb_to_yuv_bt2020_limited(Func rf, Func gf, Func bf, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func(name);
+  Expr yuv_y = ((rf(x, y) * 0.22564f) + (gf(x, y) * 0.59558f) + (bf(x, y) * 0.05209f)) + float_16;
+  Expr yuv_u = ((rf(x, y) * -0.11992f) - (gf(x, y) * 0.31656f) + (bf(x, y) * 0.43922f)) + float_128;
+  Expr yuv_v = ((rf(x, y) * 0.42941f) - (gf(x, y) * 0.40389f) - (bf(x, y) * 0.03533f)) + float_128;
+
+  Expr yy = clamp(yuv_y, float_0, float_255);
+  Expr uu = clamp(yuv_u, float_0, float_255);
+  Expr vv = clamp(yuv_v, float_0, float_255);
+
+  Expr v = select(
+    ch == 0, yy,      // Y
+    ch == 1, uu,      // U
+    ch == 2, vv,      // V
+    likely(float_255) // A always 0xff
+  );
+
+  f(x, y, ch) = cast<uint8_t>(v);
+  return f;
+}
+
+Func rgb_to_yuv444(Func in, const char *name) {
+  Var x("x"), y("y");
+
+  Func rf = Func("r_float");
+  Func gf = Func("g_float");
+  Func bf = Func("b_float");
+  rf(x, y) = cast<float>(in(x, y, 0));
+  gf(x, y) = cast<float>(in(x, y, 1));
+  bf(x, y) = cast<float>(in(x, y, 2));
+
+  return rgb_to_yuv_bt2020_limited(rf, gf, bf, name);
+}
+
 Func gray_xy(Func in) {
   Var x("x"), y("y");
 
@@ -173,21 +481,21 @@ Func gray_xy_uint8(Func in, const char *name) {
 }
 
 Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = clamped(y, (height - 1) - x, ch);
   return read;
 }
 
 Func rotate180(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = clamped((width - 1) - x, (height - 1) - y, ch);
   return read;
 }
 
 Func rotate270(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
-  Var x("x"), y("y"), ch("channel");
+  Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = clamped((width - 1) - y, x, ch);
   return read;
@@ -234,8 +542,8 @@ Func filter2d_gray(
 
   Func gradient = Func(name);
   gradient(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(conv(x, y) & 128)
+    ch < 3, cast<uint8_t>(conv(x, y) & 128),
+    likely(ui8_255)
   );
 
   conv.compute_root()
@@ -389,27 +697,27 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   Func nms = Func("nonmax_supression");
   Expr angle = (atan2(gy(x, y), gx(x, y)) * 180) / pi;
   Expr approx = select(
-    angle >=  -22.5f && angle <  22.5f,    0,
-    angle >=  157.5f && angle <  180.0f,   0,
-    angle >=  180.0f && angle < -157.5f,   0,
-    angle >=   22.5f && angle <   67.5f,  45,
-    angle >= -157.5f && angle < -112.5f,  45,
-    angle >=   67.5f && angle <  112.5f,  90,
-    angle >= -112.5f && angle <  -67.5f,  90,
-    angle >=  112.5f && angle <  157.5f, 135,
-    angle >=  -67.5f && angle <  -22.5f, 135,
-    0
+    angle >=  -22.5f && angle <  22.5f,  degree0,
+    angle >=  157.5f && angle <  180.0f, degree0,
+    angle >=  180.0f && angle < -157.5f, degree0,
+    angle >=   22.5f && angle <   67.5f, degree45,
+    angle >= -157.5f && angle < -112.5f, degree45,
+    angle >=   67.5f && angle <  112.5f, degree90,
+    angle >= -112.5f && angle <  -67.5f, degree90,
+    angle >=  112.5f && angle <  157.5f, degree135,
+    angle >=  -67.5f && angle <  -22.5f, degree135,
+    likely(degree0)
   );
   nms(x, y) = select(
-    approx ==  0 && sobel(x, y) < sobel(x + 1, y), 0,
-    approx ==  0 && sobel(x, y) < sobel(x - 1, y), 0,
-    approx == 45 && sobel(x, y) < sobel(x + 1, y - 1), 0,
-    approx == 45 && sobel(x, y) < sobel(x - 1, y + 1), 0,
-    approx == 90 && sobel(x, y) < sobel(x, y + 1), 0,
-    approx == 90 && sobel(x, y) < sobel(x, y - 1), 0,
-    sobel(x, y) < sobel(x + 1, y + 1), 0,
-    sobel(x, y) < sobel(x - 1, y - 1), 0,
-    sobel(x, y)
+    approx == degree0  && sobel(x, y) < sobel(x + 1, y),     ui8_0,
+    approx == degree0  && sobel(x, y) < sobel(x - 1, y),     ui8_0,
+    approx == degree45 && sobel(x, y) < sobel(x + 1, y - 1), ui8_0,
+    approx == degree45 && sobel(x, y) < sobel(x - 1, y + 1), ui8_0,
+    approx == degree90 && sobel(x, y) < sobel(x, y + 1),     ui8_0,
+    approx == degree90 && sobel(x, y) < sobel(x, y - 1),     ui8_0,
+    sobel(x, y) < sobel(x + 1, y + 1), ui8_0,
+    sobel(x, y) < sobel(x - 1, y - 1), ui8_0,
+    cast<uint8_t>(sobel(x, y))
   );
 
   //
@@ -420,9 +728,9 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   Expr value = nms(x, y);
   Expr nb_val = maximum(nms(x + rd_nb.x, y + rd_nb.y));
   Expr th_val = select(
-    value  < threshold_min, 0,
-    value  > threshold_max, 255,
-    nb_val > threshold_max, 255,
+    value  < threshold_min, ui8_0,
+    value  > threshold_max, ui8_255,
+    nb_val > threshold_max, ui8_255,
     value
   );
   hy(x, y) = th_val;
@@ -467,6 +775,145 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     .unroll(y, 8)
     .vectorize(x, 16);
   return cloneimg;
+}
+
+Func convert_from(Func in, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func convert = Func(name);
+  convert(x, y, ch) = in(x, y, ch);
+
+  convert.compute_at(in, x)
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  return convert;
+}
+
+// ABGR
+Func convert_from_abgr_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_abgr(input, "in"),
+    width,
+    height,
+    "convert_from_abgr"
+  );
+}
+
+// ARGB
+Func convert_from_argb_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_argb(input, "in"),
+    width,
+    height,
+    "convert_from_argb"
+  );
+}
+
+// BGRA
+Func convert_from_bgra_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_bgra(input, "in"),
+    width,
+    height,
+    "convert_from_bgra"
+  );
+}
+
+// BGRA little endian (argb in memory) at libyuv
+Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_rabg(input, "in"),
+    width,
+    height,
+    "convert_from_rabg"
+  );
+}
+
+Func convert_from_yuv_444_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_yuv_444(in_y, in_u, in_v, "in"),
+    width,
+    height,
+    "convert_from_yuv_444"
+  );
+}
+
+Func convert_from_yuv_420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height) {
+  return convert_from(
+    read_from_yuv_420(in_y, in_u, in_v, "in"),
+    width,
+    height,
+    "convert_from_yuv_420"
+  );
+}
+
+Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 3}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr y_max_w = width;
+  Expr y_max_h = height;
+  Expr uv_max_h = y_max_h + y_max_h;
+
+  Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
+
+  Func f = Func("convert_to_yuv_444");
+  f(x, y) = select(
+    y < y_max_h,                  yuv(x, y, 0),
+    y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
+    uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
+    ui8_0
+  );
+
+  f.compute_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  return f;
+}
+
+Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+  Region src_bounds = {{0, width},{0, height},{0, 3}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr y_max_w = width;
+  Expr y_max_h = height;
+  Expr y_height = height;
+  Expr uv_size = (width * height) / 4;
+  Expr uv_stride = width / 2;
+  Expr uv_height = uv_size / width;
+
+  Expr u_max_h = y_height + uv_height;
+  Expr v_max_h = u_max_h + uv_height;
+
+  Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
+
+  Func yuv444to420 = Func("yuv444to420");
+  Expr kx = 2 * (x % uv_stride);
+  Expr ky = (y * uv_stride) + (2 * (x / uv_stride)) + y;
+  yuv444to420(x,y,ch) = (
+    yuv(kx, ky, ch) +
+    yuv(kx + 1, ky, ch) +
+    yuv(kx, ky + 1, ch) +
+    yuv(kx + 1, ky + 1, ch)
+  ) / 4;
+
+  Func f = Func("convert_to_yuv_420");
+  f(x, y) = select(
+    y < y_max_h,                 yuv(x, y, 0),
+    y_max_h <= y && y < u_max_h, yuv444to420(x, y - y_max_h, 1),
+    u_max_h <= y && y < v_max_h, yuv444to420(x, y - u_max_h, 2),
+    ui8_0
+  );
+  return f;
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -805,8 +1252,8 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Expr value = ((r * GRAY_R) + (g * GRAY_G) + (b * GRAY_B)) >> 8;
 
   grayscale(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(value)
+    ch < 3, cast<uint8_t>(value),
+    likely(ui8_255)
   );
 
   grayscale.compute_at(in, xi)
@@ -833,11 +1280,10 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var ti("ti");
 
   Func invert = Func("invert");
-  Expr value = select(
-    ch == 3, in(x, y, ch), // alpha
-    255 - in(x, y, ch)     // r g b
+  invert(x, y, ch) = select(
+    ch < 3, ui8_255 - in(x, y, ch),
+    likely(ui8_255)
   );
-  invert(x, y, ch) = value;
 
   invert.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -900,8 +1346,8 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
   value = fast_pow(value / 255.0f, e) * 255.0f;
 
   gammacorrection(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(value)
+    ch < 3, cast<uint8_t>(value),
+    likely(ui8_255)
   );
 
   gammacorrection.compute_at(in, xi)
@@ -1064,8 +1510,8 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(gx(x, y), 2);
   Expr magnitude = pow_gy + pow_gx;
   edge(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(magnitude)
+    ch < 3, cast<uint8_t>(magnitude),
+    likely(ui8_255)
   );
 
   gy.compute_at(edge, x)
@@ -1106,8 +1552,8 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   Expr pow_gx = fast_pow(abs(gx(x, y)), 2);
   Expr magnitude = ceil(sqrt(pow_gy + pow_gx));
   sobel(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(magnitude)
+    ch < 3, cast<uint8_t>(magnitude),
+    likely(ui8_255)
   );
 
   gy.compute_at(sobel, x)
@@ -1139,8 +1585,8 @@ Func canny_fn(
   Expr hysteresis = hy(x, y);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis)
+    ch < 3, cast<uint8_t>(hysteresis),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1167,8 +1613,8 @@ Func canny_dilate_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1198,8 +1644,8 @@ Func canny_morphology_open_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1229,8 +1675,8 @@ Func canny_morphology_close_fn(
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
   canny(x, y, ch) = select(
-    ch == 3, 255,
-    cast<uint8_t>(hysteresis_dilate)
+    ch < 3, cast<uint8_t>(hysteresis_dilate),
+    likely(ui8_255)
   );
 
   canny.compute_root()
@@ -1253,8 +1699,8 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   Func emboss = Func("emboss");
   emboss(x, y, ch) = select(
-    ch == 3, 255,
-    clamp(conv(x, y, ch) + 128, 0, 255)
+    ch < 3, clamp(conv(x, y, ch) + 128, 0, 255),
+    likely(ui8_255)
   );
 
   conv.compute_root()
@@ -1315,8 +1761,8 @@ Func blockmozaic_fn(Func input, Param<int32_t> width, Param<int32_t> height, Par
 
   Func avg_color = Func("avg_color");
   avg_color(x, y, ch) = select(
-    ch == 3, 255,
-    block_color(x, y, ch) / base
+    ch < 3, block_color(x, y, ch) / base,
+    likely(float_255)
   );
 
   Func blockmozaic = Func("blockmozaic");
@@ -1366,15 +1812,15 @@ Func match_template_sad_fn(
   Func match = Func("match_template_sad");
   match(x, y) = cast<uint16_t>(sad(x, y));
   
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root()
+  in.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
-  t.compute_root()
+  t.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
   return match;
@@ -1405,15 +1851,15 @@ Func match_template_ssd_fn(
   Func match = Func("match_template_ssd");
   match(x, y) = cast<int32_t>(ssd(x, y));
  
-  match.compute_root()
+  match.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
     .vectorize(xi, 32);
-  in.compute_root()
+  in.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 16);
-  t.compute_root()
+  t.compute_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 16);
   return match;
@@ -1477,12 +1923,8 @@ Func prepared_match_template_ncc_fn(
   in.compute_at(match, ti)
     .unroll(y, 8)
     .vectorize(x, 16);
-  buf_tpl_val.compute_at(match, ti)
-    .unroll(y, 8)
-    .vectorize(x, 16);
-  buf_tpl_sum.compute_at(match, ti)
-    .unroll(y)
-    .parallel(x);
+  buf_tpl_val.compute_root();
+  buf_tpl_sum.compute_root();
   return match;
 }
 
@@ -1518,7 +1960,7 @@ Func match_template_ncc_fn(
     .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
-    .unroll(y, 8)
+    .unroll(y, 4)
     .vectorize(x, 16);
   t.compute_at(match, ti)
     .unroll(y, 4)

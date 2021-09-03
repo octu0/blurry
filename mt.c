@@ -19,7 +19,7 @@
 #endif
 
 #include <stdlib.h>
-#include "bridge.h"
+#include "buffer.h"
 #include "mt.h"
 
 int libmtsad(

@@ -6,7 +6,7 @@ exec 2>&1
 cd /out
 
 # build main
-clang++ -g \
+clang++ -g -O2 \
   -I/halide/Halide-Runtime/include -I/halide/Halide-Runtime/share/Halide/tools \
   -L/halide/Halide-Runtime/lib -lHalide `libpng-config --cflags --ldflags` -ljpeg -lpthread -ldl -std=c++11 \
   /app/blurry.cpp \
@@ -17,7 +17,7 @@ clang++ -g \
 LD_LIBRARY_PATH=/halide/Halide-Runtime/lib ./blurry.out
 
 # build runtime
-clang++ -g \
+clang++ -g -O2 \
   -I/halide/Halide-Runtime/include -I/halide/Halide-Runtime/share/Halide/tools \
   -L/halide/Halide-Runtime/lib -lHalide `libpng-config --cflags --ldflags` -ljpeg -lpthread -ldl -std=c++11 \
   /app/generator.cpp /halide/Halide-Runtime/share/Halide/tools/GenGen.cpp \

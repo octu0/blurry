@@ -19,44 +19,51 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.01170ms
-BenchmarkJIT/rotate0                       : 0.01106ms
-BenchmarkJIT/rotate90                      : 0.06281ms
-BenchmarkJIT/rotate180                     : 0.01115ms
-BenchmarkJIT/rotate270                     : 0.06121ms
-BenchmarkJIT/blend_normal                  : 0.09182ms
-BenchmarkJIT/blend_sub                     : 0.09193ms
-BenchmarkJIT/blend_add                     : 0.09163ms
-BenchmarkJIT/blend_diff                    : 0.09576ms
-BenchmarkJIT/grayscale                     : 0.05667ms
-BenchmarkJIT/invert                        : 0.04925ms
-BenchmarkJIT/brightness                    : 0.05612ms
-BenchmarkJIT/gammacorrection               : 0.08894ms
-BenchmarkJIT/contrast                      : 0.05773ms
-BenchmarkJIT/boxblur                       : 0.13224ms
-BenchmarkJIT/gaussianblur                  : 0.15382ms
-BenchmarkJIT/blockmozaic                   : 0.24911ms
-BenchmarkJIT/erosion                       : 0.11815ms
-BenchmarkJIT/dilation                      : 0.12230ms
-BenchmarkJIT/morphology_open               : 0.13795ms
-BenchmarkJIT/morphology_close              : 0.13667ms
-BenchmarkJIT/morphology_gradient           : 0.08031ms
-BenchmarkJIT/emboss$1                      : 0.14375ms
-BenchmarkJIT/laplacian                     : 0.10031ms
-BenchmarkJIT/highpass                      : 0.10279ms
-BenchmarkJIT/gradient                      : 0.10152ms
-BenchmarkJIT/edgedetect                    : 0.10309ms
-BenchmarkJIT/sobel                         : 0.11264ms
-BenchmarkJIT/canny                         : 0.52737ms
-BenchmarkJIT/canny_dilate                  : 0.56953ms
-BenchmarkJIT/canny_morphology_open         : 0.61919ms
-BenchmarkJIT/canny_morphology_close        : 0.61472ms
-BenchmarkJIT/match_template_sad            : 5.56696ms
-BenchmarkJIT/match_template_ssd            : 4.42042ms
-BenchmarkJIT/match_template_ncc            : 8.58278ms
-BenchmarkJIT/prepared_match_template_ncc   : 6.34826ms
-BenchmarkJIT/match_template_zncc           : 12.16301ms
-BenchmarkJIT/prepared_match_template_zncc  : 11.66600ms
+BenchmarkJIT/cloneimg                      : 0.01252ms
+BenchmarkJIT/convert_from_argb             : 0.04468ms
+BenchmarkJIT/convert_from_abgr             : 0.07070ms
+BenchmarkJIT/convert_from_bgra             : 0.04652ms
+BenchmarkJIT/convert_from_rabg             : 0.07350ms
+BenchmarkJIT/convert_from_yuv_i420         : 0.07403ms
+BenchmarkJIT/convert_from_yuv_i444         : 0.05969ms
+BenchmarkJIT/convert_to_yuv_i444           : 0.15520ms
+BenchmarkJIT/rotate0                       : 0.01378ms
+BenchmarkJIT/rotate90                      : 0.08395ms
+BenchmarkJIT/rotate180                     : 0.01281ms
+BenchmarkJIT/rotate270                     : 0.08380ms
+BenchmarkJIT/blend_normal                  : 0.08395ms
+BenchmarkJIT/blend_sub                     : 0.07714ms
+BenchmarkJIT/blend_add                     : 0.07664ms
+BenchmarkJIT/blend_diff                    : 0.10934ms
+BenchmarkJIT/grayscale                     : 0.05180ms
+BenchmarkJIT/invert                        : 0.04068ms
+BenchmarkJIT/brightness                    : 0.06584ms
+BenchmarkJIT/gammacorrection               : 0.10498ms
+BenchmarkJIT/contrast                      : 0.07484ms
+BenchmarkJIT/boxblur                       : 0.09998ms
+BenchmarkJIT/gaussianblur                  : 0.19446ms
+BenchmarkJIT/blockmozaic                   : 0.26720ms
+BenchmarkJIT/erosion                       : 0.13686ms
+BenchmarkJIT/dilation                      : 0.13779ms
+BenchmarkJIT/morphology_open               : 0.14827ms
+BenchmarkJIT/morphology_close              : 0.14860ms
+BenchmarkJIT/morphology_gradient           : 0.11987ms
+BenchmarkJIT/emboss                        : 0.14171ms
+BenchmarkJIT/laplacian                     : 0.08635ms
+BenchmarkJIT/highpass                      : 0.09456ms
+BenchmarkJIT/gradient                      : 0.09132ms
+BenchmarkJIT/edgedetect                    : 0.07551ms
+BenchmarkJIT/sobel                         : 0.09155ms
+BenchmarkJIT/canny                         : 0.45865ms
+BenchmarkJIT/canny_dilate                  : 0.47360ms
+BenchmarkJIT/canny_morphology_open         : 0.52677ms
+BenchmarkJIT/canny_morphology_close        : 0.52089ms
+BenchmarkJIT/match_template_sad            : 5.45613ms
+BenchmarkJIT/match_template_ssd            : 4.39070ms
+BenchmarkJIT/match_template_ncc            : 7.92950ms
+BenchmarkJIT/prepared_match_template_ncc   : 5.96293ms
+BenchmarkJIT/match_template_zncc           : 12.02843ms
+BenchmarkJIT/prepared_match_template_zncc  : 10.89218ms
 ```
 
 ## AOT benchmarks
@@ -492,6 +499,60 @@ img, err := blurry.Blend(input0, input1, image.Pt(76, 36), blurry.BlendNormal)
 | `blurry.BlendSub`     | ![example](testdata/blend_sub.png)    |
 | `blurry.BlendAdd`     | ![example](testdata/blend_add.png)    |
 | `blurry.BlendDiff`    | ![example](testdata/blend_diff.png)   |
+
+### Convert
+
+blurry supports reading ARGB, ABGR, BGRA, YUV420 and YUV444.  
+It also supports YUV444 output.
+
+#### Read: RGBA Color Model
+
+```go
+img, err := blurry.ConvertFromARGB(input)
+```
+
+| ColorModel  | Method                                |
+| :---------: | :-----------------------------------: |
+| ARGB        | `blurry.ConvertFromARGB(*image.RGBA)` |
+| ABGR        | `blurry.ConvertFromABGR(*image.RGBA)` |
+| BGRA        | `blurry.ConvertFromBGRA(*image.RGBA)` |
+| RABG        | `blurry.ConvertFromRABG(*image.RGBA)` |
+
+#### Read: YUV Chroma Subsampling
+
+```go
+img, err := blurry.ConvertFromYUV420(ycbcr)
+```
+
+| Subsampling  | Method                                   |
+| :----------: | :--------------------------------------: |
+| 420          | `blurry.ConvertFromYUV420(*image.YCbCr)` |
+| 444          | `blurry.ConvertFromYUV444(*image.YCbCr)` |
+
+or byte slice can also be specified
+
+```go
+var y,u,v []byte
+var strideY,strideU,strideV int
+var width, height int
+
+img, err := blurry.ConvertFromYUV420Plane(y, u, v, strideY, strideU, strideV, width, height)
+```
+
+| Subsampling  | Method                                   |
+| :----------: | :--------------------------------------: |
+| 420          | `blurry.ConvertFromYUV420Plane(y,u,v []byte, int,int,int, w,h int)` |
+| 444          | `blurry.ConvertFromYUV444Plane(y,u,v []byte, int,int,int, w,h int)` |
+
+#### Write: YUV Chroma Subsampling
+
+```go
+ycbcr, err := blurry.ConvertToYUV444(rgba)
+```
+
+| Subsampling  | Method                                |
+| :----------: | :-----------------------------------: |
+| 444          | `blurry.ConvertToYUV420(*image.RGBA)` |
 
 ## CLI usage
 

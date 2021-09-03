@@ -7,12 +7,13 @@ package blurry
 #include <stdlib.h>
 #include <string.h>
 
-#include "bridge.h"
 #ifdef __APPLE__
 #include "liberosion_osx.h"
 #elif __linux__
 #include "liberosion_linux.h"
 #endif
+
+#include "buffer.h"
 
 int liberosion(unsigned char *src, int32_t width, int32_t height, int32_t size, unsigned char *out) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);

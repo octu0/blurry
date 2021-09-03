@@ -36,6 +36,22 @@ Func wrapFunc_xy(Buffer<double> buf, const char* name);
 
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
+Func convert_from_abgr_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_from_argb_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_from_rabg_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_from_bgra_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_from_yuv_444_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_from_yuv_420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height);

@@ -24,7 +24,7 @@ func main() {
 	app.Version = blurry.Version
 	app.Name = blurry.AppName
 	app.Usage = ""
-	app.Commands = bridge.Command()
+	app.Commands = cgo.Command()
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "debug, d",

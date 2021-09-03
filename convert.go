@@ -21,21 +21,21 @@ package blurry
 #include "buffer.h"
 
 int call_convert_rgba(
-  unsigned char mode,
+  unsigned char model,
   halide_buffer_t *in,
   int32_t width, int32_t height,
   halide_buffer_t *out
 ) {
-  if(1 == mode) {
+  if(1 == model) {
     return convert_from_argb(in, width, height, out);
   }
-  if(2 == mode) {
+  if(2 == model) {
     return convert_from_abgr(in, width, height, out);
   }
-  if(3 == mode) {
+  if(3 == model) {
     return convert_from_bgra(in, width, height, out);
   }
-  if(4 == mode) {
+  if(4 == model) {
     return convert_from_rabg(in, width, height, out);
   }
   return 1;
@@ -44,7 +44,7 @@ int call_convert_rgba(
 int libconvert_from_rgba(
   unsigned char *src,
   int32_t width, int32_t height,
-  unsigned char mode,
+  unsigned char model,
   unsigned char *out
 ) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
@@ -57,7 +57,7 @@ int libconvert_from_rgba(
     return 1;
   }
 
-  int ret = call_convert_rgba(mode, in_rgba_buf, width, height, out_rgba_buf);
+  int ret = call_convert_rgba(model, in_rgba_buf, width, height, out_rgba_buf);
   free_buf(in_rgba_buf);
   free_buf(out_rgba_buf);
   return ret;
@@ -69,20 +69,11 @@ import (
 	"image"
 )
 
-type ConvertRGBAMode uint8
-
-const (
-	ConvertFromARGB ConvertRGBAMode = iota + 1
-	ConvertFromABGR
-	ConvertFromBGRA
-	ConvertFromRABG
-)
-
 var (
 	ErrConvertFromRGBA = errors.New("convert_from cgo call error")
 )
 
-func ConvertFrom(img *image.RGBA, mode ConvertRGBAMode) (*image.RGBA, error) {
+func ConvertFrom(img *image.RGBA, model ColorModel) (*image.RGBA, error) {
 	width, height := wh(img)
 	out := GetRGBA(width, height)
 
@@ -90,7 +81,7 @@ func ConvertFrom(img *image.RGBA, mode ConvertRGBAMode) (*image.RGBA, error) {
 		(*C.uchar)(&img.Pix[0]),
 		C.int(width),
 		C.int(height),
-		C.uchar(mode),
+		C.uchar(model),
 		(*C.uchar)(&out.Pix[0]),
 	)
 	if int(ret) != 0 {
@@ -100,17 +91,17 @@ func ConvertFrom(img *image.RGBA, mode ConvertRGBAMode) (*image.RGBA, error) {
 }
 
 func ConvertFromARGB(img *image.RGBA) (*image.RGBA, error) {
-	return ConvertFrom(img, ConvertFromARGB)
+	return ConvertFrom(img, ColorModelARGB)
 }
 
 func ConvertFromABGR(img *image.RGBA) (*image.RGBA, error) {
-	return ConvertFrom(img, ConvertFromABGR)
+	return ConvertFrom(img, ColorModelABGR)
 }
 
 func ConvertFromBGRA(img *image.RGBA) (*image.RGBA, error) {
-	return ConvertFrom(img, ConvertFromBGRA)
+	return ConvertFrom(img, ColorModelBGRA)
 }
 
 func ConvertFromRABG(img *image.RGBA) (*image.RGBA, error) {
-	return ConvertFrom(img, ConvertFromRABG)
+	return ConvertFrom(img, ColorModelRABG)
 }

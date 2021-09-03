@@ -44,6 +44,10 @@ func loadImage(inputFile string) (*image.RGBA, error) {
 	return convertRGBA(img), nil
 }
 
+func loadData(path string) ([]byte, error) {
+	return os.ReadFile(path)
+}
+
 func saveImage(img *image.RGBA) (string, error) {
 	out, err := ioutil.TempFile("/tmp", "out*.png")
 	if err != nil {

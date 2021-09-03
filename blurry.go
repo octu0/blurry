@@ -6,6 +6,22 @@ import (
 	"sync/atomic"
 )
 
+type ColorModel uint8
+
+const (
+	ColorModelARGB ColorModel = iota + 1
+	ColorModelABGR
+	ColorModelBGRA
+	ColorModelRABG
+)
+
+type ChromaSubsampling uint8
+
+const (
+	ChromaSubsampling420 ChromaSubsampling = iota + 1
+	ChromaSubsampling444
+)
+
 const (
 	RGBAStride int = 4
 )

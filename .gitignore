@@ -4,5 +4,5 @@
 *.out
 /Halide-Runtime*
 
-benchmark/include/libyuv/*
-benchmark/lib/libyuv/*
+_benchmark/include/libyuv/*
+_benchmark/lib/libyuv/*

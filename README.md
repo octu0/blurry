@@ -19,51 +19,56 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.01252ms
-BenchmarkJIT/convert_from_argb             : 0.04468ms
-BenchmarkJIT/convert_from_abgr             : 0.07070ms
-BenchmarkJIT/convert_from_bgra             : 0.04652ms
-BenchmarkJIT/convert_from_rabg             : 0.07350ms
-BenchmarkJIT/convert_from_yuv_i420         : 0.07403ms
-BenchmarkJIT/convert_from_yuv_i444         : 0.05969ms
-BenchmarkJIT/convert_to_yuv_i444           : 0.15520ms
-BenchmarkJIT/rotate0                       : 0.01378ms
-BenchmarkJIT/rotate90                      : 0.08395ms
-BenchmarkJIT/rotate180                     : 0.01281ms
-BenchmarkJIT/rotate270                     : 0.08380ms
-BenchmarkJIT/blend_normal                  : 0.08395ms
-BenchmarkJIT/blend_sub                     : 0.07714ms
-BenchmarkJIT/blend_add                     : 0.07664ms
-BenchmarkJIT/blend_diff                    : 0.10934ms
-BenchmarkJIT/grayscale                     : 0.05180ms
-BenchmarkJIT/invert                        : 0.04068ms
-BenchmarkJIT/brightness                    : 0.06584ms
-BenchmarkJIT/gammacorrection               : 0.10498ms
-BenchmarkJIT/contrast                      : 0.07484ms
-BenchmarkJIT/boxblur                       : 0.09998ms
-BenchmarkJIT/gaussianblur                  : 0.19446ms
-BenchmarkJIT/blockmozaic                   : 0.26720ms
-BenchmarkJIT/erosion                       : 0.13686ms
-BenchmarkJIT/dilation                      : 0.13779ms
-BenchmarkJIT/morphology_open               : 0.14827ms
-BenchmarkJIT/morphology_close              : 0.14860ms
-BenchmarkJIT/morphology_gradient           : 0.11987ms
-BenchmarkJIT/emboss                        : 0.14171ms
-BenchmarkJIT/laplacian                     : 0.08635ms
-BenchmarkJIT/highpass                      : 0.09456ms
-BenchmarkJIT/gradient                      : 0.09132ms
-BenchmarkJIT/edgedetect                    : 0.07551ms
-BenchmarkJIT/sobel                         : 0.09155ms
-BenchmarkJIT/canny                         : 0.45865ms
-BenchmarkJIT/canny_dilate                  : 0.47360ms
-BenchmarkJIT/canny_morphology_open         : 0.52677ms
-BenchmarkJIT/canny_morphology_close        : 0.52089ms
-BenchmarkJIT/match_template_sad            : 5.45613ms
-BenchmarkJIT/match_template_ssd            : 4.39070ms
-BenchmarkJIT/match_template_ncc            : 7.92950ms
-BenchmarkJIT/prepared_match_template_ncc   : 5.96293ms
-BenchmarkJIT/match_template_zncc           : 12.02843ms
-BenchmarkJIT/prepared_match_template_zncc  : 10.89218ms
+BenchmarkJIT/cloneimg                      : 0.01320ms
+BenchmarkJIT/convert_from_argb             : 0.04339ms
+BenchmarkJIT/convert_from_abgr             : 0.07046ms
+BenchmarkJIT/convert_from_bgra             : 0.04780ms
+BenchmarkJIT/convert_from_rabg             : 0.07334ms
+BenchmarkJIT/convert_from_yuv_420          : 0.07158ms
+BenchmarkJIT/convert_from_yuv_444          : 0.05951ms
+BenchmarkJIT/convert_to_yuv_444            : 0.15529ms
+BenchmarkJIT/rotate0                       : 0.01312ms
+BenchmarkJIT/rotate90                      : 0.07968ms
+BenchmarkJIT/rotate180                     : 0.01394ms
+BenchmarkJIT/rotate270                     : 0.08807ms
+BenchmarkJIT/crop                          : 0.05707ms
+BenchmarkJIT/scale                         : 0.04763ms
+BenchmarkJIT/scale_box                     : 0.10367ms
+BenchmarkJIT/scale_linear                  : 0.10360ms
+BenchmarkJIT/scale_gaussian                : 0.11636ms
+BenchmarkJIT/blend_normal                  : 0.08605ms
+BenchmarkJIT/blend_sub                     : 0.07611ms
+BenchmarkJIT/blend_add                     : 0.08011ms
+BenchmarkJIT/blend_diff                    : 0.11269ms
+BenchmarkJIT/grayscale                     : 0.05239ms
+BenchmarkJIT/invert                        : 0.04209ms
+BenchmarkJIT/brightness                    : 0.05831ms
+BenchmarkJIT/gammacorrection               : 0.09816ms
+BenchmarkJIT/contrast                      : 0.05776ms
+BenchmarkJIT/boxblur                       : 0.10037ms
+BenchmarkJIT/gaussianblur                  : 0.23968ms
+BenchmarkJIT/blockmozaic                   : 0.26124ms
+BenchmarkJIT/erosion                       : 0.13673ms
+BenchmarkJIT/dilation                      : 0.13595ms
+BenchmarkJIT/morphology_open               : 0.14927ms
+BenchmarkJIT/morphology_close              : 0.14888ms
+BenchmarkJIT/morphology_gradient           : 0.11828ms
+BenchmarkJIT/emboss                        : 0.14875ms
+BenchmarkJIT/laplacian$1                   : 0.10491ms
+BenchmarkJIT/highpass                      : 0.09658ms
+BenchmarkJIT/gradient                      : 0.08674ms
+BenchmarkJIT/edgedetect                    : 0.07488ms
+BenchmarkJIT/sobel                         : 0.09165ms
+BenchmarkJIT/canny                         : 0.44909ms
+BenchmarkJIT/canny_dilate                  : 0.46696ms
+BenchmarkJIT/canny_morphology_open         : 0.50971ms
+BenchmarkJIT/canny_morphology_close        : 0.51879ms
+BenchmarkJIT/match_template_sad            : 5.77770ms
+BenchmarkJIT/match_template_ssd            : 4.35721ms
+BenchmarkJIT/match_template_ncc            : 8.19072ms
+BenchmarkJIT/prepared_match_template_ncc   : 6.03240ms
+BenchmarkJIT/match_template_zncc           : 11.91219ms
+BenchmarkJIT/prepared_match_template_zncc  : 11.20913ms
 ```
 
 ## AOT benchmarks
@@ -608,34 +613,36 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.17.1
+   1.18.0
 
 COMMANDS:
-     blend             
-     blockmozaic       
-     boxblur           
-     brightness        
-     canny             
-     clone             
-     contrast          
-     convert           
-     convert_from_yuv  
-     convert_to_yuv    
-     dilation          
-     edge              
-     emboss            
-     erosion           
-     gamma             
-     gaussianblur      
-     gradient          
-     grayscale         
-     highpass          
-     invert            
-     laplacian         
-     morphology        
-     match_template    
-     rotate            
-     sobel             
+     blend
+     blockmozaic
+     boxblur
+     brightness
+     canny
+     clone
+     contrast
+     convert
+     convert_from_yuv
+     convert_to_yuv
+     crop
+     dilation
+     edge
+     emboss
+     erosion
+     gamma
+     gaussianblur
+     gradient
+     grayscale
+     highpass
+     invert
+     laplacian
+     morphology
+     match_template
+     rotate
+     scale
+     sobel
      help, h           Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

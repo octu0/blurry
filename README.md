@@ -212,7 +212,7 @@ img, err := blurry.Rotate(input, blurry.Rotate90)
 crop x,y with crop_width,crop_height
 
 ```go
-img, err := blurry.Crop(input, x, y, crop_width, crop_height)
+img, err := blurry.Crop(input, image.Pt(175, 40), crop_width, crop_height)
 ```
 
 | original                      | `x=175,y=40,cw=80,ch=50`      |

@@ -1,37 +1,44 @@
-package genrun
+package cgo
 
 import (
+	"fmt"
+	"log"
+
 	"gopkg.in/urfave/cli.v1"
-	"strconv"
+
+	"github.com/octu0/blurry"
 )
 
 func scaleAction(c *cli.Context) error {
-	runtimePath := c.String("runtime")
-	generateOutFilePath, err := generate(runtimePath, c.String("file"))
+	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
 
-	var cmd string
+	var mode blurry.ScaleFilter
 	switch c.String("filter") {
 	case "none":
-		cmd = "scale"
+		mode = blurry.ScaleFilterNone
 	case "box":
-		cmd = "scale_box"
+		mode = blurry.ScaleFilterBox
 	case "linear":
-		cmd = "scale_linear"
+		mode = blurry.ScaleFilterLinear
 	case "gaussian":
-		cmd = "scale_gaussian"
+		mode = blurry.ScaleFilterGaussian
+	default:
+		return fmt.Errorf("unknown scale mode:%s", c.String("filter"))
 	}
 
-	args := []string{
-		strconv.Itoa(c.Int("scale_width")),
-		strconv.Itoa(c.Int("scale_height")),
-	}
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, args); err != nil {
+	out, err := blurry.Scale(in, c.Int("sw"), c.Int("sh"), mode)
+	if err != nil {
 		return err
 	}
 
+	path, err := saveImage(out)
+	if err != nil {
+		return err
+	}
+	log.Printf("info: open %s", path)
 	return nil
 }
 
@@ -46,27 +53,17 @@ func init() {
 				Value: "./testdata/src.png",
 			},
 			cli.StringFlag{
-				Name:  "r,runtime",
-				Usage: "halide runtime path",
-				Value: "./Halide-Runtime",
-			},
-			cli.StringFlag{
-				Name:  "f,file",
-				Usage: "/path/to/blurry.cpp path",
-				Value: "./blurry.cpp",
-			},
-			cli.StringFlag{
 				Name:  "filter",
 				Usage: "scale filter ('none' or 'box' or 'linear' or 'gaussian')",
 				Value: "none",
 			},
 			cli.IntFlag{
-				Name:  "scale_width",
+				Name:  "sw,scale_width",
 				Usage: "scale width",
 				Value: 128,
 			},
 			cli.IntFlag{
-				Name:  "scale_height",
+				Name:  "sh,scale_height",
 				Usage: "scale height",
 				Value: 96,
 			},

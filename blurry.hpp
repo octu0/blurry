@@ -66,10 +66,28 @@ Func crop_fn(
   Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
 );
 
+Func scale_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+);
+
+Func scale_box_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+);
+
 Func scale_linear_fn(
   Func input,
   Param<int32_t> width, Param<int32_t> height,
-  Param<float> rate
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+);
+
+Func scale_gaussian_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
 );
 
 Func blend_normal_fn(

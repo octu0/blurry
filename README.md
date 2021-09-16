@@ -219,6 +219,21 @@ img, err := blurry.Crop(input, x, y, crop_width, crop_height)
 | :---------------------------: | :---------------------------: |
 | ![original](testdata/src.png) | ![cropped](testdata/crop.png) |
 
+### Scale
+
+a.k.a. Resize resampling
+
+```go
+img, err := blurry.Scale(input, scale_width, scale_height, blurry.ScaleFilterNone)
+```
+
+| `blurry.ScaleFilter`         | Result                                  |
+| :--------------------------: | :-------------------------------------: |
+| `blurry.ScaleFilterNone`     | ![example](testdata/scale_none.png)     |
+| `blurry.ScaleFilterBox`      | ![example](testdata/scale_box.png)      |
+| `blurry.ScaleFilterLinear`   | ![example](testdata/scale_linear.png)   |
+| `blurry.ScaleFilterGaussian` | ![example](testdata/scale_gaussian.png) |
+
 ### Grayscale
 
 ```go

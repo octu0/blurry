@@ -11,6 +11,7 @@ const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 const Expr ui8_0 = cast<uint8_t>(0);
 const Expr ui8_255 = cast<uint8_t>(255);
+const Expr f05 = cast<float>(0.5f);
 const Expr float_0 = cast<float>(0.f);
 const Expr float_16 = cast<float>(16.f);
 const Expr float_128 = cast<float>(128.f);
@@ -159,6 +160,13 @@ Func readUI8(Func clamped, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
   read(x, y, ch) = cast<uint8_t>(clamped(x, y, ch));
+  return read;
+}
+
+Func readFloat(Func clamped, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func read = Func(name);
+  read(x, y, ch) = cast<float>(clamped(x, y, ch));
   return read;
 }
 
@@ -1008,14 +1016,196 @@ Func crop_fn(
   return crop;
 }
 
+Func scale_kernel_box() {
+  Var x("x");
+  Func f = Func("scale_kernel_box");
+  f(x) = select(abs(x) < 0.5f, 1.f, 0.f);
+
+  f.compute_root();
+  return f;
+}
+
+Func scale_kernel_linar() {
+  Var x("x");
+  Func f = Func("scale_kernel_gaussian");
+  Expr xx = abs(x);
+  f(x) = select(xx < 1.f, 1.f - xx, 0.f);
+
+  f.compute_root();
+  return f;
+}
+
+Func scale_kernel_gaussian() {
+  Var x("x");
+  Func f = Func("scale_kernel_gaussian");
+  Expr xx = abs(x);
+  Expr xx2 = fast_pow(0.5f, fast_pow(xx, 2.f));
+  Expr base = fast_pow(0.5f, fast_pow(2, 2.f));
+  f(x) = select(xx < 1.f, (xx2 - base) / (1 - base), 0.f);
+
+  f.compute_root();
+  return f;
+}
+
+Func scale_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr dx = cast<float>(width) / cast<float>(scale_width);
+  Expr dy = cast<float>(height) / cast<float>(scale_height);
+
+  Func scale = Func("scale_normal");
+  scale(x, y, ch) = in(cast<int>((x + f05) * dx), cast<int>((y + f05) * dy), ch);
+
+  Func f = Func("scale");
+  Expr value = select(
+    ch < 3, scale(x, y, ch),
+    likely(float_255)
+  );
+  f(x, y, ch) = cast<uint8_t>(value);
+
+  f.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+  return f;
+}
+
+Func scale_by_kernel(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height,
+  Func kernel, Expr size,
+  const char* name
+) {
+  Var x("x"), y("y"), ch("ch");
+  Var s("s");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr delta_w = cast<float>(width) / cast<float>(scale_width);
+  Expr delta_h = cast<float>(height) / cast<float>(scale_height);
+  Expr rate_w = max(1.f, delta_w);
+  Expr rate_h = max(1.f, delta_h);
+  Expr kernel_radius_w = rate_w * 1.0f;
+  Expr kernel_radius_h = rate_h * 1.0f;
+  RDom rd_scale = RDom(0, size, "rd_scale_box");
+
+  Expr src_x = ((x + f05) * delta_w) - f05;
+  Expr src_y = ((y + f05) * delta_h) - f05;
+  Expr begin_x = cast<int>(ceil(src_x - kernel_radius_w));
+  Expr begin_y = cast<int>(ceil(src_y - kernel_radius_h));
+  begin_x = clamp(begin_x, 0, (width + 1) - size);
+  begin_y = clamp(begin_y, 0, (height + 1) - size);
+
+  Func kernel_val_x = Func("kernel_val_x"), kernel_val_y = Func("kernel_val_y");
+  kernel_val_x(x, s) = kernel(cast<int>((s + begin_x - src_x) * rate_w));
+  kernel_val_y(y, s) = kernel(cast<int>((s + begin_y - src_y) * rate_h));
+
+  Func kernel_sum_x = Func("kernel_sum_x"), kernel_sum_y = Func("kernel_sum_y");
+  kernel_sum_x(x) = sum(kernel_val_x(x, rd_scale));
+  kernel_sum_y(y) = sum(kernel_val_y(y, rd_scale));
+
+  Func kernel_x = Func("kernel_x"), kernel_y = Func("kernel_y");
+  kernel_x(x, s) = kernel_val_x(x, s) / kernel_sum_x(x);
+  kernel_y(y, s) = kernel_val_y(y, s) / kernel_sum_y(y);
+
+  Func scale_y = Func("scale_y");
+  scale_y(x, y, ch) = sum(kernel_y(y, rd_scale) * in(x, rd_scale + begin_y, ch));
+
+  Func scale_x = Func("scale_x");
+  scale_x(x, y, ch) = sum(kernel_x(x, rd_scale) * scale_y(begin_x + rd_scale, y, ch));
+
+  Func f = Func(name);
+  Expr value = select(
+    ch < 3, scale_x(x, y, ch),
+    likely(float_255)
+  );
+  f(x, y, ch) = cast<uint8_t>(value);
+
+  kernel_val_x.compute_at(kernel_x, x)
+    .vectorize(x);
+  kernel_sum_x.compute_at(kernel_x, x)
+    .vectorize(x);
+  kernel_x.compute_root()
+    .reorder(s, x)
+    .vectorize(x, 32);
+
+  kernel_val_y.compute_at(kernel_y, y)
+    .vectorize(y, 32);
+  kernel_sum_y.compute_at(kernel_y, y)
+    .vectorize(y);
+  kernel_y.compute_at(f, yi)
+    .reorder(s, y)
+    .vectorize(y, 32);
+
+  f.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+
+  in.compute_root()
+    .unroll(y, 8)
+    .vectorize(x, 16);
+  return f;
+}
+
+Func scale_box_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+) {
+  return scale_by_kernel(
+    input,
+    width, height,
+    scale_width, scale_height,
+    scale_kernel_box(), 1,
+    "scale_box"
+  );
+}
+
 Func scale_linear_fn(
   Func input,
   Param<int32_t> width, Param<int32_t> height,
-  Param<float> rate
+  Param<int32_t> scale_width, Param<int32_t> scale_height
 ) {
-  return Func("scale_linear");
+  return scale_by_kernel(
+    input, width, height,
+    scale_width, scale_height,
+    scale_kernel_linar(), 1,
+    "scale_linear"
+  );
 }
 
+Func scale_gaussian_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+) {
+  return scale_by_kernel(
+    input, width, height,
+    scale_width, scale_height,
+    scale_kernel_gaussian(), 1,
+    "scale_gaussian"
+  );
+}
 
 Func blend(
   Func source, Func blended,

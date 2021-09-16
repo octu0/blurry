@@ -207,6 +207,18 @@ img, err := blurry.Rotate(input, blurry.Rotate90)
 | `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
 | `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
 
+### Crop
+
+crop x,y with crop_width,crop_height
+
+```go
+img, err := blurry.Crop(input, x, y, crop_width, crop_height)
+```
+
+| original                      | `x=175,y=40,cw=80,ch=50`      |
+| :---------------------------: | :---------------------------: |
+| ![original](testdata/src.png) | ![cropped](testdata/crop.png) |
+
 ### Grayscale
 
 ```go

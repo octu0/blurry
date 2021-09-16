@@ -60,6 +60,18 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
+Func crop_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
+);
+
+Func scale_linear_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<float> rate
+);
+
 Func blend_normal_fn(
   Func src0, Param<int32_t> width0, Param<int32_t> height0,
   Func src1, Param<int32_t> width1, Param<int32_t> height1,

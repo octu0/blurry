@@ -1150,6 +1150,70 @@ int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 }
 //
 // }}} rotate270
+//
+
+//
+// {{{ crop
+//
+void generate_crop(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> px{"px", 100};
+  Param<int32_t> py{"py", 200};
+  Param<int32_t> crop_width{"crop_width", 400};
+  Param<int32_t> crop_height{"crop_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = crop_fn(
+    src.in(), width, height,
+    px, py, crop_width, crop_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    px, py, crop_width, crop_height
+  }, fn.name());
+}
+
+int jit_crop(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> px{"px", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> py{"py", (int32_t) std::stoi(argv[4])};
+  Param<int32_t> crop_width{"crop_width", (int32_t) std::stoi(argv[5])};
+  Param<int32_t> crop_height{"crop_height", (int32_t) std::stoi(argv[6])};
+
+  Func fn = crop_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    px, py, crop_width, crop_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, crop_width.get(), crop_height.get());
+
+  printf("save to %s\n", argv[7]);
+  save_image(out, argv[7]);
+  return 0;
+}
+
+int benchmark_crop(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> px{"px", 175};
+  Param<int32_t> py{"py", 40};
+  Param<int32_t> crop_width{"crop_width", 80};
+  Param<int32_t> crop_height{"crop_height", 50};
+  return jit_benchmark(crop_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    px, py, crop_width, crop_height
+  ), buf_src);
+}
+//
+// }}} crop
+//
 
 //
 // {{{ blend_normal
@@ -3204,6 +3268,7 @@ void generate(){
   generate_rotate90(features);
   generate_rotate180(features);
   generate_rotate270(features);
+  generate_crop(features);
   generate_blend_normal(features);
   generate_blend_sub(features);
   generate_blend_add(features);
@@ -3264,6 +3329,7 @@ void benchmark(char **argv) {
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);
   benchmark_rotate270(buf_src, width, height);
+  benchmark_crop(buf_src, width, height);
   benchmark_blend_normal(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_blend_sub(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_blend_add(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
@@ -3345,6 +3411,9 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "rotate270") == 0) {
     return jit_rotate270(argv);
   } 
+  if(strcmp(argv[1], "crop") == 0) {
+    return jit_crop(argv);
+  }
   if(strcmp(argv[1], "blend_normal") == 0) {
     return jit_blend_normal(argv);
   }

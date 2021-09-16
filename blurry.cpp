@@ -974,6 +974,49 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return rotate;
 }
 
+Func crop_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
+) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr max_x = px + crop_width;
+  Expr max_y = py + crop_height;
+
+  Func crop = Func("crop");
+  crop(x, y, ch) = select(
+    ch < 3 && ((px + x) <= max_x && (py + y) <= max_y), in(px + x, y + py, ch),
+    likely(ui8_255)
+  );
+
+  crop.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+  
+  in.compute_at(crop, xi)
+    .unroll(y, 8)
+    .vectorize(x, 32);
+  return crop;
+}
+
+Func scale_linear_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<float> rate
+) {
+  return Func("scale_linear");
+}
+
+
 Func blend(
   Func source, Func blended,
   Param<int32_t> width0, Param<int32_t> height0,

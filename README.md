@@ -82,7 +82,7 @@ Also, the execution speed may be reduced by the overhead of multiple calls.
 
 `/D` is [DisablePool](https://pkg.go.dev/github.com/octu0/blurry#DisablePool), i.e. the benchmark when BufferPool is off.
 
-![graph](benchmark/testdata/blur_bench.png)
+![graph](_benchmark/testdata/blur_bench.png)
 
 
 ```
@@ -113,7 +113,7 @@ BenchmarkBlur/blurry/Gaussianblur/D-8 	    4250	    284221 ns/op	  311361 B/op	 
 
 ### Edge
 
-![graph](benchmark/testdata/edge_bench.png)
+![graph](_benchmark/testdata/edge_bench.png)
 
 ```
 goos: darwin
@@ -129,7 +129,7 @@ BenchmarkEdge/blurry/Edge-8                	    7792	    140375 ns/op	  311488 B
 
 ## Rotate
 
-![graph](benchmark/testdata/rotate_bench.png)
+![graph](_benchmark/testdata/rotate_bench.png)
 
 ```
 goos: darwin
@@ -165,7 +165,7 @@ BenchmarkRotate/blurry/Rotate/270-8      	    5060	    244755 ns/op	  311489 B/o
 
 ### Sobel
 
-![graph](benchmark/testdata/sobel_bench.png)
+![graph](_benchmark/testdata/sobel_bench.png)
 
 ```
 goos: darwin

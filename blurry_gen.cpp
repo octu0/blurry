@@ -1150,6 +1150,298 @@ int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
 }
 //
 // }}} rotate270
+//
+
+//
+// {{{ crop
+//
+void generate_crop(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> px{"px", 100};
+  Param<int32_t> py{"py", 200};
+  Param<int32_t> crop_width{"crop_width", 400};
+  Param<int32_t> crop_height{"crop_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = crop_fn(
+    src.in(), width, height,
+    px, py, crop_width, crop_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    px, py, crop_width, crop_height
+  }, fn.name());
+}
+
+int jit_crop(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> px{"px", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> py{"py", (int32_t) std::stoi(argv[4])};
+  Param<int32_t> crop_width{"crop_width", (int32_t) std::stoi(argv[5])};
+  Param<int32_t> crop_height{"crop_height", (int32_t) std::stoi(argv[6])};
+
+  Func fn = crop_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    px, py, crop_width, crop_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, crop_width.get(), crop_height.get());
+
+  printf("save to %s\n", argv[7]);
+  save_image(out, argv[7]);
+  return 0;
+}
+
+int benchmark_crop(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> px{"px", 175};
+  Param<int32_t> py{"py", 40};
+  Param<int32_t> crop_width{"crop_width", 80};
+  Param<int32_t> crop_height{"crop_height", 50};
+  return jit_benchmark(crop_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    px, py, crop_width, crop_height
+  ), buf_src);
+}
+//
+// }}} crop
+//
+
+//
+// {{{ scale
+//
+void generate_scale(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> scale_width{"scale_width", 400};
+  Param<int32_t> scale_height{"scale_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = scale_fn(
+    src.in(), width, height,
+    scale_width, scale_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    scale_width, scale_height
+  }, fn.name());
+}
+
+int jit_scale(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> scale_width{"scale_width", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> scale_height{"scale_height", (int32_t) std::stoi(argv[4])};
+
+  Func fn = scale_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, scale_width.get(), scale_height.get());
+
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_scale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> scale_width{"scale_width", 80};
+  Param<int32_t> scale_height{"scale_height", 50};
+  return jit_benchmark(scale_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  ), buf_src);
+}
+//
+// }}} scale
+//
+
+//
+// {{{ scale_box
+//
+void generate_scale_box(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> scale_width{"scale_width", 400};
+  Param<int32_t> scale_height{"scale_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = scale_box_fn(
+    src.in(), width, height,
+    scale_width, scale_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    scale_width, scale_height
+  }, fn.name());
+}
+
+int jit_scale_box(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> scale_width{"scale_width", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> scale_height{"scale_height", (int32_t) std::stoi(argv[4])};
+
+  Func fn = scale_box_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, scale_width.get(), scale_height.get());
+
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_scale_box(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> scale_width{"scale_width", 80};
+  Param<int32_t> scale_height{"scale_height", 50};
+  return jit_benchmark(scale_box_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  ), buf_src);
+}
+//
+// }}} scale_box
+//
+
+//
+// {{{ scale_linear
+//
+void generate_scale_linear(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> scale_width{"scale_width", 400};
+  Param<int32_t> scale_height{"scale_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = scale_linear_fn(
+    src.in(), width, height,
+    scale_width, scale_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    scale_width, scale_height
+  }, fn.name());
+}
+
+int jit_scale_linear(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> scale_width{"scale_width", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> scale_height{"scale_height", (int32_t) std::stoi(argv[4])};
+
+  Func fn = scale_linear_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, scale_width.get(), scale_height.get());
+
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_scale_linear(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> scale_width{"scale_width", 80};
+  Param<int32_t> scale_height{"scale_height", 50};
+  return jit_benchmark(scale_linear_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  ), buf_src);
+}
+//
+// }}} scale_linear
+//
+
+//
+// {{{ scale_gaussian
+//
+void generate_scale_gaussian(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<int32_t> scale_width{"scale_width", 400};
+  Param<int32_t> scale_height{"scale_height", 300};
+
+  init_input_rgba(src);
+
+  Func fn = scale_gaussian_fn(
+    src.in(), width, height,
+    scale_width, scale_height
+  );
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, {
+    src, width, height,
+    scale_width, scale_height
+  }, fn.name());
+}
+
+int jit_scale_gaussian(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<int32_t> scale_width{"scale_width", (int32_t) std::stoi(argv[3])};
+  Param<int32_t> scale_height{"scale_height", (int32_t) std::stoi(argv[4])};
+
+  Func fn = scale_gaussian_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  );
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, scale_width.get(), scale_height.get());
+
+  printf("save to %s\n", argv[5]);
+  save_image(out, argv[5]);
+  return 0;
+}
+
+int benchmark_scale_gaussian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+  Param<int32_t> scale_width{"scale_width", 80};
+  Param<int32_t> scale_height{"scale_height", 50};
+  return jit_benchmark(scale_gaussian_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    scale_width, scale_height
+  ), buf_src);
+}
+//
+// }}} scale_gaussian
+//
 
 //
 // {{{ blend_normal
@@ -3204,6 +3496,11 @@ void generate(){
   generate_rotate90(features);
   generate_rotate180(features);
   generate_rotate270(features);
+  generate_crop(features);
+  generate_scale(features);
+  generate_scale_box(features);
+  generate_scale_linear(features);
+  generate_scale_gaussian(features);
   generate_blend_normal(features);
   generate_blend_sub(features);
   generate_blend_add(features);
@@ -3264,6 +3561,11 @@ void benchmark(char **argv) {
   benchmark_rotate90(buf_src, width, height);
   benchmark_rotate180(buf_src, width, height);
   benchmark_rotate270(buf_src, width, height);
+  benchmark_crop(buf_src, width, height);
+  benchmark_scale(buf_src, width, height);
+  benchmark_scale_box(buf_src, width, height);
+  benchmark_scale_linear(buf_src, width, height);
+  benchmark_scale_gaussian(buf_src, width, height);
   benchmark_blend_normal(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_blend_sub(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_blend_add(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
@@ -3345,6 +3647,21 @@ int main(int argc, char **argv) {
   if(strcmp(argv[1], "rotate270") == 0) {
     return jit_rotate270(argv);
   } 
+  if(strcmp(argv[1], "crop") == 0) {
+    return jit_crop(argv);
+  }
+  if(strcmp(argv[1], "scale") == 0) {
+    return jit_scale(argv);
+  }
+  if(strcmp(argv[1], "scale_box") == 0) {
+    return jit_scale_box(argv);
+  }
+  if(strcmp(argv[1], "scale_linear") == 0) {
+    return jit_scale_linear(argv);
+  }
+  if(strcmp(argv[1], "scale_gaussian") == 0) {
+    return jit_scale_gaussian(argv);
+  }
   if(strcmp(argv[1], "blend_normal") == 0) {
     return jit_blend_normal(argv);
   }

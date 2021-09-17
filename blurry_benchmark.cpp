@@ -1,6 +1,9 @@
 // +build ignore.
 
-#include "blurry_benchmark.hpp"
+#include <Halide.h>
+#include <halide_benchmark.h>
+
+#include "blurry.hpp"
 
 int jit_benchmark_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());

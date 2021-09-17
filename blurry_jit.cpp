@@ -1,6 +1,9 @@
 // +build ignore.
 
-#include "blurry_jit.hpp"
+
+#include <Halide.h>
+
+#include "blurry.hpp"
 
 typedef struct mt_score_uint32 {
   int x;

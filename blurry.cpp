@@ -1018,15 +1018,15 @@ Func crop_fn(
   crop(x, y, ch) = cast<uint8_t>(value);
 
   crop.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .tile(x, y, xo, yo, xi, yi, 16, 16)
     .fuse(xo, yo, ti)
     .parallel(ch)
     .parallel(ti, 8)
-    .vectorize(xi, 32);
+    .vectorize(xi, 16);
   
   in.compute_at(crop, xi)
     .unroll(y, 8)
-    .vectorize(x, 32);
+    .vectorize(x, 16);
   return crop;
 }
 

@@ -8,7 +8,7 @@
 int jit_benchmark_bounds(Func fn, int32_t width, int32_t height) {
   fn.compile_jit(get_jit_target_from_environment());
 
-  double result = benchmark(10, 10, [&]() {
+  double result = benchmark(100, 10, [&]() {
     fn.realize({width, height, 4});
   });
   printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);

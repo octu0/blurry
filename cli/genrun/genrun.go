@@ -29,7 +29,7 @@ func useBenchmarkOpt() {
 	benchmarkOpt = true
 }
 
-func generate(runtimePath, blurryPath string) (string, error) {
+func generate(runtimePath, blurryPath, target string) (string, error) {
 	realRuntimePath, err := filepath.Abs(runtimePath)
 	if err != nil {
 		return "", err
@@ -39,7 +39,8 @@ func generate(runtimePath, blurryPath string) (string, error) {
 	blurryFileName := filepath.Base(blurryPath)
 	blurryDirName := filepath.Dir(blurryPath)
 	blurryExt := filepath.Ext(blurryFileName)
-	blurryGenName := strings.Replace(blurryFileName, blurryExt, "_gen"+blurryExt, strings.LastIndex(blurryFileName, blurryExt))
+	targetFileSuffix := "_" + target + blurryExt
+	blurryGenName := strings.Replace(blurryFileName, blurryExt, targetFileSuffix, strings.LastIndex(blurryFileName, blurryExt))
 	blurryGenPath := filepath.Join(blurryDirName, blurryGenName)
 
 	mktemp, err := exec.Command("mktemp", "/tmp/outXXXX").Output()
@@ -89,6 +90,14 @@ func generate(runtimePath, blurryPath string) (string, error) {
 		return "", err
 	}
 	return generateOutFilePath, nil
+}
+
+func generateWithBenchmark(runtimePath, blurryPath string) (string, error) {
+	return generate(runtimePath, blurryPath, "benchmark")
+}
+
+func generateWithJIT(runtimePath, blurryPath string) (string, error) {
+	return generate(runtimePath, blurryPath, "jit")
 }
 
 type runArgs []string

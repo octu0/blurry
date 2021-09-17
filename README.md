@@ -88,27 +88,27 @@ Also, the execution speed may be reduced by the overhead of multiple calls.
 ```
 goos: darwin
 goarch: amd64
-pkg: github.com/octu0/blurry
+pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     145	   8279131 ns/op	  640336 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     150	   7901781 ns/op	  640405 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     325	   3742126 ns/op	 1262508 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     331	   3751497 ns/op	 1262480 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     762	   1551078 ns/op	  793695 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     782	   1520597 ns/op	  793694 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     236	   5098631 ns/op	  925933 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     244	   4963000 ns/op	  925937 B/op	  153609 allocs/op
 BenchmarkBlur/libyuv/ARGBBlur
-BenchmarkBlur/libyuv/ARGBBlur-8       	    1783	    668378 ns/op	10182723 B/op	       3 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1861	    635287 ns/op	10182724 B/op	       3 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    5790	    220296 ns/op	     141 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    9319	    134460 ns/op	      88 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    4273	    263072 ns/op	     161 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    2943	    350995 ns/op	     194 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    5108	    235602 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    7401	    179539 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    4250	    284221 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    2733	    383585 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ### Edge
@@ -127,7 +127,7 @@ BenchmarkEdge/blurry/Edge
 BenchmarkEdge/blurry/Edge-8                	    7792	    140375 ns/op	  311488 B/op	       3 allocs/op
 ```
 
-## Rotate
+### Rotate
 
 ![graph](_benchmark/testdata/rotate_bench.png)
 
@@ -138,29 +138,29 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkRotate
 BenchmarkRotate/bild/Rotate/90
-BenchmarkRotate/bild/Rotate/90-8         	     582	   2230286 ns/op	 1237036 B/op	  115685 allocs/op
+BenchmarkRotate/bild/Rotate/90-8         	     634	   1941369 ns/op	 1237045 B/op	  115685 allocs/op
 BenchmarkRotate/bild/Rotate/180
-BenchmarkRotate/bild/Rotate/180-8        	     493	   2484821 ns/op	 1540310 B/op	  153605 allocs/op
+BenchmarkRotate/bild/Rotate/180-8        	     529	   2426364 ns/op	 1540316 B/op	  153605 allocs/op
 BenchmarkRotate/bild/Rotate/270
-BenchmarkRotate/bild/Rotate/270-8        	     526	   2135527 ns/op	 1236930 B/op	  115685 allocs/op
+BenchmarkRotate/bild/Rotate/270-8        	     531	   1927780 ns/op	 1236940 B/op	  115685 allocs/op
 BenchmarkRotate/imaging/90
-BenchmarkRotate/imaging/90-8             	    7626	    136134 ns/op	  314182 B/op	       6 allocs/op
+BenchmarkRotate/imaging/90-8             	    7983	    133069 ns/op	  314181 B/op	       6 allocs/op
 BenchmarkRotate/imaging/180
-BenchmarkRotate/imaging/180-8            	    9528	    127362 ns/op	  313541 B/op	       6 allocs/op
+BenchmarkRotate/imaging/180-8            	    9532	    124640 ns/op	  313543 B/op	       6 allocs/op
 BenchmarkRotate/imaging/270
-BenchmarkRotate/imaging/270-8            	    7866	    174405 ns/op	  314164 B/op	       6 allocs/op
+BenchmarkRotate/imaging/270-8            	    8282	    150670 ns/op	  314163 B/op	       6 allocs/op
 BenchmarkRotate/libyuv/ARGBRotate/90
-BenchmarkRotate/libyuv/ARGBRotate/90-8   	   13598	     83944 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/90-8   	   14402	     77141 ns/op	  311360 B/op	       2 allocs/op
 BenchmarkRotate/libyuv/ARGBRotate/180
-BenchmarkRotate/libyuv/ARGBRotate/180-8  	   33970	     33696 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/180-8  	   34760	     33234 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkRotate/libyuv/ARGBRotate/270
-BenchmarkRotate/libyuv/ARGBRotate/270-8  	   14926	     80698 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkRotate/libyuv/ARGBRotate/270-8  	   15648	     76499 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkRotate/blurry/Rotate/90
-BenchmarkRotate/blurry/Rotate/90-8       	    5629	    224277 ns/op	  311489 B/op	       3 allocs/op
+BenchmarkRotate/blurry/Rotate/90-8       	    8181	    152166 ns/op	  311515 B/op	       3 allocs/op
 BenchmarkRotate/blurry/Rotate/180
-BenchmarkRotate/blurry/Rotate/180-8      	    7006	    178531 ns/op	  311489 B/op	       3 allocs/op
+BenchmarkRotate/blurry/Rotate/180-8      	    7290	    166957 ns/op	  311515 B/op	       3 allocs/op
 BenchmarkRotate/blurry/Rotate/270
-BenchmarkRotate/blurry/Rotate/270-8      	    5060	    244755 ns/op	  311489 B/op	       3 allocs/op
+BenchmarkRotate/blurry/Rotate/270-8      	    5473	    227141 ns/op	  311515 B/op	       3 allocs/op
 ```
 
 ### Sobel

@@ -9,22 +9,22 @@ import (
 )
 
 func BenchmarkScale(b *testing.B) {
-	b.Run("transform.Resize/NearestNeighbor", func(tb *testing.B) {
+	b.Run("bild/Resize/NearestNeighbor", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_ = transform.Resize(testImg, 128, 96, transform.NearestNeighbor)
 		}
 	})
-	b.Run("transform.Resize/Box", func(tb *testing.B) {
+	b.Run("bild/Resize/Box", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_ = transform.Resize(testImg, 128, 96, transform.Box)
 		}
 	})
-	b.Run("transform.Resize/Linear", func(tb *testing.B) {
+	b.Run("bild/Resize/Linear", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_ = transform.Resize(testImg, 128, 96, transform.Linear)
 		}
 	})
-	b.Run("transform.Resize/Gaussian", func(tb *testing.B) {
+	b.Run("bild/Resize/Gaussian", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_ = transform.Resize(testImg, 128, 96, transform.Gaussian)
 		}

@@ -49,17 +49,17 @@ func BenchmarkScale(b *testing.B) {
 			_ = imaging.Resize(testImg, 128, 96, imaging.Gaussian)
 		}
 	})
-	b.Run("libyuv/Scale/None", func(tb *testing.B) {
+	b.Run("libyuv/ARGBScale/None", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_, _ = ARGBScale(testImg, 128, 96, FilterNone)
 		}
 	})
-	b.Run("libyuv/Scale/Box", func(tb *testing.B) {
+	b.Run("libyuv/ARGBScale/Box", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_, _ = ARGBScale(testImg, 128, 96, FilterBox)
 		}
 	})
-	b.Run("libyuv/Scale/Linear", func(tb *testing.B) {
+	b.Run("libyuv/ARGBScale/Linear", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_, _ = ARGBScale(testImg, 128, 96, FilterLinear)
 		}

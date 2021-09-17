@@ -20,7 +20,7 @@ func BenchmarkCrop(b *testing.B) {
 			_ = imaging.Crop(testImg, image.Rect(175, 40, 175+80, 40+50))
 		}
 	})
-	b.Run("libyuv/Crop", func(tb *testing.B) {
+	b.Run("libyuv/ARGBScaleClip", func(tb *testing.B) {
 		for i := 0; i < tb.N; i += 1 {
 			_, _ = ARGBScaleClip(testImg, 175, 40, 80, 50)
 		}

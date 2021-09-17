@@ -772,6 +772,9 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   //
   // RGBA interleave test
@@ -780,20 +783,30 @@ Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   cloneimg(x, y, ch) = in(x, y, ch);
 
   cloneimg.compute_at(in, x)
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
   return cloneimg;
 }
 
 Func convert_from(Func in, Param<int32_t> width, Param<int32_t> height, const char *name) {
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   Func convert = Func(name);
   convert(x, y, ch) = in(x, y, ch);
 
-  convert.compute_at(in, x)
-    .unroll(y, 8)
-    .vectorize(x, 16);
+  convert.compute_at(in, xi)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 16)
+    .vectorize(xi, 32);
+
+  in.compute_at(convert, xi)
+    .parallel(ch)
+    .vectorize(x, 32);
   return convert;
 }
 
@@ -935,7 +948,7 @@ Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   rotate(x, y, ch) = in(x, y, ch);
 
   rotate.compute_at(in, x)
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
   return rotate;
 }
@@ -949,7 +962,7 @@ Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   rotate(x, y, ch) = in(y, (height - 1) - x, ch);
 
   rotate.compute_at(in, y)
-    .unroll(x, 8)
+    .parallel(ch)
     .vectorize(y, 16);
   return rotate;
 }
@@ -963,7 +976,7 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   rotate(x, y, ch) = in((width - 1) - x, (height - 1) - y, ch);
 
   rotate.compute_at(in, x)
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
   return rotate;
 }
@@ -977,7 +990,7 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   rotate(x, y, ch) = in((width - 1) - y, x, ch);
 
   rotate.compute_at(in, y)
-    .unroll(x, 8)
+    .parallel(ch)
     .vectorize(y, 16);
   return rotate;
 }
@@ -998,10 +1011,11 @@ Func crop_fn(
   Expr max_y = py + crop_height;
 
   Func crop = Func("crop");
-  crop(x, y, ch) = select(
+  Expr value = select(
     ch < 3 && ((px + x) <= max_x && (py + y) <= max_y), in(px + x, y + py, ch),
     likely(ui8_255)
   );
+  crop(x, y, ch) = cast<uint8_t>(value);
 
   crop.compute_root()
     .tile(x, y, xo, yo, xi, yi, 16, 16)
@@ -1073,7 +1087,7 @@ Func scale_fn(
   );
   f(x, y, ch) = cast<uint8_t>(value);
 
-  f.compute_root()
+  f.compute_at(scale, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1162,7 +1176,7 @@ Func scale_by_kernel(
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
   return f;
 }
@@ -1226,7 +1240,7 @@ Func blend(
 
   Func f = Func(name);
   Expr value = select(
-    ch == 3, 255,
+    ch == 3, likely(ui8_255),
     px_min <= x && x <= px_max && py_min <= y && y <= py_max, blended(x, y, ch),
     source(x, y, ch)
   );
@@ -1373,14 +1387,16 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<i
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(value);
 
-  erosion.compute_at(in, x)
+  erosion.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
     .parallel(ti, 4)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .parallel(ch)
+    .vectorize(x, 16);
   return erosion;
 }
 
@@ -1398,14 +1414,16 @@ Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   Expr value = in(x + rd.x, y + rd.y, ch);
   dilation(x, y, ch) = maximum(value);
 
-  dilation.compute_root()
+  dilation.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
     .parallel(ti, 4)
     .vectorize(xi, 32);
 
-  in.compute_root();
+  in.compute_root()
+    .parallel(ch)
+    .vectorize(x, 16);
   return dilation;
 }
 
@@ -1489,15 +1507,15 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     likely(ui8_255)
   );
 
-  grayscale.compute_at(in, xi)
+  grayscale.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
 
   return grayscale;

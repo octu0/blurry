@@ -8,7 +8,7 @@ import (
 
 func convertToYUVAction(c *cli.Context) error {
 	runtimePath := c.String("runtime")
-	generateOutFilePath, err := generate(runtimePath, c.String("file"))
+	generateOutFilePath, err := generateWithJIT(runtimePath, c.String("file"))
 	if err != nil {
 		return err
 	}

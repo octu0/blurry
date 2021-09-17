@@ -2,7 +2,6 @@
 
 #include <Halide.h>
 #include <halide_image_io.h>
-#include <halide_benchmark.h>
 
 using namespace Halide;
 using namespace Halide::Tools;
@@ -216,4 +215,5 @@ Func prepared_match_template_zncc_fn(
   Func buf_tpl_val, Func buf_tpl_stddev,
   Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );
+
 #endif // BLURRY_H_

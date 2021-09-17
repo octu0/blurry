@@ -19,10 +19,7 @@ var blendImgData []byte
 
 var (
 	testImg     *image.RGBA
-	testImgRGBA *image.RGBA
 	testImgARGB *image.RGBA
-	testImgABGR *image.RGBA
-	testImgBGRA *image.RGBA
 )
 
 var (
@@ -53,24 +50,6 @@ func init() {
 		panic(err.Error())
 	} else {
 		blendImgARGB = argb
-	}
-
-	if rgba, err := ARGBToRGBA(testImgARGB); err != nil {
-		panic(err.Error())
-	} else {
-		testImgRGBA = rgba
-	}
-
-	if abgr, err := ARGBToABGR(testImgARGB); err != nil {
-		panic(err.Error())
-	} else {
-		testImgABGR = abgr
-	}
-
-	if bgra, err := ARGBToBGRA(testImgARGB); err != nil {
-		panic(err.Error())
-	} else {
-		testImgBGRA = bgra
 	}
 }
 
@@ -176,4 +155,36 @@ func saveYUVData(img *image.YCbCr, prefix string) ([]string, error) {
 		return []string{}, err
 	}
 	return []string{outY.Name(), outU.Name(), outV.Name()}, nil
+}
+
+func RGBAToYCbCrImage420(src *image.RGBA) (*image.YCbCr, error) {
+	ycbcr := image.NewYCbCr(src.Bounds(), image.YCbCrSubsampleRatio420)
+	if err := RGBAToYCbCrImage(ycbcr, src); err != nil {
+		return nil, err
+	}
+	return ycbcr, nil
+}
+
+func RGBAToYCbCrImage444(src *image.RGBA) (*image.YCbCr, error) {
+	ycbcr := image.NewYCbCr(src.Bounds(), image.YCbCrSubsampleRatio444)
+	if err := RGBAToYCbCrImage(ycbcr, src); err != nil {
+		return nil, err
+	}
+	return ycbcr, nil
+}
+
+func RGBAToYCbCrImage(dst *image.YCbCr, src *image.RGBA) error {
+	rect := src.Bounds()
+	width, height := rect.Dx(), rect.Dy()
+
+	for w := 0; w < width; w += 1 {
+		for h := 0; h < height; h += 1 {
+			c := src.RGBAAt(w, h)
+			y, u, v := color.RGBToYCbCr(c.R, c.G, c.B)
+			dst.Y[dst.YOffset(w, h)] = y
+			dst.Cb[dst.COffset(w, h)] = u
+			dst.Cr[dst.COffset(w, h)] = v
+		}
+	}
+	return nil
 }

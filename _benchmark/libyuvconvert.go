@@ -11,7 +11,6 @@ import "C"
 import (
 	"fmt"
 	"image"
-	"image/color"
 )
 
 type convertCFuncRGBA func(
@@ -260,19 +259,116 @@ func BGRAToI420(src *image.RGBA) (*image.YCbCr, error) {
 	}, "BGRAToI420")
 }
 
-func RGBAToYCbCrImage(src *image.RGBA) (*image.YCbCr, error) {
+//int ARGBToI444(const uint8_t* src_argb,
+//               int src_stride_argb,
+//               uint8_t* dst_y,
+//               int dst_stride_y,
+//               uint8_t* dst_u,
+//               int dst_stride_u,
+//               uint8_t* dst_v,
+//               int dst_stride_v,
+//               int width,
+//               int height);
+func ARGBToI444(src *image.RGBA) (*image.YCbCr, error) {
+	sample := image.YCbCrSubsampleRatio420
 	rect := src.Bounds()
 	width, height := rect.Dx(), rect.Dy()
 
-	ycbcr := image.NewYCbCr(rect, image.YCbCrSubsampleRatio420)
-	for w := 0; w < width; w += 1 {
-		for h := 0; h < height; h += 1 {
-			c := src.RGBAAt(w, h)
-			y, u, v := color.RGBToYCbCr(c.R, c.G, c.B)
-			ycbcr.Y[ycbcr.YOffset(w, h)] = y
-			ycbcr.Cb[ycbcr.COffset(w, h)] = u
-			ycbcr.Cr[ycbcr.COffset(w, h)] = v
-		}
+	yStride := width
+	uvStride := width
+
+	ySize := width * height
+	uvSize := width * height
+
+	dst := &image.YCbCr{
+		Y:              make([]byte, ySize),
+		Cb:             make([]byte, uvSize),
+		Cr:             make([]byte, uvSize),
+		YStride:        yStride,
+		CStride:        uvStride,
+		Rect:           rect,
+		SubsampleRatio: sample,
 	}
-	return ycbcr, nil
+	ret := C.ARGBToI444(
+		(*C.uchar)(&src.Pix[0]),
+		C.int(width*4),
+		(*C.uchar)(&dst.Y[0]),
+		C.int(dst.YStride),
+		(*C.uchar)(&dst.Cb[0]),
+		C.int(dst.CStride),
+		(*C.uchar)(&dst.Cr[0]),
+		C.int(dst.CStride),
+		C.int(width),
+		C.int(height),
+	)
+	if ret != 0 {
+		return nil, fmt.Errorf("failed to call %s(%d)", "ARGBToI444", ret)
+	}
+	return dst, nil
+}
+
+//int I420ToARGB(const uint8_t* src_y,
+//               int src_stride_y,
+//               const uint8_t* src_u,
+//               int src_stride_u,
+//               const uint8_t* src_v,
+//               int src_stride_v,
+//               uint8_t* dst_argb,
+//               int dst_stride_argb,
+//               int width,
+//               int height);
+func I420ToARGB(src *image.YCbCr) (*image.RGBA, error) {
+	b := src.Bounds()
+	width, height := b.Dx(), b.Dy()
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	ret := C.I420ToARGB(
+		(*C.uchar)(&src.Y[0]),
+		C.int(src.YStride),
+		(*C.uchar)(&src.Cb[0]),
+		C.int(src.CStride),
+		(*C.uchar)(&src.Cr[0]),
+		C.int(src.CStride),
+		(*C.uchar)(&dst.Pix[0]),
+		C.int(dst.Stride),
+		C.int(width),
+		C.int(height),
+	)
+	if ret != 0 {
+		return nil, fmt.Errorf("failed to call %s(%d)", "I420ToARGB", ret)
+	}
+	return dst, nil
+}
+
+//int I444ToARGB(const uint8_t* src_y,
+//               int src_stride_y,
+//               const uint8_t* src_u,
+//               int src_stride_u,
+//               const uint8_t* src_v,
+//               int src_stride_v,
+//               uint8_t* dst_argb,
+//               int dst_stride_argb,
+//               int width,
+//               int height);
+func I444ToARGB(src *image.YCbCr) (*image.RGBA, error) {
+	b := src.Bounds()
+	width, height := b.Dx(), b.Dy()
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	ret := C.I444ToARGB(
+		(*C.uchar)(&src.Y[0]),
+		C.int(src.YStride),
+		(*C.uchar)(&src.Cb[0]),
+		C.int(src.CStride),
+		(*C.uchar)(&src.Cr[0]),
+		C.int(src.CStride),
+		(*C.uchar)(&dst.Pix[0]),
+		C.int(dst.Stride),
+		C.int(width),
+		C.int(height),
+	)
+	if ret != 0 {
+		return nil, fmt.Errorf("failed to call %s(%d)", "I420ToARGB", ret)
+	}
+	return dst, nil
 }

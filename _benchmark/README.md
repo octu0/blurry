@@ -17,23 +17,23 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     150	   7901781 ns/op	  640405 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     154	   7812824 ns/op	  640402 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     331	   3751497 ns/op	 1262480 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     333	   3486751 ns/op	 1262485 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     782	   1520597 ns/op	  793694 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     786	   1520193 ns/op	  793698 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     244	   4963000 ns/op	  925937 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     231	   5147219 ns/op	  925937 B/op	  153609 allocs/op
 BenchmarkBlur/libyuv/ARGBBlur
-BenchmarkBlur/libyuv/ARGBBlur-8       	    1861	    635287 ns/op	10182724 B/op	       3 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1861	    642486 ns/op	10182722 B/op	       3 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    9319	    134460 ns/op	      88 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    7257	    178086 ns/op	      88 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    2943	    350995 ns/op	     194 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    5367	    222615 ns/op	     146 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    7401	    179539 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    6093	    201573 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    2733	    383585 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    4629	    257483 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ## Blend
@@ -79,13 +79,13 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkContrast
 BenchmarkContrast/bild/Contrast
-BenchmarkContrast/bild/Contrast-8         	    5983	    192479 ns/op	  311706 B/op	       6 allocs/op
+BenchmarkContrast/bild/Contrast-8         	    6556	    184407 ns/op	  311709 B/op	       6 allocs/op
 BenchmarkContrast/imaging/Contrast
-BenchmarkContrast/imaging/Contrast-8      	    8102	    150315 ns/op	  313796 B/op	       7 allocs/op
+BenchmarkContrast/imaging/Contrast-8      	    8320	    148759 ns/op	  313794 B/op	       7 allocs/op
 BenchmarkContrast/blurry/Contrast
-BenchmarkContrast/blurry/Contrast-8       	    8150	    148220 ns/op	     126 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast-8       	   12572	     97210 ns/op	     112 B/op	       2 allocs/op
 BenchmarkContrast/blurry/Contrast/D
-BenchmarkContrast/blurry/Contrast/D-8     	    6895	    169469 ns/op	  311360 B/op	       2 allocs/op
+BenchmarkContrast/blurry/Contrast/D-8     	    8854	    114270 ns/op	  311360 B/op	       2 allocs/op
 ```
 
 ## Convert
@@ -161,9 +161,9 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkEdge
 BenchmarkEdge/bild/EdgeDetection
-BenchmarkEdge/bild/EdgeDetection-8         	     618	   2018322 ns/op	  631294 B/op	      10 allocs/op
+BenchmarkEdge/bild/EdgeDetection-8         	     643	   1858350 ns/op	  631257 B/op	      10 allocs/op
 BenchmarkEdge/blurry/Edge
-BenchmarkEdge/blurry/Edge-8                	    7792	    140375 ns/op	  311488 B/op	       3 allocs/op
+BenchmarkEdge/blurry/Edge-8                	   10000	    100695 ns/op	  311513 B/op	       3 allocs/op
 ```
 
 ## Emboss
@@ -177,11 +177,11 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkEmboss
 BenchmarkEmboss/bild/Emboss
-BenchmarkEmboss/bild/Emboss-8         	     612	   1942848 ns/op	  631282 B/op	      10 allocs/op
+BenchmarkEmboss/bild/Emboss-8         	     668	   1837078 ns/op	  631306 B/op	      10 allocs/op
 BenchmarkEmboss/imaging/Convolve3x3
-BenchmarkEmboss/imaging/Convolve3x3-8 	    1234	    978724 ns/op	  627413 B/op	      16 allocs/op
+BenchmarkEmboss/imaging/Convolve3x3-8 	    1218	    941631 ns/op	  627423 B/op	      16 allocs/op
 BenchmarkEmboss/blurry/Emboss
-BenchmarkEmboss/blurry/Emboss-8       	    4455	    252560 ns/op	      88 B/op	       2 allocs/op
+BenchmarkEmboss/blurry/Emboss-8       	   10000	    117855 ns/op	     119 B/op	       2 allocs/op
 ```
 
 ## Gamma
@@ -195,11 +195,11 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkGamma
 BenchmarkGamma/bild/Gamma
-BenchmarkGamma/bild/Gamma-8         	    5610	    211753 ns/op	  311710 B/op	       6 allocs/op
+BenchmarkGamma/bild/Gamma-8         	    6093	    199606 ns/op	  311708 B/op	       6 allocs/op
 BenchmarkGamma/imaging/Gamma
-BenchmarkGamma/imaging/Gamma-8      	    7389	    167046 ns/op	  313794 B/op	       7 allocs/op
+BenchmarkGamma/imaging/Gamma-8      	    7360	    162977 ns/op	  313796 B/op	       7 allocs/op
 BenchmarkGamma/blurry/Gamma
-BenchmarkGamma/blurry/Gamma-8       	    5488	    220096 ns/op	  311487 B/op	       3 allocs/op
+BenchmarkGamma/blurry/Gamma-8       	    6897	    202331 ns/op	  311513 B/op	       3 allocs/op
 ```
 
 ## Grayscale
@@ -313,9 +313,9 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     210	   5645878 ns/op	 2196751 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     208	   5707148 ns/op	 2196784 B/op	      32 allocs/op
 BenchmarkSobel/libyuv/ARGBSobel
-BenchmarkSobel/libyuv/ARGBSobel-8   	   16543	     72586 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkSobel/libyuv/ARGBSobel-8   	   16557	     72320 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    6816	    177510 ns/op	  311514 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    9255	    140586 ns/op	  311515 B/op	       3 allocs/op
 ```

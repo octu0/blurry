@@ -19,56 +19,56 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.00751ms
-BenchmarkJIT/convert_from_argb             : 0.02332ms
-BenchmarkJIT/convert_from_abgr             : 0.03640ms
-BenchmarkJIT/convert_from_bgra             : 0.02374ms
-BenchmarkJIT/convert_from_rabg             : 0.03224ms
-BenchmarkJIT/convert_from_yuv_420          : 0.02847ms
-BenchmarkJIT/convert_from_yuv_444          : 0.02522ms
-BenchmarkJIT/convert_to_yuv_444            : 0.15433ms
-BenchmarkJIT/rotate0                       : 0.00722ms
-BenchmarkJIT/rotate90                      : 0.02570ms
-BenchmarkJIT/rotate180                     : 0.00788ms
-BenchmarkJIT/rotate270                     : 0.02468ms
-BenchmarkJIT/crop                          : 0.05639ms
-BenchmarkJIT/scale                         : 0.04700ms
-BenchmarkJIT/scale_box                     : 0.07280ms
-BenchmarkJIT/scale_linear                  : 0.07283ms
-BenchmarkJIT/scale_gaussian                : 0.09728ms
-BenchmarkJIT/blend_normal                  : 0.07533ms
-BenchmarkJIT/blend_sub                     : 0.07517ms
-BenchmarkJIT/blend_add                     : 0.07514ms
-BenchmarkJIT/blend_diff                    : 0.07619ms
-BenchmarkJIT/grayscale                     : 0.03613ms
-BenchmarkJIT/invert                        : 0.03790ms
-BenchmarkJIT/brightness                    : 0.05097ms
-BenchmarkJIT/gammacorrection               : 0.08885ms
-BenchmarkJIT/contrast                      : 0.05708ms
-BenchmarkJIT/boxblur                       : 0.09986ms
-BenchmarkJIT/gaussianblur                  : 0.19152ms
-BenchmarkJIT/blockmozaic                   : 0.26015ms
-BenchmarkJIT/erosion                       : 0.11658ms
-BenchmarkJIT/dilation                      : 0.11661ms
-BenchmarkJIT/morphology_open               : 0.14715ms
-BenchmarkJIT/morphology_close              : 0.14756ms
-BenchmarkJIT/morphology_gradient           : 0.11740ms
-BenchmarkJIT/emboss$1                      : 0.13713ms
-BenchmarkJIT/laplacian$1                   : 0.08318ms
-BenchmarkJIT/highpass                      : 0.09241ms
-BenchmarkJIT/gradient                      : 0.08698ms
-BenchmarkJIT/edgedetect                    : 0.07420ms
-BenchmarkJIT/sobel                         : 0.09116ms
-BenchmarkJIT/canny                         : 0.44941ms
-BenchmarkJIT/canny_dilate                  : 0.46907ms
-BenchmarkJIT/canny_morphology_open         : 0.51312ms
-BenchmarkJIT/canny_morphology_close        : 0.51674ms
-BenchmarkJIT/match_template_sad            : 5.64521ms
-BenchmarkJIT/match_template_ssd            : 4.79710ms
-BenchmarkJIT/match_template_ncc            : 8.34123ms
-BenchmarkJIT/prepared_match_template_ncc   : 6.14829ms
-BenchmarkJIT/match_template_zncc           : 12.70546ms
-BenchmarkJIT/prepared_match_template_zncc  : 11.11403ms
+BenchmarkJIT/cloneimg                      : 0.00789ms
+BenchmarkJIT/convert_from_argb             : 0.02330ms
+BenchmarkJIT/convert_from_abgr             : 0.03586ms
+BenchmarkJIT/convert_from_bgra             : 0.02291ms
+BenchmarkJIT/convert_from_rabg             : 0.03170ms
+BenchmarkJIT/convert_from_yuv_420          : 0.02831ms
+BenchmarkJIT/convert_from_yuv_444          : 0.02550ms
+BenchmarkJIT/convert_to_yuv_444            : 0.15431ms
+BenchmarkJIT/rotate0                       : 0.00734ms
+BenchmarkJIT/rotate90                      : 0.02490ms
+BenchmarkJIT/rotate180                     : 0.00760ms
+BenchmarkJIT/rotate270                     : 0.02527ms
+BenchmarkJIT/crop                          : 0.05602ms
+BenchmarkJIT/scale                         : 0.04713ms
+BenchmarkJIT/scale_box                     : 0.07675ms
+BenchmarkJIT/scale_linear                  : 0.07369ms
+BenchmarkJIT/scale_gaussian                : 0.10329ms
+BenchmarkJIT/blend_normal                  : 0.07470ms
+BenchmarkJIT/blend_sub                     : 0.07444ms
+BenchmarkJIT/blend_add                     : 0.07475ms
+BenchmarkJIT/blend_diff                    : 0.07626ms
+BenchmarkJIT/grayscale                     : 0.03584ms
+BenchmarkJIT/invert                        : 0.03849ms
+BenchmarkJIT/brightness                    : 0.05237ms
+BenchmarkJIT/gammacorrection               : 0.07924ms
+BenchmarkJIT/contrast                      : 0.01450ms
+BenchmarkJIT/boxblur                       : 0.10815ms
+BenchmarkJIT/gaussianblur                  : 0.15950ms
+BenchmarkJIT/blockmozaic                   : 0.25977ms
+BenchmarkJIT/erosion                       : 0.11932ms
+BenchmarkJIT/dilation                      : 0.11329ms
+BenchmarkJIT/morphology_open               : 0.14737ms
+BenchmarkJIT/morphology_close              : 0.14699ms
+BenchmarkJIT/morphology_gradient           : 0.11624ms
+BenchmarkJIT/emboss$1                      : 0.04308ms
+BenchmarkJIT/laplacian                     : 0.03242ms
+BenchmarkJIT/highpass                      : 0.03915ms
+BenchmarkJIT/gradient                      : 0.03400ms
+BenchmarkJIT/edgedetect                    : 0.02577ms
+BenchmarkJIT/sobel                         : 0.06255ms
+BenchmarkJIT/canny                         : 0.27951ms
+BenchmarkJIT/canny_dilate                  : 0.33996ms
+BenchmarkJIT/canny_morphology_open         : 0.40266ms
+BenchmarkJIT/canny_morphology_close        : 0.40321ms
+BenchmarkJIT/match_template_sad            : 5.46089ms
+BenchmarkJIT/match_template_ssd            : 4.37320ms
+BenchmarkJIT/match_template_ncc            : 8.22482ms
+BenchmarkJIT/prepared_match_template_ncc   : 6.02995ms
+BenchmarkJIT/match_template_zncc           : 11.85622ms
+BenchmarkJIT/prepared_match_template_zncc  : 11.02131ms
 ```
 
 ## AOT benchmarks
@@ -92,23 +92,23 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkBlur
 BenchmarkBlur/bild/blur/Box
-BenchmarkBlur/bild/blur/Box-8         	     150	   7901781 ns/op	  640405 B/op	      11 allocs/op
+BenchmarkBlur/bild/blur/Box-8         	     154	   7812824 ns/op	  640402 B/op	      11 allocs/op
 BenchmarkBlur/bild/blur/Gaussian
-BenchmarkBlur/bild/blur/Gaussian-8    	     331	   3751497 ns/op	 1262480 B/op	      21 allocs/op
+BenchmarkBlur/bild/blur/Gaussian-8    	     333	   3486751 ns/op	 1262485 B/op	      21 allocs/op
 BenchmarkBlur/imaging/Blur
-BenchmarkBlur/imaging/Blur-8          	     782	   1520597 ns/op	  793694 B/op	      45 allocs/op
+BenchmarkBlur/imaging/Blur-8          	     786	   1520193 ns/op	  793698 B/op	      45 allocs/op
 BenchmarkBlur/stackblur-go
-BenchmarkBlur/stackblur-go-8          	     244	   4963000 ns/op	  925937 B/op	  153609 allocs/op
+BenchmarkBlur/stackblur-go-8          	     231	   5147219 ns/op	  925937 B/op	  153609 allocs/op
 BenchmarkBlur/libyuv/ARGBBlur
-BenchmarkBlur/libyuv/ARGBBlur-8       	    1861	    635287 ns/op	10182724 B/op	       3 allocs/op
+BenchmarkBlur/libyuv/ARGBBlur-8       	    1861	    642486 ns/op	10182722 B/op	       3 allocs/op
 BenchmarkBlur/blurry/Boxblur
-BenchmarkBlur/blurry/Boxblur-8        	    9319	    134460 ns/op	      88 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur-8        	    7257	    178086 ns/op	      88 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur
-BenchmarkBlur/blurry/Gaussianblur-8   	    2943	    350995 ns/op	     194 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur-8   	    5367	    222615 ns/op	     146 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Boxblur/D
-BenchmarkBlur/blurry/Boxblur/D-8      	    7401	    179539 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Boxblur/D-8      	    6093	    201573 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkBlur/blurry/Gaussianblur/D
-BenchmarkBlur/blurry/Gaussianblur/D-8 	    2733	    383585 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkBlur/blurry/Gaussianblur/D-8 	    4629	    257483 ns/op	  311361 B/op	       2 allocs/op
 ```
 
 ### Edge
@@ -122,9 +122,9 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkEdge
 BenchmarkEdge/bild/EdgeDetection
-BenchmarkEdge/bild/EdgeDetection-8         	     618	   2018322 ns/op	  631294 B/op	      10 allocs/op
+BenchmarkEdge/bild/EdgeDetection-8         	     643	   1858350 ns/op	  631257 B/op	      10 allocs/op
 BenchmarkEdge/blurry/Edge
-BenchmarkEdge/blurry/Edge-8                	    7792	    140375 ns/op	  311488 B/op	       3 allocs/op
+BenchmarkEdge/blurry/Edge-8                	   10000	    100695 ns/op	  311513 B/op	       3 allocs/op
 ```
 
 ### Rotate
@@ -174,11 +174,11 @@ pkg: github.com/octu0/blurry/benchmark
 cpu: Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 BenchmarkSobel
 BenchmarkSobel/bild/Sobel
-BenchmarkSobel/bild/Sobel-8         	     210	   5645878 ns/op	 2196751 B/op	      32 allocs/op
+BenchmarkSobel/bild/Sobel-8         	     208	   5707148 ns/op	 2196784 B/op	      32 allocs/op
 BenchmarkSobel/libyuv/ARGBSobel
-BenchmarkSobel/libyuv/ARGBSobel-8   	   16543	     72586 ns/op	  311361 B/op	       2 allocs/op
+BenchmarkSobel/libyuv/ARGBSobel-8   	   16557	     72320 ns/op	  311361 B/op	       2 allocs/op
 BenchmarkSobel/blurry/Sobel
-BenchmarkSobel/blurry/Sobel-8       	    6816	    177510 ns/op	  311514 B/op	       3 allocs/op
+BenchmarkSobel/blurry/Sobel-8       	    9255	    140586 ns/op	  311515 B/op	       3 allocs/op
 ```
 
 ### Other Benchmarks

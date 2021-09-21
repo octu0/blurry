@@ -613,7 +613,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.18.2
+   1.18.3
 
 COMMANDS:
      blend

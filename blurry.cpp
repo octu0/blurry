@@ -38,7 +38,6 @@ Func kernel_sobel3x3_x() {
   kernel_x(-1,  0) = -2; kernel_x(0,  0) = 0; kernel_x(1,  0) = 2;
   kernel_x(-1,  1) = -1; kernel_x(0,  1) = 0; kernel_x(1,  1) = 1;
 
-  kernel_x.compute_root();
   return kernel_x;
 }
 
@@ -51,7 +50,6 @@ Func kernel_sobel3x3_y() {
   kernel_y(-1,  0) =  0; kernel_y(0,  0) =  0; kernel_y(1,  0) =  0;
   kernel_y(-1,  1) =  1; kernel_y(0,  1) =  2; kernel_y(1,  1) =  1;
 
-  kernel_y.compute_root();
   return kernel_y;
 }
 
@@ -64,7 +62,6 @@ Func kernel_emboss3x3() {
   kernel(-1,  0) = -1; kernel(0,  0) =  0; kernel(1,  0) = 1;
   kernel(-1,  1) =  0; kernel(0,  1) =  1; kernel(1,  1) = 1;
 
-  kernel.compute_root();
   return kernel;
 }
 
@@ -77,7 +74,6 @@ Func kernel_laplacian3x3() {
   kernel(-1,  0) = 1; kernel(0,  0) = -4; kernel(1,  0) = 1;
   kernel(-1,  1) = 0; kernel(0,  1) =  1; kernel(1,  1) = 0;
 
-  kernel.compute_root();
   return kernel;
 }
 
@@ -90,7 +86,6 @@ Func kernel_highpass3x3() {
   kernel(-1,  0) = -1; kernel(0,  0) =  8; kernel(1,  0) = -1;
   kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
 
-  kernel.compute_root();
   return kernel;
 }
 
@@ -103,7 +98,6 @@ Func kernel_gradient3x3() {
   kernel(-1,  0) =  0; kernel(0,  0) =  0; kernel(1,  0) =  0;
   kernel(-1,  1) = -1; kernel(0,  1) = -1; kernel(1,  1) = -1;
 
-  kernel.compute_root();
   return kernel;
 }
 
@@ -539,12 +533,12 @@ Func filter2d_gray(
   RDom rd_kernel,
   const char *name
 ) {
-  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, bounds), "in");
 
   Func conv = convolve_xy(in, kernel, rd_kernel);
 
@@ -554,18 +548,16 @@ Func filter2d_gray(
     likely(ui8_255)
   );
 
-  conv.compute_root()
-    .vectorize(x, 32);
+  conv.compute_at(gradient, yi)
+    .vectorize(x);
 
-  gradient.compute_at(in, xi)
+  gradient.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ch)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
-  in.compute_root()
-    .unroll(y, 4)
-    .vectorize(x, 16);
   return gradient;
 }
 
@@ -578,7 +570,6 @@ Func gauss_kernel(Expr sigma) {
   Func kernel = Func("kernel");
   kernel(x) = fast_exp(-((x * x)) / sig2 / sigR);
 
-  kernel.compute_root();
   return kernel;
 }
 
@@ -665,13 +656,8 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   Expr val = in_val * kernel(rd);
   gaussian(x, y) += cast<uint8_t>(val / center_val);
 
-  gaussian.compute_root()
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
-  sum_kernel.compute_root();
+  sum_kernel.compute_at(gaussian, y)
+    .vectorize(x);
   return gaussian;
 }
 
@@ -743,18 +729,20 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
   );
   hy(x, y) = th_val;
 
-  gy.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
-  gx.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 16);
+  gauss.compute_at(hy, ti)
+    .vectorize(y)
+    .vectorize(x);
+  gy.compute_at(hy, ti)
+    .vectorize(x);
+  gx.compute_at(hy, ti)
+    .vectorize(x);
 
-  nms.compute_root()
-    .parallel(y, 8)
-    .vectorize(x, 8);
+  nms.compute_at(hy, ti)
+    .vectorize(x);
 
-  sobel.compute_root();
+  sobel.compute_at(hy, ti)
+    .unroll(y, 8)
+    .vectorize(x);
 
   hy.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -762,19 +750,13 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
     .parallel(ti)
     .vectorize(xi, 32);
 
-  gauss.compute_root();
-
   return hy;
 }
 
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
 
   //
   // RGBA interleave test
@@ -1609,22 +1591,18 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
 
   return gammacorrection;
 }
 
 Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
+  Var x("x"), y("y"), ch("ch");
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr e = max(min(1.0f, factor), 0.0f);
-
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
 
   Func contrast = Func("contrast");
   Expr value = in(x, y, ch);
@@ -1635,30 +1613,22 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
 
   contrast(x, y, ch) = cast<uint8_t>(value);
 
-  contrast.compute_at(in, xi)
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
+  contrast.compute_at(in, x)
     .parallel(ch)
-    .parallel(ti, 8)
-    .vectorize(xi, 32);
-
-  in.compute_root()
-    .unroll(y, 8)
     .vectorize(x, 16);
-
   return contrast;
 }
 
 Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Expr box_size = max(size, 1);
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Expr box_size = max(size, 1);
 
   RDom rd_x = RDom(0, box_size, "rdom_x");
   Func blur_x = Func("blur_x");
@@ -1672,10 +1642,10 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
 
   blur_x.compute_root()
-    .parallel(y, 8)
+    .parallel(ch)
     .vectorize(x, 32);
   blur_y.compute_at(boxblur, yi)
-    .parallel(y, 8)
+    .parallel(ch)
     .vectorize(x, 32);
 
   boxblur.compute_at(in, ti)
@@ -1686,12 +1656,18 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
     .vectorize(xi, 32);
 
   in.compute_at(blur_x, y)
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 32);
   return boxblur;
 }
 
 Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
+  Var x("x"), y("y"), ch("ch");
+  Var s("s");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -1704,19 +1680,14 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
   Expr half = fast_integer_divide(radius, 2);
 
-  Var x("x"), y("y"), ch("ch");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
-
   RDom rd_rad = RDom(half, size, "rd_radius");
 
   Func kernel = Func("kernel");
-  kernel(x) = fast_exp(-(x * x) / sig2 / sigR);
+  kernel(s) = fast_exp(-(s * s) / sig2 / sigR);
 
   Func sum_kernel = Func("sum_kernel");
   Expr kernel_val = kernel(rd_rad);
-  sum_kernel(x) = sum(kernel_val);
+  sum_kernel(s) = sum(kernel_val);
 
   Func gaussianblur = Func("gaussianblur");
   Expr center_val = sum_kernel(center);
@@ -1725,30 +1696,33 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
-    .unroll(x, 4);
+    .vectorize(s, 8);
 
   sum_kernel.compute_at(gaussianblur, ti)
-    .unroll(x, 8);
+    .vectorize(s, 32);
 
   gaussianblur.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 16)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
 
   return gaussianblur;
 }
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func gy = Func("gy");
   gy(x, y) = (in(x, y + 1) - in(x, y - 1)) / 2;
@@ -1765,28 +1739,29 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     likely(ui8_255)
   );
 
-  gy.compute_at(edge, x)
-    .parallel(y)
-    .vectorize(x, 8);
-  gx.compute_at(edge, x)
-    .parallel(x)
-    .vectorize(y, 8);
+  gy.compute_at(edge, yi)
+    .vectorize(y);
+  gx.compute_at(edge, xi)
+    .vectorize(x);
 
-  edge.compute_root()
+  edge.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(y, 8);
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
 
-  in.compute_root()
-    .unroll(y, 8)
-    .vectorize(x, 16);
   return edge;
 }
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func gy = Func("grad_y");
   Expr gy_in = in(x + rd_kernel.x, y + rd_kernel.y);
@@ -1807,17 +1782,19 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     likely(ui8_255)
   );
 
-  gy.compute_at(sobel, x)
-    .parallel(y, 16)
-    .vectorize(x, 3);
-  gx.compute_at(sobel, x)
-    .parallel(y, 16)
-    .vectorize(x, 3);
+  gy.compute_at(sobel, yi)
+    .parallel(y)
+    .vectorize(x);
+  gx.compute_at(sobel, yi)
+    .parallel(y)
+    .vectorize(x);
 
-  sobel.compute_root()
+  sobel.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(y, 8);
-
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
   return sobel;
 }
 
@@ -1825,26 +1802,25 @@ Func canny_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> threshold_max, Param<int32_t> threshold_min
 ) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
-  Var x("x"), y("y"), ch("ch");
-
   Func hy = canny(in, threshold_max, threshold_min);
 
-  Func canny = Func("canny");
+  Func f = Func("canny");
   Expr hysteresis = hy(x, y);
 
-  canny(x, y, ch) = select(
+  f(x, y, ch) = select(
     ch < 3, cast<uint8_t>(hysteresis),
     likely(ui8_255)
   );
 
-  canny.compute_root()
-    .parallel(y, 16)
+  f.compute_at(hy, y)
+    .parallel(ch)
     .vectorize(x, 32);
-
-  return canny;
+  return f;
 }
 
 Func canny_dilate_fn(
@@ -1859,20 +1835,19 @@ Func canny_dilate_fn(
 
   Func hy = canny(in, threshold_max, threshold_min);
 
-  Func canny = Func("canny_dilate");
+  Func f = Func("canny_dilate");
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = select(
+  f(x, y, ch) = select(
     ch < 3, cast<uint8_t>(hysteresis_dilate),
     likely(ui8_255)
   );
 
-  canny.compute_root()
-    .parallel(y, 16)
+  f.compute_at(hy, y)
+    .parallel(ch)
     .vectorize(x, 32);
-
-  return canny;
+  return f;
 }
 
 Func canny_morphology_open_fn(
@@ -1890,20 +1865,19 @@ Func canny_morphology_open_fn(
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
-  Func canny = Func("canny_morphology_open");
+  Func f = Func("canny_morphology_open");
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = select(
+  f(x, y, ch) = select(
     ch < 3, cast<uint8_t>(hysteresis_dilate),
     likely(ui8_255)
   );
 
-  canny.compute_root()
-    .parallel(y, 16)
+  f.compute_at(hy, y)
+    .parallel(ch)
     .vectorize(x, 32);
-
-  return canny;
+  return f;
 }
 
 Func canny_morphology_close_fn(
@@ -1921,30 +1895,29 @@ Func canny_morphology_close_fn(
 
   Func hy = canny(morph, threshold_max, threshold_min);
 
-  Func canny = Func("canny_morphology_close");
+  Func f = Func("canny_morphology_close");
   RDom rd_dilate = RDom(0, dilate_size, 0, dilate_size, "rd_canny_dilate");
   Expr hysteresis_dilate = dilate(hy, rd_dilate);
 
-  canny(x, y, ch) = select(
+  f(x, y, ch) = select(
     ch < 3, cast<uint8_t>(hysteresis_dilate),
     likely(ui8_255)
   );
 
-  canny.compute_root()
-    .parallel(y, 16)
+  f.compute_at(hy, y)
+    .parallel(ch)
     .vectorize(x, 32);
-
-  return canny;
+  return f;
 }
 
 Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Func conv = convolve(in, kernel_emboss, rd_kernel);
 
@@ -1954,19 +1927,19 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     likely(ui8_255)
   );
 
-  conv.compute_root()
-    .vectorize(x, 32);
+  conv.compute_at(emboss, yi)
+    .vectorize(x);
 
-  emboss.compute_at(in, xi)
+  emboss.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ti, 4)
+    .parallel(ch)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 4)
+    .parallel(ch)
     .vectorize(x, 16);
-
   return emboss;
 }
 

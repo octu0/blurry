@@ -183,7 +183,7 @@ BenchmarkSobel/blurry/Sobel-8       	    6816	    177510 ns/op	  311514 B/op	   
 
 ### Other Benchmarks
 
-See [benchmark](https://github.com/octu0/blurry/tree/master/benchmark) for benchmarks of other methods and performance comparison with [libyuv](https://chromium.googlesource.com/libyuv/libyuv/).
+See [_benchmark](https://github.com/octu0/blurry/tree/master/_benchmark) for benchmarks of other methods and performance comparison with [libyuv](https://chromium.googlesource.com/libyuv/libyuv/).
 
 
 # Installation

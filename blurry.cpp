@@ -599,13 +599,10 @@ Func morphology_open(Func in, Param<int32_t> size) {
   morph(x, y) = dilate_tmp(x, y);
 
   erode_tmp.compute_root()
-    .parallel(y, 16)
+    .parallel(y, 8)
     .vectorize(x, 32);
   dilate_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-
-  morph.compute_root()
+    .parallel(y, 8)
     .vectorize(x, 32);
 
   return morph;
@@ -625,14 +622,11 @@ Func morphology_close(Func in, Param<int32_t> size) {
   morph(x, y) = erode_tmp(x, y);
 
   dilate_tmp.compute_root()
-    .parallel(y, 16)
+    .parallel(y, 8)
     .vectorize(x, 32);
 
   erode_tmp.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
-
-  morph.compute_root()
+    .parallel(y, 8)
     .vectorize(x, 32);
 
   return morph;
@@ -640,9 +634,6 @@ Func morphology_close(Func in, Param<int32_t> size) {
 
 Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   Var x("x"), y("y");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
 
   Func kernel = gauss_kernel(sigma);
 
@@ -1356,20 +1347,20 @@ Func blend_diff_fn(
 }
 
 Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_erode");
   Func erosion = Func("erosion");
   Expr value = in(x + rd.x, y + rd.y, ch);
   erosion(x, y, ch) = minimum(value);
 
-  erosion.compute_at(in, ti)
+  erosion.compute_at(in, yi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1383,20 +1374,20 @@ Func erosion_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<i
 }
 
 Func dilation_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<int32_t> size) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   RDom rd = RDom(-1 * size, (size * 2) + 1, -1 * size, (size * 2) + 1, "rd_dilate");
   Func dilation = Func("dilation");
   Expr value = in(x + rd.x, y + rd.y, ch);
   dilation(x, y, ch) = maximum(value);
 
-  dilation.compute_at(in, ti)
+  dilation.compute_at(in, yi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1413,18 +1404,31 @@ Func morphology_open_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> size
 ) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func f = morphology_open(in, size);
   Func morph = Func("morphology_open");
   morph(x, y, ch) = select(
-    ch == 3, 255,
-    f(x, y)
+    ch < 3, f(x, y),
+    likely(ui8_255)
   );
 
+  morph.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+
+  in.compute_root()
+    .parallel(y)
+    .vectorize(x, 16);
   return morph;
 }
 
@@ -1432,18 +1436,31 @@ Func morphology_close_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> size
 ) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func f = morphology_close(in, size);
   Func morph = Func("morphology_close");
   morph(x, y, ch) = select(
-    ch == 3, 255,
-    f(x, y)
+    ch < 3, f(x, y),
+    likely(ui8_255)
   );
 
+  morph.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
+
+  in.compute_root()
+    .parallel(y)
+    .vectorize(x, 16);
   return morph;
 }
 
@@ -1451,10 +1468,13 @@ Func morphology_gradient_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Param<int32_t> size
 ) {
+  Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::mirror_image(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   RDom rd_morph = RDom(0, size, 0, size, "rd_morph_gradient");
   Func morph = Func("morphology_gradient");
@@ -1462,21 +1482,27 @@ Func morphology_gradient_fn(
   Expr val_erode = erode(in, rd_morph);
   morph(x, y, ch) = val_dilate - val_erode;
 
-  morph.compute_root()
-    .parallel(y, 16)
-    .vectorize(x, 32);
+  morph.compute_at(in, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ch)
+    .parallel(ti, 8)
+    .vectorize(xi, 32);
 
+  in.compute_root()
+    .parallel(y)
+    .vectorize(x, 16);
   return morph;
 }
 
 Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Func grayscale = Func("grayscale");
   Expr r = in(x, y, 0);
@@ -1504,13 +1530,13 @@ Func grayscale_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Func invert = Func("invert");
   invert(x, y, ch) = select(
@@ -1518,28 +1544,28 @@ Func invert_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
     likely(ui8_255)
   );
 
-  invert.compute_at(in, xi)
+  invert.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 4)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
 
   return invert;
 }
 
 Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Func brightness = Func("brightness");
   Expr value = in(x, y, ch);
@@ -1548,7 +1574,7 @@ Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Para
 
   brightness(x, y, ch) = cast<uint8_t>(value);
 
-  brightness.compute_at(in, xi)
+  brightness.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1556,20 +1582,20 @@ Func brightness_fn(Func input, Param<int32_t> width, Param<int32_t> height, Para
     .vectorize(xi, 32);
 
   in.compute_root()
-    .unroll(y, 8)
+    .parallel(ch)
     .vectorize(x, 16);
 
   return brightness;
 }
 
 Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
-  Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
   Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
   Expr e = 1.0f / max(0.00001f, factor);
 
@@ -1599,6 +1625,7 @@ Func gammacorrection_fn(Func input, Param<int32_t> width, Param<int32_t> height,
 
 Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> factor) {
   Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
@@ -1820,6 +1847,10 @@ Func canny_fn(
   f.compute_at(hy, y)
     .parallel(ch)
     .vectorize(x, 32);
+
+  in.compute_root()
+    .parallel(y)
+    .vectorize(x, 16);
   return f;
 }
 
@@ -1828,10 +1859,10 @@ Func canny_dilate_fn(
   Param<int32_t> threshold_max, Param<int32_t> threshold_min,
   Param<int32_t> dilate_size
 ) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func hy = canny(in, threshold_max, threshold_min);
 
@@ -1856,10 +1887,10 @@ Func canny_morphology_open_fn(
   Param<int32_t> morphology_size,
   Param<int32_t> dilate_size
 ) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func morph = morphology_open(in, morphology_size);
 
@@ -1886,10 +1917,10 @@ Func canny_morphology_close_fn(
   Param<int32_t> morphology_size,
   Param<int32_t> dilate_size
 ) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = gray_xy_uint8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   Func morph = morphology_close(in, morphology_size);
 

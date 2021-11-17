@@ -24,10 +24,10 @@ setup-halide-runtime:
 ifeq ($(shell [ -d ./Halide-Runtime ] && echo "1"),1)
 	@echo "./Halide-Runtime exists"
 else
-	curl -O -sSL https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
-	tar xzf Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
-	mv Halide-12.0.1-x86-64-osx ./Halide-Runtime
-	rm Halide-12.0.1-x86-64-osx-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz
+	curl -O -sSL https://github.com/halide/Halide/releases/download/v13.0.1/Halide-13.0.1-x86-64-osx-fb39d7e3149c0ee1e848bb9957be2ea18765c35d.tar.gz
+	tar xzf Halide-13.0.1-x86-64-osx-fb39d7e3149c0ee1e848bb9957be2ea18765c35d.tar.gz
+	mv Halide-13.0.1-x86-64-osx ./Halide-Runtime
+	rm Halide-13.0.1-x86-64-osx-fb39d7e3149c0ee1e848bb9957be2ea18765c35d.tar.gz
 endif
 endif
 

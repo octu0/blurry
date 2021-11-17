@@ -1,2 +1,5 @@
 *.out
 /Halide-Runtime
+.git
+_benchmark
+testdata/

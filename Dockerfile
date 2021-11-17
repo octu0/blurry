@@ -1,16 +1,17 @@
 # syntax=docker/dockerfile:experimental
-FROM golang:1.16-alpine as goget
+FROM golang:1.17 as goget
 
 COPY go.mod go.sum /go/src/github.com/octu0/blurry/
 
 RUN set -eux && \
-    apk add --no-cache --virtual .build-deps git wget openssh-client && \
+    apt-get clean && \
+    apt-get update -y && \
+    apt-get install -y git wget openssh-client && \
     cd /go/src/github.com/octu0/blurry && \
-    go mod download && \
-    apk del .build-deps
+    go mod download
 
 # ----------------------------------
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 COPY --from=goget /go/bin/  /go/bin/
 COPY --from=goget /go/src/  /go/src/
 COPY --from=goget /go/pkg/  /go/pkg/
@@ -38,7 +39,7 @@ RUN set -eux && \
 
 # ----------------------------------
 
-FROM golang:1.16
+FROM golang:1.17
 
 WORKDIR /app
 COPY --from=builder /build/blurry /app

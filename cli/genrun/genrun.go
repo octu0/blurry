@@ -75,7 +75,7 @@ func generate(runtimePath, blurryPath, target string) (string, error) {
 		"-lHalide",
 		"-lpthread",
 		"-ldl",
-		"-std=c++11",
+		"-std=c++17",
 		"-o", generateOutFilePath,
 		blurryPath,
 		blurryGenPath,

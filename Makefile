@@ -4,7 +4,7 @@ _NAME       = $(shell grep -o 'AppName string = "[^"]*"' $(VERSION_GO)  | cut -d
 _VERSION    = $(shell grep -oE 'Version string = "[0-9]+\.[0-9]+\.[0-9]+"' $(VERSION_GO) | cut -d '"' -f2)
 
 _HALIDE     = "generator"
-_HALIDE_VER = "12.0.1"
+_HALIDE_VER = "13.0.1"
 
 .PHONY: vet
 vet:

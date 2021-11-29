@@ -10,6 +10,8 @@ const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 const Expr ui8_0 = cast<uint8_t>(0);
+const Expr ui8_1 = cast<uint8_t>(1);
+const Expr ui8_128 = cast<uint8_t>(128);
 const Expr ui8_255 = cast<uint8_t>(255);
 const Expr f05 = cast<float>(0.5f);
 const Expr float_0 = cast<float>(0.f);
@@ -482,25 +484,81 @@ Func gray_xy_uint8(Func in, const char *name) {
   return gray;
 }
 
-Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+Func rotate90(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped(y, (height - 1) - x, ch);
+  read(x, y, ch) = in(y, height - x, ch);
+  return read;
+}
+
+Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate90(clamped, w, h, name);
+}
+
+Func rotate180(Func in, Expr width, Expr height, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func read = Func(name);
+  read(x, y, ch) = in(width - x, height - y, ch);
   return read;
 }
 
 Func rotate180(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate180(clamped, w, h, name);
+}
+
+Func rotate270(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped((width - 1) - x, (height - 1) - y, ch);
+  read(x, y, ch) = in(width - y, x, ch);
   return read;
 }
 
 Func rotate270(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate270(clamped, w, h, name);
+}
+
+// Func flip = flipV(in, width, height, "myFlip")
+// f(x, y, ch) = flip(x, y, ch);
+Func flipV(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped((width - 1) - y, x, ch);
+  read(x, y, ch) = in(width - x, y, ch);
   return read;
+}
+
+// Func foo(Func input, Param<int32_t> w, Param<int32_t> h) {
+//   Func in = flipV(input, w, h);
+//   ...
+// }
+Func flipV(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return flipV(clamped, w, h, name);
+}
+
+// Func flip = flipH(in, width, height, "myFlip")
+// f(x, y, ch) = flip(x, y, ch);
+Func flipH(Func in, Expr width, Expr height, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func read = Func(name);
+  read(x, y, ch) = in(x, height - y, ch);
+  return read;
+}
+
+// Func foo(Func input, Param<int32_t> w, Param<int32_t> h) {
+//   Func in = flipH(input, w, h);
+//   ...
+// }
+Func flipH(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return flipH(clamped, w, h, name);
 }
 
 Func convolve(Func in, Func kernel, RDom rd_kernel) {
@@ -891,30 +949,36 @@ Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> heig
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
   Func yuv444to420 = Func("yuv444to420");
-  Expr kx = 2 * (x % uv_stride);
-  Expr ky = (y * uv_stride) + (2 * (x / uv_stride)) + y;
-  yuv444to420(x,y,ch) = (
+  Expr kx = x * 2;
+  Expr ky = y * 2;
+  yuv444to420(x, y, ch) = cast<float>(
     yuv(kx, ky, ch) +
     yuv(kx + 1, ky, ch) +
     yuv(kx, ky + 1, ch) +
     yuv(kx + 1, ky + 1, ch)
-  ) / 4;
+  ) / 4.f;
 
   Func f = Func("convert_to_yuv_420");
-  f(x, y) = select(
-    y < y_max_h,                 yuv(x, y, 0),
-    y_max_h <= y && y < u_max_h, yuv444to420(x, y - y_max_h, 1),
-    u_max_h <= y && y < v_max_h, yuv444to420(x, y - u_max_h, 2),
-    ui8_0
+  Expr value = select(
+    y < y_max_h, yuv(x, y, 0),
+    y_max_h <= y && y < u_max_h && x < uv_width, yuv444to420(x, y - y_max_h, 1),
+    u_max_h <= y && y < v_max_h && x < uv_width, yuv444to420(x, y - u_max_h, 2),
+    likely(float_0)
   );
+  f(x, y) = cast<uint8_t>(value);
+
+  f.compute_at(in, yo)
+    .split(y, yi, yo, 4)
+    .parallel(yi)
+    .vectorize(x, 8);
   return f;
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   // same cloneimg
   Func rotate = Func("rotate0");
@@ -927,12 +991,12 @@ Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
-  Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate90");
-  rotate(x, y, ch) = in(y, (height - 1) - x, ch);
+  Func rotate = rotate90(in, width, height, "rotate90");
 
   rotate.compute_at(in, y)
     .parallel(ch)
@@ -945,8 +1009,7 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate180");
-  rotate(x, y, ch) = in((width - 1) - x, (height - 1) - y, ch);
+  Func rotate = rotate180(in, width, height, "rotate180");
 
   rotate.compute_at(in, x)
     .parallel(ch)
@@ -955,12 +1018,12 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
-  Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate270");
-  rotate(x, y, ch) = in((width - 1) - y, x, ch);
+  Func rotate = rotate270(in, width, height, "rotate270");
 
   rotate.compute_at(in, y)
     .parallel(ch)
@@ -968,10 +1031,34 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return rotate;
 }
 
-Func crop_fn(
-  Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
-) {
+Func flipV_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Func flip = flipV(in, width, height, "flipV");
+
+  flip.compute_at(in, x)
+    .parallel(ch)
+    .vectorize(x, 16);
+  return flip;
+}
+
+Func flipH_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Func flip = flipH(in, width, height, "flipH");
+
+  flip.compute_at(in, x)
+    .parallel(ch)
+    .vectorize(x, 16);
+  return flip;
+}
+
+Func crop(Func input, Expr width, Expr height, Expr px, Expr py, Expr crop_width, Expr crop_height) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -1001,6 +1088,19 @@ Func crop_fn(
     .unroll(y, 8)
     .vectorize(x, 16);
   return crop;
+}
+
+Func crop_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
+) {
+  Expr w = width;
+  Expr h = height;
+  Expr x = px;
+  Expr y = py;
+  Expr cw = crop_width;
+  Expr ch = crop_height;
+  return crop(input, w, h, x, y, cw, ch);
 }
 
 Func scale_kernel_box() {
@@ -1034,10 +1134,10 @@ Func scale_kernel_gaussian() {
   return f;
 }
 
-Func scale_fn(
+Func scale(
   Func input,
-  Param<int32_t> width, Param<int32_t> height,
-  Param<int32_t> scale_width, Param<int32_t> scale_height
+  Expr width, Expr height,
+  Expr scale_width, Expr scale_height
 ) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -1060,13 +1160,30 @@ Func scale_fn(
   );
   f(x, y, ch) = cast<uint8_t>(value);
 
-  f.compute_at(scale, ti)
+  scale.compute_at(f, ti)
+    .parallel(ch)
+    .vectorize(y, 8)
+    .vectorize(x, 8);
+
+  f.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 8)
+    .parallel(ti)
     .vectorize(xi, 32);
   return f;
+}
+
+Func scale_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+) {
+  Expr w = width;
+  Expr h = height;
+  Expr sw = scale_width;
+  Expr sh = scale_height;
+  return scale(input, w, h, sw, sh);
 }
 
 Func scale_by_kernel(
@@ -1646,7 +1763,7 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   return contrast;
 }
 
-Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+Func boxblur(Func input, Expr width, Expr height, Expr size) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -1655,7 +1772,7 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
-  Expr box_size = max(size, 1);
+  Expr box_size = cast<uint8_t>(max(size, 1));
 
   RDom rd_x = RDom(0, box_size, "rdom_x");
   Func blur_x = Func("blur_x");
@@ -1665,17 +1782,17 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Func blur_y = Func("blur_y");
   blur_y(x, y, ch) = fast_integer_divide(sum(blur_x(x, y + rd_y, ch)), box_size);
 
-  Func boxblur = Func("boxblur");
-  boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
+  Func f = Func("boxblur");
+  f(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
 
   blur_x.compute_root()
     .parallel(ch)
     .vectorize(x, 32);
-  blur_y.compute_at(boxblur, yi)
+  blur_y.compute_at(f, yi)
     .parallel(ch)
     .vectorize(x, 32);
 
-  boxblur.compute_at(in, ti)
+  f.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1685,10 +1802,17 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   in.compute_at(blur_x, y)
     .parallel(ch)
     .vectorize(x, 32);
-  return boxblur;
+  return f;
 }
 
-Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
+Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+  Expr w = width;
+  Expr h = height;
+  Expr s = size;
+  return boxblur(input, w, h, s);
+}
+
+Func gaussianblur(Func input, Expr width, Expr height, Expr sigma){
   Var x("x"), y("y"), ch("ch");
   Var s("s");
   Var xo("xo"), xi("xi");
@@ -1707,7 +1831,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
   Expr half = fast_integer_divide(radius, 2);
 
-  RDom rd_rad = RDom(half, size, "rd_radius");
+  RDom rd_rad = RDom(-1 * half, size - half, "rd_radius");
 
   Func kernel = Func("kernel");
   kernel(s) = fast_exp(-(s * s) / sig2 / sigR);
@@ -1716,19 +1840,19 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Expr kernel_val = kernel(rd_rad);
   sum_kernel(s) = sum(kernel_val);
 
-  Func gaussianblur = Func("gaussianblur");
+  Func f = Func("gaussianblur");
   Expr center_val = sum_kernel(center);
   Expr in_val = in(x + rd_rad.x, y, ch);
   Expr val = sum(in_val * kernel(rd_rad));
-  gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
+  f(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
     .vectorize(s, 8);
 
-  sum_kernel.compute_at(gaussianblur, ti)
+  sum_kernel.compute_at(f, ti)
     .vectorize(s, 32);
 
-  gaussianblur.compute_at(in, ti)
+  f.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1739,7 +1863,14 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
     .parallel(ch)
     .vectorize(x, 16);
 
-  return gaussianblur;
+  return f;
+}
+
+Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
+  Expr w = width;
+  Expr h = height;
+  Expr s = sigma;
+  return gaussianblur(input, w, h, s);
 }
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){

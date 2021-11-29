@@ -59,6 +59,10 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
+Func flipV_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func flipH_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
 Func crop_fn(
   Func input,
   Param<int32_t> width, Param<int32_t> height,

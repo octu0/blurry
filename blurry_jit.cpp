@@ -468,6 +468,34 @@ int jit_rotate270(char **argv) {
   Param<int32_t> height{"height", buf_src.get()->height()};
 
   Func fn = rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, height.get(), width.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int jit_flipV(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = flipV_fn(wrapFunc(buf_src, "buf_src"), width, height);
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
+
+  printf("save to %s\n", argv[3]);
+  save_image(out, argv[3]);
+  return 0;
+}
+
+int jit_flipH(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+
+  Func fn = flipH_fn(wrapFunc(buf_src, "buf_src"), width, height);
   Buffer<uint8_t> out = jit_realize_uint8_bounds(fn, width.get(), height.get());
 
   printf("save to %s\n", argv[3]);
@@ -1370,6 +1398,12 @@ int jit_run(char **argv) {
   if(strcmp(argv[1], "rotate270") == 0) {
     return jit_rotate270(argv);
   } 
+  if(strcmp(argv[1], "flipV") == 0) {
+    return jit_flipV(argv);
+  }
+  if(strcmp(argv[1], "flipH") == 0) {
+    return jit_flipH(argv);
+  }
   if(strcmp(argv[1], "crop") == 0) {
     return jit_crop(argv);
   }

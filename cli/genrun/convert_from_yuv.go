@@ -33,17 +33,17 @@ func init() {
 			cli.StringFlag{
 				Name:  "input-y",
 				Usage: "/path/to/input image-y",
-				Value: "./testdata/yuv_i420_y_320x240.raw",
+				Value: "./testdata/yuv_420_y_320x240.raw",
 			},
 			cli.StringFlag{
 				Name:  "input-u",
 				Usage: "/path/to/input image-u",
-				Value: "./testdata/yuv_i420_u_320x240.raw",
+				Value: "./testdata/yuv_420_u_320x240.raw",
 			},
 			cli.StringFlag{
 				Name:  "input-v",
 				Usage: "/path/to/input image-v",
-				Value: "./testdata/yuv_i420_v_320x240.raw",
+				Value: "./testdata/yuv_420_v_320x240.raw",
 			},
 			cli.StringFlag{
 				Name:  "r,runtime",

@@ -111,12 +111,12 @@ void init_output_rgba(OutputImageParam out) {
   out.dim(2).set_bounds(0, 4);
 }
 
-void init_output_yuv_444(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
+void init_output_yuv_420(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
   out.dim(0).set_stride(1);
   out.dim(1).set_stride(width);
 }
 
-void init_output_yuv_420(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
+void init_output_yuv_444(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
   out.dim(0).set_stride(1);
   out.dim(1).set_stride(width);
 }
@@ -308,6 +308,33 @@ void generate_convert_from_yuv_444(std::vector<Target::Feature> features) {
 //
 
 //
+// {{{ convert_to_yuv_420
+//
+void generate_convert_to_yuv_420(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = convert_to_yuv_420_fn(
+    src.in(),
+    width, height
+  );
+
+  init_output_yuv_420(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, {
+    src,
+    width, height
+  }, fn.name());
+}
+//
+// }}} convert_to_yuv_420
+//
+
+//
 // {{{ convert_to_yuv_444
 //
 void generate_convert_to_yuv_444(std::vector<Target::Feature> features) {
@@ -322,6 +349,8 @@ void generate_convert_to_yuv_444(std::vector<Target::Feature> features) {
     src.in(),
     width, height
   );
+
+  init_output_yuv_444(fn.output_buffer(), width, height);
 
   generate_static_link(features, fn, {
     src,
@@ -416,6 +445,48 @@ void generate_rotate270(std::vector<Target::Feature> features) {
 }
 //
 // }}} rotate270
+//
+
+//
+// {{{ flipV
+//
+void generate_flipV(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = flipV_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+//
+// }}} flipV
+//
+
+//
+// {{{ flipH
+//
+void generate_flipH(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+
+  init_input_rgba(src);
+
+  Func fn = flipH_fn(src.in(), width, height);
+
+  init_output_rgba(fn.output_buffer());
+
+  generate_static_link(features, fn, { src, width, height }, fn.name());
+}
+//
+// }}} flipH
 //
 
 //
@@ -1541,6 +1612,29 @@ void generate_prepared_match_template_zncc(std::vector<Target::Feature> features
 // }}} match_prepared_template_zncc
 //
 
+//
+// {{{ contour
+//
+void generate_contour(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<uint8_t>(), 3, "src");
+
+  Param<int32_t> width{"width", 1920};
+  Param<int32_t> height{"height", 1080};
+  Param<uint8_t> threshold{"threshold", 100};
+  Param<uint8_t> size{"size", 4};
+
+  init_input_rgba(src);
+
+  Func fn = contour_fn(src.in(), width, height, threshold, size);
+
+  init_output_array(fn.output_buffer(), width, height);
+
+  generate_static_link(features, fn, { src, width, height, threshold, size }, fn.name());
+}
+//
+// }}} contour
+//
+
 int generate(char **argv){
   printf("generate...\n");
 
@@ -1563,11 +1657,14 @@ int generate(char **argv){
   generate_convert_from_rabg(features);
   generate_convert_from_yuv_420(features);
   generate_convert_from_yuv_444(features);
+  generate_convert_to_yuv_420(features);
   generate_convert_to_yuv_444(features);
   generate_rotate0(features);
   generate_rotate90(features);
   generate_rotate180(features);
   generate_rotate270(features);
+  generate_flipV(features);
+  generate_flipH(features);
   generate_crop(features);
   generate_scale(features);
   generate_scale_box(features);
@@ -1608,6 +1705,7 @@ int generate(char **argv){
   generate_prepared_match_template_ncc(features);
   generate_prepare_zncc_template(features);
   generate_prepared_match_template_zncc(features);
+  generate_contour(features);
 
   return 0;
 }

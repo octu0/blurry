@@ -2839,8 +2839,8 @@ Func contour_line(Func binary_input, Expr width, Expr height, Expr size) {
   f(x, y) = value;
 
   slant.compute_at(f, ti)
-    .vectorize(y)
-    .vectorize(x);
+    .vectorize(y, 8)
+    .vectorize(x, 8);
 
   next_top.compute_at(f, ti)
     .vectorize(y)
@@ -2868,8 +2868,8 @@ Func contour_line(Func binary_input, Expr width, Expr height, Expr size) {
     .vectorize(x);
 
   nb.compute_at(f, ti)
-    .vectorize(y)
-    .vectorize(x);
+    .vectorize(y, 8)
+    .vectorize(x, 8);
 
   f.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)

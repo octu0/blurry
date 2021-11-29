@@ -292,6 +292,137 @@ int jit_convert_from_yuv_444(char **argv) {
   return 0;
 }
 
+int jit_convert_to_yuv_420(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> _width{"width", buf_src.get()->width()};
+  Param<int32_t> _height{"height", buf_src.get()->height()};
+
+  int32_t width = buf_src.get()->width();
+  int32_t height = buf_src.get()->height();
+
+  Func fn = convert_to_yuv_420_fn(
+    wrapFunc(buf_src, "buf_src"),
+    _width, _height
+  );
+
+  fn.compile_jit(get_jit_target_from_environment());
+
+  int32_t y_width = width;
+  int32_t uv_width = width / 2;
+  int32_t y_height = height;
+  int32_t uv_height = height / 2;
+
+  printf("realize(uint8_t) %s...\n", fn.name().c_str());
+  Buffer<uint8_t> out = fn.realize({
+    y_width,
+    y_height + uv_height + uv_height,
+    2
+  });
+  uint8_t *yuv = out.data();
+
+  int32_t ysize = y_width * y_height;
+  int32_t uvsize = uv_width * uv_height;
+  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
+  if(data_y == nullptr) {
+    return 1;
+  }
+  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_u == nullptr) {
+    return 1;
+  }
+  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
+  if(data_v == nullptr) {
+    return 1;
+  }
+
+  int i = 0;
+  int ypos = 0;
+  for(int y = 0; y < y_height; y += 1) {
+    for(int x = 0; x < y_width; x += 1) {
+      //data_y[ypos] = yuv[(y * y_height) + x];
+      data_y[ypos] = yuv[i];
+      ypos += 1;
+      i += 1;
+    }
+  }
+  int upos = 0;
+  for(int y = 0; y < uv_height; y += 1) {
+    for(int x = 0; x < uv_width; x += 1) {
+      //data_u[upos] = yuv[(y * y_height) + x];
+      data_u[upos] = yuv[i];
+      upos += 1;
+      i += 1;
+    }
+    i += uv_width;
+  }
+  int vpos = 0;
+  for(int y = 0; y < uv_height; y += 1) {
+    for(int x = 0; x < uv_width; x += 1) {
+      //data_v[vpos] = yuv[(y * y_height) + x];
+      data_v[vpos] = yuv[i];
+      vpos += 1;
+      i += 1;
+    }
+    i += uv_width;
+  }
+
+  FILE *const y = fopen(argv[3], "wb");
+  if(y == nullptr) {
+    return 1;
+  }
+  fwrite(data_y, 1, ysize, y);
+  fclose(y);
+
+  FILE *const u = fopen(argv[4], "wb");
+  if(u == nullptr) {
+    return 1;
+  }
+  fwrite(data_u, 1, uvsize, u);
+  fclose(u);
+
+  FILE *const v = fopen(argv[5], "wb");
+  if(v == nullptr) {
+    return 1;
+  }
+  fwrite(data_v, 1, uvsize, v);
+  fclose(v);
+
+  printf("save to %s\n", argv[3]);
+  printf("save to %s\n", argv[4]);
+  printf("save to %s\n", argv[5]);
+
+  printf("%dx%d\n", width, height);
+  if(0){
+    Buffer<uint8_t> src_y = Buffer<uint8_t>::make_interleaved(data_y, y_width, y_height, 1);
+    Buffer<uint8_t> src_u = Buffer<uint8_t>::make_interleaved(data_u, uv_width, uv_height, 1);
+    Buffer<uint8_t> src_v = Buffer<uint8_t>::make_interleaved(data_v, uv_width, uv_height, 1);
+    src_y.raw_buffer()->dimensions = 2;
+    src_u.raw_buffer()->dimensions = 2;
+    src_u.raw_buffer()->dim[0].extent = uv_width;
+    src_u.raw_buffer()->dim[0].stride = 1;
+    src_u.raw_buffer()->dim[1].extent = uv_height;
+    src_u.raw_buffer()->dim[1].stride = uv_width;
+    src_v.raw_buffer()->dimensions = 2;
+    src_v.raw_buffer()->dim[0].extent = uv_width;
+    src_v.raw_buffer()->dim[0].stride = 1;
+    src_v.raw_buffer()->dim[1].extent = uv_height;
+    src_v.raw_buffer()->dim[1].stride = uv_width;
+
+    Buffer<uint8_t> out2 = jit_realize_uint8_bounds(convert_from_yuv_420_fn(
+      wrapFunc_xy(src_y, "src_y"),
+      wrapFunc_xy(src_u, "src_u"),
+      wrapFunc_xy(src_v, "src_v"),
+      _width, _height
+    ), width, height);
+
+    save_image(out2, "/tmp/test.png");
+    printf("save to %s\n", "/tmp/test.png");
+  }
+  return 0;
+}
+
+
 int jit_convert_to_yuv_444(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
@@ -308,10 +439,10 @@ int jit_convert_to_yuv_444(char **argv) {
 
   fn.compile_jit(get_jit_target_from_environment());
 
-  int32_t y_width = buf_src.get()->width();
-  int32_t uv_width = buf_src.get()->width();
-  int32_t y_height = buf_src.get()->height();
-  int32_t uv_height = buf_src.get()->height();
+  int32_t y_width = width;
+  int32_t uv_width = width;
+  int32_t y_height = height;
+  int32_t uv_height = height;
 
   printf("realize(uint8_t) %s...\n", fn.name().c_str());
   Buffer<uint8_t> out = fn.realize({
@@ -1361,6 +1492,34 @@ int jit_prepared_match_template_zncc(char **argv) {
   return 0;
 }
 
+int jit_contour(char **argv) {
+  Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
+
+  Param<int32_t> width{"width", buf_src.get()->width()};
+  Param<int32_t> height{"height", buf_src.get()->height()};
+  Param<uint8_t> threshold{"threshold", (uint8_t) std::stoi(argv[3])};
+  Param<uint8_t> size{"size", (uint8_t) std::stoi(argv[4])};
+
+  Buffer<uint8_t> out = jit_realize_uint8(contour_fn(
+    wrapFunc(buf_src, "buf_src"), width, height,
+    threshold, size
+  ), buf_src);
+  uint8_t *data = out.data();
+  uint8_t w = out.extent(0);
+  uint8_t h = out.extent(1);
+
+  for(int y = 0; y < h; y += 1) {
+    for(int x = 0; x < w; x += 1) {
+      int idx = (y * w) + x;
+      uint8_t score = data[idx];
+      if(score == 1) {
+        printf("x:%d y:%d\n", x, y);
+      }
+    }
+  }
+  return 0;
+}
+
 int jit_run(char **argv) {
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
@@ -1382,6 +1541,9 @@ int jit_run(char **argv) {
   }
   if(strcmp(argv[1], "convert_from_yuv444") == 0) {
     return jit_convert_from_yuv_444(argv);
+  }
+  if(strcmp(argv[1], "convert_to_yuv420") == 0) {
+    return jit_convert_to_yuv_420(argv);
   }
   if(strcmp(argv[1], "convert_to_yuv444") == 0) {
     return jit_convert_to_yuv_444(argv);
@@ -1517,6 +1679,9 @@ int jit_run(char **argv) {
   }
   if(strcmp(argv[1], "prepared_match_template_zncc") == 0) {
     return jit_prepared_match_template_zncc(argv);
+  }
+  if(strcmp(argv[1], "contour") == 0) {
+    return jit_contour(argv);
   }
 
   printf("unknown command: %s\n", argv[1]);

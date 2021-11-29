@@ -447,7 +447,8 @@ Func rgb_to_yuv_bt2020_limited(Func rf, Func gf, Func bf, const char *name) {
     likely(float_255) // A always 0xff
   );
 
-  f(x, y, ch) = cast<uint8_t>(v);
+  f(x, y, ch) = v;
+
   return f;
 }
 
@@ -915,33 +916,36 @@ Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> heig
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
   Func f = Func("convert_to_yuv_444");
-  f(x, y) = select(
+  Expr value = select(
     y < y_max_h,                  yuv(x, y, 0),
     y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
     uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
-    ui8_0
+    likely(float_0)
   );
+  f(x, y) = cast<uint8_t>(value);
 
-  f.compute_at(yuv, ti)
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
+  f.compute_at(in, yo)
+    .split(y, yi, yo, 4)
+    .parallel(yi)
+    .vectorize(x, 16);
   return f;
 }
 
 Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+
   Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Expr y_max_w = width;
   Expr y_max_h = height;
   Expr y_height = height;
-  Expr uv_size = (width * height) / 4;
-  Expr uv_stride = width / 2;
-  Expr uv_height = uv_size / width;
+  Expr y_width = width;
+
+  Expr uv_width = width / 2;
+  Expr uv_height = height / 2;
 
   Expr u_max_h = y_height + uv_height;
   Expr v_max_h = u_max_h + uv_height;

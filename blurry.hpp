@@ -220,4 +220,9 @@ Func prepared_match_template_zncc_fn(
   Param<int32_t> tpl_width, Param<int32_t> tpl_height
 );
 
+Func contour_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<uint8_t> threshold, Param<uint8_t> size
+);
+
 #endif // BLURRY_H_

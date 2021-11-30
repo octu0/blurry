@@ -19,56 +19,57 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.00753ms
-BenchmarkJIT/convert_from_argb             : 0.02263ms
-BenchmarkJIT/convert_from_abgr             : 0.03598ms
-BenchmarkJIT/convert_from_bgra             : 0.02335ms
-BenchmarkJIT/convert_from_rabg             : 0.03069ms
-BenchmarkJIT/convert_from_yuv_420          : 0.02930ms
-BenchmarkJIT/convert_from_yuv_444          : 0.02553ms
-BenchmarkJIT/convert_to_yuv_444            : 0.15633ms
-BenchmarkJIT/rotate0                       : 0.00756ms
-BenchmarkJIT/rotate90                      : 0.02554ms
-BenchmarkJIT/rotate180                     : 0.00784ms
-BenchmarkJIT/rotate270                     : 0.02563ms
-BenchmarkJIT/crop                          : 0.05762ms
-BenchmarkJIT/scale                         : 0.04926ms
-BenchmarkJIT/scale_box                     : 0.19874ms
-BenchmarkJIT/scale_linear                  : 0.19809ms
-BenchmarkJIT/scale_gaussian                : 0.22281ms
-BenchmarkJIT/blend_normal                  : 0.08000ms
-BenchmarkJIT/blend_sub                     : 0.08007ms
-BenchmarkJIT/blend_add                     : 0.08135ms
-BenchmarkJIT/blend_diff                    : 0.08454ms
-BenchmarkJIT/grayscale                     : 0.03740ms
-BenchmarkJIT/invert                        : 0.03768ms
-BenchmarkJIT/brightness                    : 0.04058ms
-BenchmarkJIT/gammacorrection               : 0.07850ms
-BenchmarkJIT/contrast                      : 0.01462ms
-BenchmarkJIT/boxblur                       : 0.10559ms
-BenchmarkJIT/gaussianblur                  : 0.16082ms
-BenchmarkJIT/blockmozaic                   : 0.27287ms
-BenchmarkJIT/erosion                       : 0.11763ms
-BenchmarkJIT/dilation                      : 0.11733ms
-BenchmarkJIT/morphology_open               : 0.09926ms
-BenchmarkJIT/morphology_close              : 0.10079ms
-BenchmarkJIT/morphology_gradient           : 0.08179ms
-BenchmarkJIT/emboss$1                      : 0.04332ms
-BenchmarkJIT/laplacian                     : 0.03075ms
-BenchmarkJIT/highpass                      : 0.03739ms
-BenchmarkJIT/gradient                      : 0.03263ms
-BenchmarkJIT/edgedetect                    : 0.02617ms
-BenchmarkJIT/sobel                         : 0.06278ms
-BenchmarkJIT/canny                         : 0.28966ms
-BenchmarkJIT/canny_dilate                  : 0.33296ms
-BenchmarkJIT/canny_morphology_open         : 0.38941ms
-BenchmarkJIT/canny_morphology_close        : 0.38664ms
-BenchmarkJIT/match_template_sad            : 5.64372ms
-BenchmarkJIT/match_template_ssd            : 4.22466ms
-BenchmarkJIT/match_template_ncc            : 7.87017ms
-BenchmarkJIT/prepared_match_template_ncc   : 5.90085ms
-BenchmarkJIT/match_template_zncc           : 11.49493ms
-BenchmarkJIT/prepared_match_template_zncc  : 10.68775ms
+BenchmarkJIT/cloneimg                      : 0.00808ms
+BenchmarkJIT/convert_from_argb             : 0.02258ms
+BenchmarkJIT/convert_from_abgr             : 0.03573ms
+BenchmarkJIT/convert_from_bgra             : 0.02377ms
+BenchmarkJIT/convert_from_rabg             : 0.03090ms
+BenchmarkJIT/convert_from_yuv_420          : 0.02977ms
+BenchmarkJIT/convert_from_yuv_444          : 0.02632ms
+BenchmarkJIT/convert_to_yuv_420            : 0.31946ms
+BenchmarkJIT/convert_to_yuv_444            : 0.12534ms
+BenchmarkJIT/rotate0                       : 0.00745ms
+BenchmarkJIT/rotate90                      : 0.02571ms
+BenchmarkJIT/rotate180                     : 0.00788ms
+BenchmarkJIT/rotate270                     : 0.02556ms
+BenchmarkJIT/crop                          : 0.05760ms
+BenchmarkJIT/scale                         : 0.13315ms
+BenchmarkJIT/scale_box                     : 0.20069ms
+BenchmarkJIT/scale_linear                  : 0.19803ms
+BenchmarkJIT/scale_gaussian                : 0.22627ms
+BenchmarkJIT/blend_normal                  : 0.08148ms
+BenchmarkJIT/blend_sub                     : 0.08143ms
+BenchmarkJIT/blend_add                     : 0.08078ms
+BenchmarkJIT/blend_diff                    : 0.08116ms
+BenchmarkJIT/grayscale                     : 0.03515ms
+BenchmarkJIT/invert                        : 0.03462ms
+BenchmarkJIT/brightness                    : 0.04046ms
+BenchmarkJIT/gammacorrection               : 0.07893ms
+BenchmarkJIT/contrast                      : 0.01498ms
+BenchmarkJIT/boxblur                       : 0.10998ms
+BenchmarkJIT/gaussianblur                  : 1.56453ms
+BenchmarkJIT/blockmozaic                   : 0.27597ms
+BenchmarkJIT/erosion                       : 0.12262ms
+BenchmarkJIT/dilation                      : 0.12282ms
+BenchmarkJIT/morphology_open               : 0.10249ms
+BenchmarkJIT/morphology_close              : 0.10167ms
+BenchmarkJIT/morphology_gradient           : 0.08229ms
+BenchmarkJIT/emboss$1                      : 0.04387ms
+BenchmarkJIT/laplacian                     : 0.03211ms
+BenchmarkJIT/highpass                      : 0.03781ms
+BenchmarkJIT/gradient                      : 0.03286ms
+BenchmarkJIT/edgedetect                    : 0.02686ms
+BenchmarkJIT/sobel                         : 0.05947ms
+BenchmarkJIT/canny                         : 0.29165ms
+BenchmarkJIT/canny_dilate                  : 0.35416ms
+BenchmarkJIT/canny_morphology_open         : 0.38104ms
+BenchmarkJIT/canny_morphology_close        : 0.39057ms
+BenchmarkJIT/match_template_sad            : 5.68084ms
+BenchmarkJIT/match_template_ssd            : 4.21580ms
+BenchmarkJIT/match_template_ncc            : 8.13887ms
+BenchmarkJIT/prepared_match_template_ncc   : 5.91766ms
+BenchmarkJIT/match_template_zncc           : 11.78979ms
+BenchmarkJIT/prepared_match_template_zncc  : 10.75978ms
 ```
 
 ## AOT benchmarks
@@ -211,6 +212,20 @@ img, err := blurry.Rotate(input, blurry.Rotate90)
 | `blurry.Rotate90`     | ![example](testdata/rotate90.png)  |
 | `blurry.Rotate180`    | ![example](testdata/rotate180.png) |
 | `blurry.Rotate270`    | ![example](testdata/rotate270.png) |
+
+### Flip
+
+flipV(vertically) flipH(horizontally)
+
+```go
+img, err := blurry.Flip(input, blurry.FlipVertical)
+```
+
+| `blurry.FlipMode`     | Result                             |
+| :-------------------: | :--------------------------------: |
+| `blurry.FlipVertical` | ![example](testdata/flipv.png)  |
+| `blurry.FlipHorizon`  | ![example](testdata/fliph.png) |
+
 
 ### Crop
 
@@ -517,6 +532,24 @@ for _, img := range images {
 }
 ```
 
+### Contour
+
+Extract contours based on the sobel filter for binarization.  
+In actual use, it is better to denoise the image before passing it through the sobel filter.
+
+```go
+points, err := blurry.Contour(input, 100, 4)
+```
+
+| `threshold` | size | Result                               |
+| :---------: | :--: | :----------------------------------: |
+| 100         | 4 | ![example](testdata/contour_100_4.png)  |
+| 150         | 4 | ![example](testdata/contour_150_4.png)  |
+| 200         | 4 | ![example](testdata/contour_200_4.png)  |
+| 250         | 4 | ![example](testdata/contour_250_4.png)  |
+| 100         | 2 | ![example](testdata/contour_100_2.png)  |
+| 200         | 2 | ![example](testdata/contour_200_2.png)  |
+
 ### Blend
 
 Blend input1 on input0.
@@ -571,8 +604,8 @@ var width, height int
 img, err := blurry.ConvertFromYUV420Plane(y, u, v, strideY, strideU, strideV, width, height)
 ```
 
-| Subsampling  | Method                                   |
-| :----------: | :--------------------------------------: |
+| Subsampling  | Method                                                              |
+| :----------: | :-----------------------------------------------------------------: |
 | 420          | `blurry.ConvertFromYUV420Plane(y,u,v []byte, int,int,int, w,h int)` |
 | 444          | `blurry.ConvertFromYUV444Plane(y,u,v []byte, int,int,int, w,h int)` |
 
@@ -584,7 +617,8 @@ ycbcr, err := blurry.ConvertToYUV444(rgba)
 
 | Subsampling  | Method                                |
 | :----------: | :-----------------------------------: |
-| 444          | `blurry.ConvertToYUV420(*image.RGBA)` |
+| 420          | `blurry.ConvertToYUV420(*image.RGBA)` |
+| 444          | `blurry.ConvertToYUV444(*image.RGBA)` |
 
 ## CLI usage
 
@@ -613,36 +647,38 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.18.4
+   1.19.0
 
 COMMANDS:
-     blend
-     blockmozaic
-     boxblur
-     brightness
-     canny
-     clone
-     contrast
-     convert
-     convert_from_yuv
-     convert_to_yuv
-     crop
-     dilation
-     edge
-     emboss
-     erosion
-     gamma
-     gaussianblur
-     gradient
-     grayscale
-     highpass
-     invert
-     laplacian
-     morphology
-     match_template
-     rotate
-     scale
-     sobel
+     blend             
+     blockmozaic       
+     boxblur           
+     brightness        
+     canny             
+     clone             
+     contour           
+     contrast          
+     convert           
+     convert_from_yuv  
+     convert_to_yuv    
+     crop              
+     dilation          
+     edge              
+     emboss            
+     erosion           
+     flip              
+     gamma             
+     gaussianblur      
+     gradient          
+     grayscale         
+     highpass          
+     invert            
+     laplacian         
+     morphology        
+     match_template    
+     rotate            
+     scale             
+     sobel             
      help, h           Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

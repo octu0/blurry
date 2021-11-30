@@ -2,17 +2,19 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_yuv_420_osx -lconvert_from_yuv_444_osx -lconvert_to_yuv_444_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_yuv_420_linux -lconvert_from_yuv_444_linux -lconvert_to_yuv_444_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_yuv_420_osx -lconvert_from_yuv_444_osx -lconvert_to_yuv_420_osx -lconvert_to_yuv_444_osx -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_yuv_420_linux -lconvert_from_yuv_444_linux -lconvert_to_yuv_420_linux -lconvert_to_yuv_444_linux -ldl -lm
 #include <stdlib.h>
 
 #ifdef __APPLE__
 #include "libconvert_from_yuv_420_osx.h"
 #include "libconvert_from_yuv_444_osx.h"
+#include "libconvert_to_yuv_420_osx.h"
 #include "libconvert_to_yuv_444_osx.h"
 #elif __linux__
 #include "libconvert_from_yuv_420_linux.h"
 #include "libconvert_from_yuv_444_linux.h"
+#include "libconvert_to_yuv_420_linux.h"
 #include "libconvert_to_yuv_444_linux.h"
 #endif
 
@@ -99,6 +101,27 @@ int libconvert_from_yuv(
   free_buf(in_u_buf);
   free_buf(in_v_buf);
   free_buf(out_rgba_buf);
+  return ret;
+}
+
+int libconvert_to_yuv420(
+  unsigned char *src,
+  int32_t width, int32_t height,
+  unsigned char *out
+) {
+  halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
+  if(in_rgba_buf == NULL){
+    return 1;
+  }
+  halide_buffer_t *out_yuv420_buf = create_yuv420_buffer(out, width, height);
+  if(out_yuv420_buf == NULL) {
+    free_buf(in_rgba_buf);
+    return 1;
+  }
+
+  int ret = convert_to_yuv_420(in_rgba_buf, width, height, out_yuv420_buf);
+  free_buf(in_rgba_buf);
+  free_buf(out_yuv420_buf);
   return ret;
 }
 
@@ -198,13 +221,108 @@ func ConvertFromYUV444Plane(y, u, v []byte, y_stride, u_stride, v_stride int, wi
 	return ConvertFromYUV(img, ChromaSubsampling444)
 }
 
+func ConvertToYUV420(img *image.RGBA) (*image.YCbCr, error) {
+	width, height := wh(img)
+	uvWidth := width / 2
+	uvHeight := height / 2
+	ySize := width * height
+	uSize := uvWidth * uvHeight
+	vSize := uvWidth * uvHeight
+
+	//
+	// data layout
+	// +-----------------+ width
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// +---------+-------+ height
+	// | U U U U | 0 0 0 |
+	// | U U U U | 0 0 0 |
+	// +---------+-------+ uvHeight
+	// | V V V V | 0 0 0 |
+	// | V V V V | 0 0 0 |
+	// +-----------------+
+	//           uvWidth
+	//
+	buf := GetByteBuf((height + uvHeight + uvHeight) * width)
+	defer PutByteBuf(buf)
+
+	ret := C.libconvert_to_yuv420(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&buf[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrConvertToYUV
+	}
+
+	yBuf := GetByteBuf(ySize)
+	uBuf := GetByteBuf(uSize)
+	vBuf := GetByteBuf(vSize)
+
+	yPlaneSize := width * height
+	uPlaneSize := width * uvHeight
+	vPlaneSize := width * uvHeight
+
+	yPlane := buf[0:yPlaneSize]
+	uPlane := buf[yPlaneSize : yPlaneSize+uPlaneSize]
+	vPlane := buf[yPlaneSize+uPlaneSize : yPlaneSize+uPlaneSize+vPlaneSize]
+
+	copy(yBuf, yPlane)
+
+	for i := 0; i < uvHeight; i += 1 {
+		s := i * uvWidth
+		uRow := uPlane[:width]
+		vRow := vPlane[:width]
+
+		copy(uBuf[s:s+uvWidth], uRow[:uvWidth])
+		copy(vBuf[s:s+uvWidth], vRow[:uvWidth])
+
+		uPlane = uPlane[width:]
+		vPlane = vPlane[width:]
+	}
+
+	out := &image.YCbCr{
+		Y:              yBuf,
+		Cb:             uBuf,
+		Cr:             vBuf,
+		YStride:        width,
+		CStride:        uvWidth,
+		SubsampleRatio: image.YCbCrSubsampleRatio420,
+		Rect:           image.Rect(0, 0, width, height),
+	}
+	return out, nil
+}
+
 func ConvertToYUV444(img *image.RGBA) (*image.YCbCr, error) {
 	width, height := wh(img)
 	ySize := width * height
 	uSize := width * height
 	vSize := width * height
 
+	//
+	// data layout
+	// +-----------------+ width
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// | Y Y Y Y Y Y Y Y |
+	// +---------+-------+ height
+	// | U U U U U U U U |
+	// | U U U U U U U U |
+	// | U U U U U U U U |
+	// | U U U U U U U U |
+	// +---------+-------+ height
+	// | V V V V V V V V |
+	// | V V V V V V V V |
+	// | V V V V V V V V |
+	// | V V V V V V V V |
+	// +-----------------+ height
+	//
 	buf := GetByteBuf(ySize + uSize + vSize)
+	defer PutByteBuf(buf)
 
 	ret := C.libconvert_to_yuv444(
 		(*C.uchar)(&img.Pix[0]),
@@ -216,13 +334,26 @@ func ConvertToYUV444(img *image.RGBA) (*image.YCbCr, error) {
 		return nil, ErrConvertToYUV
 	}
 
+	yBuf := GetByteBuf(ySize)
+	uBuf := GetByteBuf(uSize)
+	vBuf := GetByteBuf(vSize)
+
+	yPlane := buf[0:ySize]
+	uPlane := buf[ySize : ySize+uSize]
+	vPlane := buf[ySize+uSize : ySize+uSize+vSize]
+
+	copy(yBuf, yPlane)
+	copy(uBuf, uPlane)
+	copy(vBuf, vPlane)
+
 	out := &image.YCbCr{
-		Y:              buf[0:ySize],
-		Cb:             buf[ySize : ySize+uSize],
-		Cr:             buf[ySize+uSize : ySize+uSize+vSize],
+		Y:              yBuf,
+		Cb:             uBuf,
+		Cr:             vBuf,
 		YStride:        width,
 		CStride:        width,
 		SubsampleRatio: image.YCbCrSubsampleRatio444,
+		Rect:           image.Rect(0, 0, width, height),
 	}
 	return out, nil
 }

@@ -249,6 +249,22 @@ int benchmark_convert_to_yuv_444() {
   ), y_width, y_height + uv_height + uv_height);
 }
 
+int benchmark_convert_to_yuv_420() {
+  Buffer<uint8_t> buf_src = load_and_convert_image("./testdata/src.png");
+  Param<int32_t> _width{"width", buf_src.get()->width()};
+  Param<int32_t> _height{"height", buf_src.get()->height()};
+
+  int32_t y_width = buf_src.get()->width();
+  int32_t uv_width = buf_src.get()->width() / 2;
+  int32_t y_height = buf_src.get()->height();
+  int32_t uv_height = buf_src.get()->height() / 2;
+
+  return jit_benchmark_bounds(convert_to_yuv_420_fn(
+    wrapFunc(buf_src, "buf_src"),
+    _width, _height
+  ), y_width, y_height + uv_height + uv_height);
+}
+
 int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
 }
@@ -619,6 +635,7 @@ int benchmark(char **argv) {
   benchmark_convert_from_rabg();
   benchmark_convert_from_yuv_420();
   benchmark_convert_from_yuv_444();
+  benchmark_convert_to_yuv_420();
   benchmark_convert_to_yuv_444();
   benchmark_rotate0(buf_src, width, height);
   benchmark_rotate90(buf_src, width, height);
@@ -662,7 +679,6 @@ int benchmark(char **argv) {
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
-
   return 0;
 }
 

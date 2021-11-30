@@ -57,6 +57,19 @@ func saveImage(img *image.RGBA) (string, error) {
 	return out.Name(), nil
 }
 
+func saveImageImage(img image.Image) (string, error) {
+	out, err := ioutil.TempFile("/tmp", "out*.png")
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	if err := png.Encode(out, img); err != nil {
+		return "", err
+	}
+	return out.Name(), nil
+}
+
 func loadData(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }

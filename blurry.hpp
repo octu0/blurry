@@ -59,6 +59,10 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
+Func flipV_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
+Func flipH_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+
 Func crop_fn(
   Func input,
   Param<int32_t> width, Param<int32_t> height,
@@ -214,6 +218,11 @@ Func prepared_match_template_zncc_fn(
   Func input, Param<int32_t> width, Param<int32_t> height,
   Func buf_tpl_val, Func buf_tpl_stddev,
   Param<int32_t> tpl_width, Param<int32_t> tpl_height
+);
+
+Func contour_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<uint8_t> threshold, Param<uint8_t> size
 );
 
 #endif // BLURRY_H_

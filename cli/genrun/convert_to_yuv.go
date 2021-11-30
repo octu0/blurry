@@ -36,7 +36,7 @@ func convertToYUVAction(c *cli.Context) error {
 		outU.Name(),
 		outV.Name(),
 	}
-	cmd := "convert_to_yuv444"
+	cmd := "convert_to_yuv" + c.String("c")
 	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, args); err != nil {
 		return err
 	}
@@ -63,6 +63,11 @@ func init() {
 				Name:  "f,file",
 				Usage: "/path/to/blurry.cpp path",
 				Value: "./blurry.cpp",
+			},
+			cli.StringFlag{
+				Name:  "c",
+				Usage: "chroma sampling",
+				Value: "420",
 			},
 		},
 	})

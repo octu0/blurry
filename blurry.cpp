@@ -10,6 +10,8 @@ const Expr CANNY_SIGMA = 5.0f;
 const Expr acos_v = -1.0f;
 const Expr pi = acos(acos_v);
 const Expr ui8_0 = cast<uint8_t>(0);
+const Expr ui8_1 = cast<uint8_t>(1);
+const Expr ui8_128 = cast<uint8_t>(128);
 const Expr ui8_255 = cast<uint8_t>(255);
 const Expr f05 = cast<float>(0.5f);
 const Expr float_0 = cast<float>(0.f);
@@ -445,7 +447,8 @@ Func rgb_to_yuv_bt2020_limited(Func rf, Func gf, Func bf, const char *name) {
     likely(float_255) // A always 0xff
   );
 
-  f(x, y, ch) = cast<uint8_t>(v);
+  f(x, y, ch) = v;
+
   return f;
 }
 
@@ -482,25 +485,81 @@ Func gray_xy_uint8(Func in, const char *name) {
   return gray;
 }
 
-Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+Func rotate90(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped(y, (height - 1) - x, ch);
+  read(x, y, ch) = in(y, height - x, ch);
+  return read;
+}
+
+Func rotate90(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate90(clamped, w, h, name);
+}
+
+Func rotate180(Func in, Expr width, Expr height, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func read = Func(name);
+  read(x, y, ch) = in(width - x, height - y, ch);
   return read;
 }
 
 Func rotate180(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate180(clamped, w, h, name);
+}
+
+Func rotate270(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped((width - 1) - x, (height - 1) - y, ch);
+  read(x, y, ch) = in(width - y, x, ch);
   return read;
 }
 
 Func rotate270(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return rotate270(clamped, w, h, name);
+}
+
+// Func flip = flipV(in, width, height, "myFlip")
+// f(x, y, ch) = flip(x, y, ch);
+Func flipV(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
-  read(x, y, ch) = clamped((width - 1) - y, x, ch);
+  read(x, y, ch) = in(width - x, y, ch);
   return read;
+}
+
+// Func foo(Func input, Param<int32_t> w, Param<int32_t> h) {
+//   Func in = flipV(input, w, h);
+//   ...
+// }
+Func flipV(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return flipV(clamped, w, h, name);
+}
+
+// Func flip = flipH(in, width, height, "myFlip")
+// f(x, y, ch) = flip(x, y, ch);
+Func flipH(Func in, Expr width, Expr height, const char *name) {
+  Var x("x"), y("y"), ch("ch");
+  Func read = Func(name);
+  read(x, y, ch) = in(x, height - y, ch);
+  return read;
+}
+
+// Func foo(Func input, Param<int32_t> w, Param<int32_t> h) {
+//   Func in = flipH(input, w, h);
+//   ...
+// }
+Func flipH(Func clamped, Param<int32_t> width, Param<int32_t> height, const char *name) {
+  Expr w = width - 1;
+  Expr h = height - 1;
+  return flipH(clamped, w, h, name);
 }
 
 Func convolve(Func in, Func kernel, RDom rd_kernel) {
@@ -857,33 +916,36 @@ Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> heig
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
   Func f = Func("convert_to_yuv_444");
-  f(x, y) = select(
+  Expr value = select(
     y < y_max_h,                  yuv(x, y, 0),
     y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
     uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
-    ui8_0
+    likely(float_0)
   );
+  f(x, y) = cast<uint8_t>(value);
 
-  f.compute_at(yuv, ti)
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
-    .fuse(xo, yo, ti)
-    .parallel(ti)
-    .vectorize(xi, 32);
-
+  f.compute_at(in, yo)
+    .split(y, yi, yo, 4)
+    .parallel(yi)
+    .vectorize(x, 16);
   return f;
 }
 
 Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+
   Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Expr y_max_w = width;
   Expr y_max_h = height;
   Expr y_height = height;
-  Expr uv_size = (width * height) / 4;
-  Expr uv_stride = width / 2;
-  Expr uv_height = uv_size / width;
+  Expr y_width = width;
+
+  Expr uv_width = width / 2;
+  Expr uv_height = height / 2;
 
   Expr u_max_h = y_height + uv_height;
   Expr v_max_h = u_max_h + uv_height;
@@ -891,30 +953,36 @@ Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> heig
   Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
 
   Func yuv444to420 = Func("yuv444to420");
-  Expr kx = 2 * (x % uv_stride);
-  Expr ky = (y * uv_stride) + (2 * (x / uv_stride)) + y;
-  yuv444to420(x,y,ch) = (
+  Expr kx = x * 2;
+  Expr ky = y * 2;
+  yuv444to420(x, y, ch) = cast<float>(
     yuv(kx, ky, ch) +
     yuv(kx + 1, ky, ch) +
     yuv(kx, ky + 1, ch) +
     yuv(kx + 1, ky + 1, ch)
-  ) / 4;
+  ) / 4.f;
 
   Func f = Func("convert_to_yuv_420");
-  f(x, y) = select(
-    y < y_max_h,                 yuv(x, y, 0),
-    y_max_h <= y && y < u_max_h, yuv444to420(x, y - y_max_h, 1),
-    u_max_h <= y && y < v_max_h, yuv444to420(x, y - u_max_h, 2),
-    ui8_0
+  Expr value = select(
+    y < y_max_h, yuv(x, y, 0),
+    y_max_h <= y && y < u_max_h && x < uv_width, yuv444to420(x, y - y_max_h, 1),
+    u_max_h <= y && y < v_max_h && x < uv_width, yuv444to420(x, y - u_max_h, 2),
+    likely(float_0)
   );
+  f(x, y) = cast<uint8_t>(value);
+
+  f.compute_at(in, yo)
+    .split(y, yi, yo, 4)
+    .parallel(yi)
+    .vectorize(x, 8);
   return f;
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
-
-  Var x("x"), y("y"), ch("ch");
 
   // same cloneimg
   Func rotate = Func("rotate0");
@@ -927,12 +995,12 @@ Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func rotate90_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
-  Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate90");
-  rotate(x, y, ch) = in(y, (height - 1) - x, ch);
+  Func rotate = rotate90(in, width, height, "rotate90");
 
   rotate.compute_at(in, y)
     .parallel(ch)
@@ -945,8 +1013,7 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
   Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate180");
-  rotate(x, y, ch) = in((width - 1) - x, (height - 1) - y, ch);
+  Func rotate = rotate180(in, width, height, "rotate180");
 
   rotate.compute_at(in, x)
     .parallel(ch)
@@ -955,12 +1022,12 @@ Func rotate180_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
 }
 
 Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
 
-  Var x("x"), y("y"), ch("ch");
-  Func rotate = Func("rotate270");
-  rotate(x, y, ch) = in((width - 1) - y, x, ch);
+  Func rotate = rotate270(in, width, height, "rotate270");
 
   rotate.compute_at(in, y)
     .parallel(ch)
@@ -968,10 +1035,34 @@ Func rotate270_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return rotate;
 }
 
-Func crop_fn(
-  Func input, Param<int32_t> width, Param<int32_t> height,
-  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
-) {
+Func flipV_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Func flip = flipV(in, width, height, "flipV");
+
+  flip.compute_at(in, x)
+    .parallel(ch)
+    .vectorize(x, 16);
+  return flip;
+}
+
+Func flipH_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readUI8(BoundaryConditions::repeat_edge(input, src_bounds), "in");
+
+  Var x("x"), y("y"), ch("ch");
+  Func flip = flipH(in, width, height, "flipH");
+
+  flip.compute_at(in, x)
+    .parallel(ch)
+    .vectorize(x, 16);
+  return flip;
+}
+
+Func crop(Func input, Expr width, Expr height, Expr px, Expr py, Expr crop_width, Expr crop_height) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -1001,6 +1092,19 @@ Func crop_fn(
     .unroll(y, 8)
     .vectorize(x, 16);
   return crop;
+}
+
+Func crop_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> px, Param<int32_t> py, Param<int32_t> crop_width, Param<int32_t> crop_height
+) {
+  Expr w = width;
+  Expr h = height;
+  Expr x = px;
+  Expr y = py;
+  Expr cw = crop_width;
+  Expr ch = crop_height;
+  return crop(input, w, h, x, y, cw, ch);
 }
 
 Func scale_kernel_box() {
@@ -1034,10 +1138,10 @@ Func scale_kernel_gaussian() {
   return f;
 }
 
-Func scale_fn(
+Func scale(
   Func input,
-  Param<int32_t> width, Param<int32_t> height,
-  Param<int32_t> scale_width, Param<int32_t> scale_height
+  Expr width, Expr height,
+  Expr scale_width, Expr scale_height
 ) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
@@ -1060,13 +1164,30 @@ Func scale_fn(
   );
   f(x, y, ch) = cast<uint8_t>(value);
 
-  f.compute_at(scale, ti)
+  scale.compute_at(f, ti)
+    .parallel(ch)
+    .vectorize(y, 8)
+    .vectorize(x, 8);
+
+  f.compute_root()
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 8)
+    .parallel(ti)
     .vectorize(xi, 32);
   return f;
+}
+
+Func scale_fn(
+  Func input,
+  Param<int32_t> width, Param<int32_t> height,
+  Param<int32_t> scale_width, Param<int32_t> scale_height
+) {
+  Expr w = width;
+  Expr h = height;
+  Expr sw = scale_width;
+  Expr sh = scale_height;
+  return scale(input, w, h, sw, sh);
 }
 
 Func scale_by_kernel(
@@ -1646,7 +1767,7 @@ Func contrast_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<
   return contrast;
 }
 
-Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+Func boxblur(Func input, Expr width, Expr height, Expr size) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -1655,7 +1776,7 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Region src_bounds = {{0, width},{0, height},{0, 4}};
   Func in = read(BoundaryConditions::repeat_edge(input, src_bounds), "in");
 
-  Expr box_size = max(size, 1);
+  Expr box_size = cast<uint8_t>(max(size, 1));
 
   RDom rd_x = RDom(0, box_size, "rdom_x");
   Func blur_x = Func("blur_x");
@@ -1665,17 +1786,17 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   Func blur_y = Func("blur_y");
   blur_y(x, y, ch) = fast_integer_divide(sum(blur_x(x, y + rd_y, ch)), box_size);
 
-  Func boxblur = Func("boxblur");
-  boxblur(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
+  Func f = Func("boxblur");
+  f(x, y, ch) = cast<uint8_t>(blur_y(x, y, ch));
 
   blur_x.compute_root()
     .parallel(ch)
     .vectorize(x, 32);
-  blur_y.compute_at(boxblur, yi)
+  blur_y.compute_at(f, yi)
     .parallel(ch)
     .vectorize(x, 32);
 
-  boxblur.compute_at(in, ti)
+  f.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1685,10 +1806,17 @@ Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<u
   in.compute_at(blur_x, y)
     .parallel(ch)
     .vectorize(x, 32);
-  return boxblur;
+  return f;
 }
 
-Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
+Func boxblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<uint8_t> size) {
+  Expr w = width;
+  Expr h = height;
+  Expr s = size;
+  return boxblur(input, w, h, s);
+}
+
+Func gaussianblur(Func input, Expr width, Expr height, Expr sigma){
   Var x("x"), y("y"), ch("ch");
   Var s("s");
   Var xo("xo"), xi("xi");
@@ -1707,7 +1835,7 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
 
   Expr half = fast_integer_divide(radius, 2);
 
-  RDom rd_rad = RDom(half, size, "rd_radius");
+  RDom rd_rad = RDom(-1 * half, size - half, "rd_radius");
 
   Func kernel = Func("kernel");
   kernel(s) = fast_exp(-(s * s) / sig2 / sigR);
@@ -1716,19 +1844,19 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
   Expr kernel_val = kernel(rd_rad);
   sum_kernel(s) = sum(kernel_val);
 
-  Func gaussianblur = Func("gaussianblur");
+  Func f = Func("gaussianblur");
   Expr center_val = sum_kernel(center);
   Expr in_val = in(x + rd_rad.x, y, ch);
   Expr val = sum(in_val * kernel(rd_rad));
-  gaussianblur(x, y, ch) = cast<uint8_t>(val / center_val);
+  f(x, y, ch) = cast<uint8_t>(val / center_val);
 
   kernel.compute_root()
     .vectorize(s, 8);
 
-  sum_kernel.compute_at(gaussianblur, ti)
+  sum_kernel.compute_at(f, ti)
     .vectorize(s, 32);
 
-  gaussianblur.compute_at(in, ti)
+  f.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
@@ -1739,7 +1867,14 @@ Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Pa
     .parallel(ch)
     .vectorize(x, 16);
 
-  return gaussianblur;
+  return f;
+}
+
+Func gaussianblur_fn(Func input, Param<int32_t> width, Param<int32_t> height, Param<float> sigma){
+  Expr w = width;
+  Expr h = height;
+  Expr s = sigma;
+  return gaussianblur(input, w, h, s);
 }
 
 Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
@@ -2377,4 +2512,432 @@ Func match_template_zncc_fn(
     .unroll(y, 8)
     .vectorize(x, 16);
   return match;
+}
+
+Func linearsum(Func in, Expr size, Expr xfactor, Expr yfactor) {
+  Var x("x"), y("y"), ch("ch");
+
+  RDom rd = RDom(0, size, "rd_linearsum");
+  Func f = Func("linearsum");
+  f(x, y, ch) += in(x + (rd * xfactor), y + (rd * yfactor), ch);
+  return f;
+}
+
+Func linearsum_xy(Func in, Expr size, Expr xfactor, Expr yfactor) {
+  Var x("x"), y("y");
+
+  RDom rd = RDom(0, size, "rd_linearsum");
+  Func f = Func("linearsum");
+  f(x, y) += in(x + (rd * xfactor), y + (rd * yfactor));
+  return f;
+}
+
+Func squaresum(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+
+  Expr half = size / 2;
+  RDom rd = RDom(-1 * half, half, -1 * half, half, "rd_squaresum");
+  Func f = Func("squaresum");
+  f(x, y, ch) += in(x + rd.x, y + rd.y, ch);
+  return f;
+}
+
+Func avgslant(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+  Func tr = linearsum(in, size, 1, 1);   // top right
+  Func br = linearsum(in, size, 1, -1);  // bottom right
+  Func bl = linearsum(in, size, -1, -1); // bottom left
+  Func tl = linearsum(in, size, -1, 1);  // top left
+
+  Func f = Func("avgslant");
+  Expr tr_avg = tr(x, y, ch) / size;
+  Expr br_avg = br(x, y, ch) / size;
+  Expr bl_avg = bl(x, y, ch) / size;
+  Expr tl_avg = tl(x, y, ch) / size;
+  f(x, y, ch) = (tr_avg + br_avg + bl_avg + tl_avg) / 4;
+  return f;
+}
+
+Func avgslant_threshold(Func in, Expr size, Expr threshold, Expr min, Expr max) {
+  Var x("x"), y("y"), ch("ch");
+  Func avg = avgslant(in, size);
+  Func f = Func("avgslant_threshold");
+  f(x, y, ch) = select(avg(x, y, ch) < threshold, min, max);
+  return f;
+}
+
+Func maxslant(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+  Func tr = linearsum(in, size, 1, 1);   // top right
+  Func br = linearsum(in, size, 1, -1);  // bottom right
+  Func bl = linearsum(in, size, -1, -1); // bottom left
+  Func tl = linearsum(in, size, -1, 1);  // top left
+
+  Func avg = Func("avgslant");
+  Expr tr_avg = tr(x, y, ch) / size;
+  Expr br_avg = br(x, y, ch) / size;
+  Expr bl_avg = bl(x, y, ch) / size;
+  Expr tl_avg = tl(x, y, ch) / size;
+  avg(x, y, ch) = max(tr_avg, max(br_avg, max(bl_avg, tl_avg)));
+  return avg;
+}
+
+Func avgstraight(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+  Func t = linearsum(in, size, 0, 1);  // top
+  Func r = linearsum(in, size, 1, 0);  // right
+  Func b = linearsum(in, size, 0, -1); // bottom
+  Func l = linearsum(in, size, -1, 0); // left
+
+  Func avg = Func("avgstraight");
+  Expr t_avg = t(x, y, ch) / size;
+  Expr r_avg = r(x, y, ch) / size;
+  Expr b_avg = b(x, y, ch) / size;
+  Expr l_avg = l(x, y, ch) / size;
+  avg(x, y, ch) = (t_avg + r_avg + b_avg + l_avg) / 4;
+  return avg;
+}
+
+Func avgstraight_threshold(Func in, Expr size, Expr threshold, Expr min, Expr max) {
+  Var x("x"), y("y"), ch("ch");
+  Func avg = avgstraight(in, size);
+  Func f = Func("avgstraight_threshold");
+  f(x, y, ch) = select(avg(x, y, ch) < threshold, min, max);
+  return f;
+}
+
+Func maxstraight(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+  Func t = linearsum(in, size, 0, 1);  // top
+  Func r = linearsum(in, size, 1, 0);  // right
+  Func b = linearsum(in, size, 0, -1); // bottom
+  Func l = linearsum(in, size, -1, 0); // left
+
+  Func avg = Func("avgstraight");
+  Expr t_avg = t(x, y, ch) / size;
+  Expr r_avg = r(x, y, ch) / size;
+  Expr b_avg = b(x, y, ch) / size;
+  Expr l_avg = l(x, y, ch) / size;
+  avg(x, y, ch) = max(t_avg, max(r_avg, max(b_avg, l_avg)));
+  return avg;
+}
+
+Func avgsquare(Func in, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func avg = squaresum(in, size);
+  Func f = Func("avgsquare");
+  f(x, y, ch) = avg(x, y, ch) / size;
+  return f;
+}
+
+Func avgfill(Func in, Expr width, Expr height, Expr size) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func f = Func("avgfill");
+  Func avg = avgslant(in, size);
+  Expr curr = avg(x, y, ch);
+  Expr next = avg(x + size, y + size, ch);
+  f(x, y, ch) = select(
+    curr == next, curr,
+    next < curr, curr,
+    next
+  );
+  return f;
+}
+
+Func contour_slant(Func binary_input) {
+  Var x("x"), y("y");
+
+  Func f = Func("contour_slant");
+  Expr tr = binary_input(x + 1, y + 1); // top right
+  Expr br = binary_input(x + 1, y - 1); // bottom right
+  Expr bl = binary_input(x - 1, y - 1); // bottom left
+  Expr tl = binary_input(x - 1, y + 1); // top left
+
+  // https://en.wikipedia.org/wiki/Marching_squares
+  f(x, y) = cast<uint8_t>(select(
+    tr == 0 && br == 0 && bl == 0 && tl == 0, 100, // case 0
+    tr == 0 && br == 0 && bl == 1 && tl == 0, 101, // case 1
+    tr == 0 && br == 1 && bl == 0 && tl == 0, 102, // case 2
+    tr == 0 && br == 1 && bl == 1 && tl == 0, 103, // case 3
+    tr == 1 && br == 0 && bl == 0 && tl == 0, 104, // case 4
+    tr == 1 && br == 0 && bl == 1 && tl == 0, 105, // case 5
+    tr == 1 && br == 1 && bl == 0 && tl == 0, 106, // case 6
+    tr == 1 && br == 1 && bl == 1 && tl == 0, 107, // case 7
+    tr == 0 && br == 0 && bl == 0 && tl == 1, 108, // case 8
+    tr == 0 && br == 0 && bl == 1 && tl == 1, 109, // case 9
+    tr == 0 && br == 1 && bl == 0 && tl == 1, 110, // case 10
+    tr == 0 && br == 1 && bl == 1 && tl == 1, 111, // case 11
+    tr == 1 && br == 0 && bl == 0 && tl == 1, 112, // case 12
+    tr == 1 && br == 0 && bl == 1 && tl == 1, 113, // case 13
+    tr == 1 && br == 1 && bl == 0 && tl == 1, 114, // case 14
+    tr == 1 && br == 1 && bl == 1 && tl == 1, 115, // case 15
+    0
+  ));
+
+  return f;
+}
+
+Func contour_line(Func binary_input, Expr width, Expr height, Expr size) {
+  Var x("x"), y("y");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Func slant = contour_slant(binary_input);
+
+  Func nb = Func("contour_neighbor");
+  Expr curr = slant(x, y);
+
+  Expr is_top = curr == 112;
+  Expr is_bottom = curr == 103;
+  Expr is_right = curr == 106;
+  Expr is_left = curr == 109;
+  Expr is_top_right = curr == 101;
+  Expr is_top_left = curr == 102;
+  Expr is_bottom_right = curr == 108;
+  Expr is_bottom_left = curr == 104;
+
+  nb(x, y) = select(
+    is_top_right || is_top_left || is_bottom_right || is_bottom_left ||
+    is_top || is_right || is_left || is_bottom ||
+    is_top_right || is_top_left ||
+    is_bottom_right || is_bottom_left,
+    ui8_1,
+    ui8_0
+  );
+
+  Func next_top = linearsum_xy(nb, size, 0, 1);
+  Func next_top_right = linearsum_xy(nb, size, 1, 1);
+  Func next_right = linearsum_xy(nb, size, 1, 0);
+  Func next_bottom_right = linearsum_xy(nb, size, 1, -1);
+  Func next_bottom = linearsum_xy(nb, size, 0, -1);
+  Func next_bottom_left = linearsum_xy(nb, size, -1, -1);
+  Func next_left = linearsum_xy(nb, size, -1, 0);
+  Func next_top_left = linearsum_xy(nb, size, -1, 1);
+
+  Func f = Func("countor_line");
+
+  Expr top = select(
+    next_top(x, y) == size, select(
+      nb(x, y + size + 1) == ui8_1, ui8_1,      // top
+      nb(x + 1, y + size + 1) == ui8_1, ui8_1,  // top right
+      nb(x + 1, y + size) == ui8_1, ui8_1,      // right
+      nb(x + 1, y + size - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x - 1, y + size - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x - 1, y + size) == ui8_1, ui8_1,      // left
+      nb(x - 1, y + size + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr top_right = select(
+    next_top_right(x, y) == size, select(
+      nb(x + size, y + size + 1) == ui8_1, ui8_1,      // top
+      nb(x + size + 1, y + size + 1) == ui8_1, ui8_1,  // top right
+      nb(x + size + 1, y + size) == ui8_1, ui8_1,      // right
+      nb(x + size + 1, y + size - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x + size, y + size - 1) == ui8_1, ui8_1,      // bottom
+      nb(x + size - 1, y + size) == ui8_1, ui8_1,      // left
+      nb(x + size - 1, y + size + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr right = select(
+    next_right(x, y) == size, select(
+      nb(x + size, y + 1) == ui8_1, ui8_1,      // top
+      nb(x + size + 1, y + 1) == ui8_1, ui8_1,  // top right
+      nb(x + size + 1, y) == ui8_1, ui8_1,      // right
+      nb(x + size + 1, y - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x + size, y - 1) == ui8_1, ui8_1,      // bottom
+      nb(x + size - 1, y - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x + size - 1, y + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr bottom_right = select(
+    next_bottom_right(x, y) == size, select(
+      nb(x + size, y - size + 1) == ui8_1, ui8_1,      // top
+      nb(x + size + 1, y - size + 1) == ui8_1, ui8_1,  // top right
+      nb(x + size + 1, y - size) == ui8_1, ui8_1,      // right
+      nb(x + size + 1, y - size - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x + size, y - size - 1) == ui8_1, ui8_1,      // bottom
+      nb(x + size - 1, y - size -1) == ui8_1, ui8_1,   // bottom left
+      nb(x + size - 1, y - size) == ui8_1, ui8_1,      // left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr bottom = select(
+    next_bottom(x, y) == size, select(
+      nb(x + 1, y - size + 1) == ui8_1, ui8_1,  // top right
+      nb(x + 1, y - size) == ui8_1, ui8_1,      // right
+      nb(x + 1, y - size - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x, y - size - 1) == ui8_1, ui8_1,      // bottom
+      nb(x - 1, y - size - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x - 1, y - size) == ui8_1, ui8_1,      // left
+      nb(x - 1, y - size + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr bottom_left = select(
+    next_bottom_left(x, y) == size, select(
+      nb(x - size, y - size + 1) == ui8_1, ui8_1,      // top
+      nb(x - size + 1, y - size) == ui8_1, ui8_1,      // right
+      nb(x - size + 1, y - size - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x - size, y - size - 1) == ui8_1, ui8_1,      // bottom
+      nb(x - size - 1, y - size - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x - size - 1, y - size) == ui8_1, ui8_1,      // left
+      nb(x - size - 1, y - size + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr left = select(
+    next_left(x, y) == size, select(
+      nb(x - size, y + 1) == ui8_1, ui8_1,      // top
+      nb(x - size + 1, y + 1) == ui8_1, ui8_1,  // top right
+      nb(x - size + 1, y - 1) == ui8_1, ui8_1,  // bottom right
+      nb(x - size, y - 1) == ui8_1, ui8_1,      // bottom 
+      nb(x - size - 1, y - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x - size - 1, y) == ui8_1, ui8_1,      // left
+      nb(x - size - 1, y + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr top_left = select(
+    next_top_left(x, y) == size, select(
+      nb(x - size, y + size + 1) == ui8_1, ui8_1,      // top
+      nb(x - size + 1, y + size + 1) == ui8_1, ui8_1,  // top right
+      nb(x - size + 1, y + size) == ui8_1, ui8_1,      // right
+      nb(x - size, y + size - 1) == ui8_1, ui8_1,      // bottom 
+      nb(x - size - 1, y + size - 1) == ui8_1, ui8_1,  // bottom left
+      nb(x - size - 1, y + size) == ui8_1, ui8_1,      // left
+      nb(x - size - 1, y + size + 1) == ui8_1, ui8_1,  // top left
+      ui8_0
+    ),
+    ui8_0
+  );
+  Expr value = select(
+    nb(x, y) == ui8_0, ui8_0, select(
+      top == ui8_1, ui8_1,
+      top_right == ui8_1, ui8_1,
+      right == ui8_1, ui8_1,
+      bottom_right == ui8_1, ui8_1,
+      bottom == ui8_1, ui8_1,
+      bottom_left == ui8_1, ui8_1,
+      left == ui8_1, ui8_1,
+      top_left == ui8_1, ui8_1,
+      ui8_0
+    )
+  );
+  f(x, y) = value;
+
+  slant.compute_at(f, ti)
+    .vectorize(y, 8)
+    .vectorize(x, 8);
+
+  next_top.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_top_right.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_right.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_bottom_right.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_bottom.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_bottom_left.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_left.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+  next_top_left.compute_at(f, ti)
+    .vectorize(y)
+    .vectorize(x);
+
+  nb.compute_at(f, ti)
+    .vectorize(y, 8)
+    .vectorize(x, 8);
+
+  f.compute_root()
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+
+  return f;
+}
+
+Func contour_overlap_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<uint8_t> threshold, Param<uint8_t> size
+) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func so = sobel_fn(input, width, height);
+  so.compute_root();
+
+  Func filter = Func("contour_filter");
+  Expr so_value = so(x, y, ch);
+  filter(x, y, ch) = select(
+    so_value < threshold, ui8_0, ui8_1  // 0 = off 1 = on
+  );
+
+  Func binary = Func("contour_sobel_binary");
+  binary(x, y) = filter(x, y, 0);
+
+  Expr w = width - 1;
+  Expr h = height - 1;
+  Func c = contour_line(binary, w, h, size);
+
+  Func f = Func("contour_overlap");
+  Expr value = c(x, y);
+  f(x, y, ch) = select(
+    ch == 3, ui8_255,
+    value == ui8_1, ui8_255, // white = #FFFFFF
+    cast<uint8_t>(input(x, y, ch))
+  );
+  return f;
+}
+
+Func contour_fn(
+  Func input, Param<int32_t> width, Param<int32_t> height,
+  Param<uint8_t> threshold, Param<uint8_t> size
+) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func so = sobel_fn(input, width, height);
+  so.compute_root();
+
+  Func filter = Func("contour_filter");
+  Expr so_value = so(x, y, ch);
+  filter(x, y, ch) = select(
+    so_value < threshold, ui8_0, ui8_1  // 0 = off 1 = on
+  );
+
+  Func binary = Func("contour_sobel_binary");
+  binary(x, y) = filter(x, y, 0);
+
+  Expr w = width - 1;
+  Expr h = height - 1;
+  Func c = contour_line(binary, w, h, size);
+
+  Func f = Func("contour");
+  Expr value = c(x, y);
+  f(x, y) = value;
+  return f;
 }

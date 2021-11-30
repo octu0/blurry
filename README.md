@@ -647,36 +647,38 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.18.4
+   1.19.0
 
 COMMANDS:
-     blend
-     blockmozaic
-     boxblur
-     brightness
-     canny
-     clone
-     contrast
-     convert
-     convert_from_yuv
-     convert_to_yuv
-     crop
-     dilation
-     edge
-     emboss
-     erosion
-     gamma
-     gaussianblur
-     gradient
-     grayscale
-     highpass
-     invert
-     laplacian
-     morphology
-     match_template
-     rotate
-     scale
-     sobel
+     blend             
+     blockmozaic       
+     boxblur           
+     brightness        
+     canny             
+     clone             
+     contour           
+     contrast          
+     convert           
+     convert_from_yuv  
+     convert_to_yuv    
+     crop              
+     dilation          
+     edge              
+     emboss            
+     erosion           
+     flip              
+     gamma             
+     gaussianblur      
+     gradient          
+     grayscale         
+     highpass          
+     invert            
+     laplacian         
+     morphology        
+     match_template    
+     rotate            
+     scale             
+     sobel             
      help, h           Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

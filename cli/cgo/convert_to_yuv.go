@@ -2,6 +2,7 @@ package cgo
 
 import (
 	"fmt"
+	"image"
 	"log"
 
 	"gopkg.in/urfave/cli.v1"
@@ -9,16 +10,23 @@ import (
 	"github.com/octu0/blurry"
 )
 
+func convertToYUV(cs string, img *image.RGBA) (*image.YCbCr, error) {
+	switch cs {
+	case "420":
+		return blurry.ConvertToYUV420(img)
+	case "444":
+		return blurry.ConvertToYUV444(img)
+	}
+	return nil, fmt.Errorf("unknown chroma subsample: '%s'", cs)
+}
+
 func convertToYUVAction(c *cli.Context) error {
 	in, err := loadImage(c.String("input"))
 	if err != nil {
 		return err
 	}
-	if c.String("c") != "444" {
-		return fmt.Errorf("supports only chroma sample 444 yet ('%s')", c.String("c"))
-	}
 
-	ycbcr, err := blurry.ConvertToYUV444(in)
+	ycbcr, err := convertToYUV(c.String("c"), in)
 	if err != nil {
 		return err
 	}
@@ -41,6 +49,12 @@ func convertToYUVAction(c *cli.Context) error {
 	log.Printf("info: y: %s", pathY)
 	log.Printf("info: u: %s", pathU)
 	log.Printf("info: v: %s", pathV)
+
+	imgPath, err := saveImageImage(ycbcr)
+	if err != nil {
+		return err
+	}
+	log.Printf("info: image: %s", imgPath)
 	return nil
 }
 
@@ -57,7 +71,7 @@ func init() {
 			cli.StringFlag{
 				Name:  "c,chroma",
 				Usage: "to subsampling(444)",
-				Value: "444",
+				Value: "420",
 			},
 		},
 	})

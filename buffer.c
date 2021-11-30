@@ -110,6 +110,27 @@ halide_buffer_t *create_yuv444_buffer(unsigned char *data, int32_t width, int32_
   return buffer;
 }
 
+halide_buffer_t *create_uint8_array_buffer(unsigned char *data, int32_t width, int32_t height) {
+  int32_t dimensions = 2;
+  halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));
+  if(buffer == NULL) {
+    return NULL;
+  }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
+  halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
+  if(dim == NULL) {
+    free_buf(buffer);
+    return NULL;
+  }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
+
+  init_array_dim(dim, width, height);
+  init_uint8_buf(buffer, dim, data, dimensions);
+
+  return buffer;
+}
+
 halide_buffer_t *create_uint16_array_buffer(unsigned char *data, int32_t width, int32_t height) {
   int32_t dimensions = 2;
   halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));

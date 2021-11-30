@@ -44,12 +44,12 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "t, threshold",
-				Usage: "grayscale threshold",
-				Value: "80",
+				Usage: "threshold for binarizing a sobelized image",
+				Value: "100",
 			},
 			cli.StringFlag{
 				Name:  "s, size",
-				Usage: "contour line size",
+				Usage: "size to be considered contour",
 				Value: "4",
 			},
 		},

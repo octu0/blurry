@@ -5,6 +5,7 @@
 #endif
 
 extern halide_buffer_t *create_rgba_buffer(unsigned char *data, int32_t width, int32_t height);
+extern halide_buffer_t *create_uint8_array_buffer(unsigned char *data, int32_t width, int32_t height);
 extern halide_buffer_t *create_uint16_array_buffer(unsigned char *data, int32_t width, int32_t height);
 extern halide_buffer_t *create_int32_array_buffer(unsigned char *data, int32_t width, int32_t height);
 extern halide_buffer_t *create_float_array_buffer(unsigned char *data, int32_t width, int32_t height);

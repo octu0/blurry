@@ -64,7 +64,7 @@ func generate(runtimePath, blurryPath, target string) (string, error) {
 
 	// strip symbol
 	genArgs := []string{
-		"g++",
+		"clang++",
 		"-g",
 		benchmarkOptFlag,
 		"-I" + runtimePath + "/include",
@@ -149,7 +149,7 @@ func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandNam
 
 func runexec(runtimePath, generateOutFilePath string, args []string) error {
 	cmd := exec.Command(generateOutFilePath, args...)
-	cmd.Env = append(os.Environ(), "DYLD_LIBRARY_PATH="+runtimePath+"/lib")
+	cmd.Env = append(os.Environ(), "DYLD_LIBRARY_PATH="+runtimePath+"/lib", "LD_LIBRARY_PATH="+runtimePath+"/lib")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

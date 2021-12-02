@@ -1838,7 +1838,9 @@ Func gaussianblur(Func input, Expr width, Expr height, Expr sigma){
   RDom rd_rad = RDom(-1 * half, size - half, "rd_radius");
 
   Func kernel = Func("kernel");
-  kernel(s) = fast_exp(-(s * s) / sig2 / sigR);
+  Expr denominator = sig2 / sigR;
+  Expr s2 = s * s;
+  kernel(s) = fast_exp((-1 * s2) / denominator);
 
   Func sum_kernel = Func("sum_kernel");
   Expr kernel_val = kernel(rd_rad);
@@ -1856,16 +1858,12 @@ Func gaussianblur(Func input, Expr width, Expr height, Expr sigma){
   sum_kernel.compute_at(f, ti)
     .vectorize(s, 32);
 
-  f.compute_at(in, ti)
+  f.compute_at(in, xi)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ch)
-    .parallel(ti, 8)
+    .parallel(ti, 32)
     .vectorize(xi, 32);
-
-  in.compute_root()
-    .parallel(ch)
-    .vectorize(x, 16);
 
   return f;
 }

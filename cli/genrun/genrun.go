@@ -21,14 +21,6 @@ func Command() []cli.Command {
 	return commands
 }
 
-var (
-	benchmarkOpt bool = false
-)
-
-func useBenchmarkOpt() {
-	benchmarkOpt = true
-}
-
 func generate(runtimePath, blurryPath, target string) (string, error) {
 	realRuntimePath, err := filepath.Abs(runtimePath)
 	if err != nil {
@@ -57,16 +49,10 @@ func generate(runtimePath, blurryPath, target string) (string, error) {
 	libpngFlags := strings.TrimSpace(string(libpngCfg))
 	libpngFlags = strings.ReplaceAll(libpngFlags, "\n", " ")
 
-	benchmarkOptFlag := ""
-	if benchmarkOpt {
-		benchmarkOptFlag = "-O2"
-	}
-
 	// strip symbol
 	genArgs := []string{
-		"g++",
+		"clang++",
 		"-g",
-		benchmarkOptFlag,
 		"-I" + runtimePath + "/include",
 		"-I" + runtimePath + "/share/Halide/tools",
 		"-L" + runtimePath + "/lib",
@@ -149,7 +135,7 @@ func runLocal(runtimePath, generateOutFilePath, inputFilePath string, commandNam
 
 func runexec(runtimePath, generateOutFilePath string, args []string) error {
 	cmd := exec.Command(generateOutFilePath, args...)
-	cmd.Env = append(os.Environ(), "DYLD_LIBRARY_PATH="+runtimePath+"/lib")
+	cmd.Env = append(os.Environ(), "DYLD_LIBRARY_PATH="+runtimePath+"/lib", "LD_LIBRARY_PATH="+runtimePath+"/lib")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

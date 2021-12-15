@@ -301,71 +301,29 @@ int jit_convert_to_yuv_420(char **argv) {
   int32_t width = buf_src.get()->width();
   int32_t height = buf_src.get()->height();
 
-  Func fn = convert_to_yuv_420_fn(
+  Pipeline pipe = convert_to_yuv_420_fn(
     wrapFunc(buf_src, "buf_src"),
     _width, _height
   );
 
-  fn.compile_jit(get_jit_target_from_environment());
+  pipe.compile_jit(get_jit_target_from_environment());
 
   int32_t y_width = width;
   int32_t uv_width = width / 2;
   int32_t y_height = height;
   int32_t uv_height = height / 2;
+  int32_t ysize = width * height;
+  int32_t uvsize = ((width + 1) / 2) * ((height + 1)/ 2);
 
-  printf("realize(uint8_t) %s...\n", fn.name().c_str());
-  Buffer<uint8_t> out = fn.realize({
-    y_width,
-    y_height + uv_height + uv_height,
-    2
-  });
-  uint8_t *yuv = out.data();
+  printf("realize(uint8_t) %s...\n", "convert_to_yuv_420");
+  Buffer<uint8_t> buf_y(y_width, y_height);
+  Buffer<uint8_t> buf_u(uv_width, uv_height);
+  Buffer<uint8_t> buf_v(uv_width, uv_height);
 
-  int32_t ysize = y_width * y_height;
-  int32_t uvsize = uv_width * uv_height;
-  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
-  if(data_y == nullptr) {
-    return 1;
-  }
-  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
-  if(data_u == nullptr) {
-    return 1;
-  }
-  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
-  if(data_v == nullptr) {
-    return 1;
-  }
-
-  int i = 0;
-  int ypos = 0;
-  for(int y = 0; y < y_height; y += 1) {
-    for(int x = 0; x < y_width; x += 1) {
-      //data_y[ypos] = yuv[(y * y_height) + x];
-      data_y[ypos] = yuv[i];
-      ypos += 1;
-      i += 1;
-    }
-  }
-  int upos = 0;
-  for(int y = 0; y < uv_height; y += 1) {
-    for(int x = 0; x < uv_width; x += 1) {
-      //data_u[upos] = yuv[(y * y_height) + x];
-      data_u[upos] = yuv[i];
-      upos += 1;
-      i += 1;
-    }
-    i += uv_width;
-  }
-  int vpos = 0;
-  for(int y = 0; y < uv_height; y += 1) {
-    for(int x = 0; x < uv_width; x += 1) {
-      //data_v[vpos] = yuv[(y * y_height) + x];
-      data_v[vpos] = yuv[i];
-      vpos += 1;
-      i += 1;
-    }
-    i += uv_width;
-  }
+  pipe.realize({buf_y, buf_u, buf_v});
+  uint8_t *data_y = buf_y.data();
+  uint8_t *data_u = buf_u.data();
+  uint8_t *data_v = buf_v.data();
 
   FILE *const y = fopen(argv[3], "wb");
   if(y == nullptr) {
@@ -422,7 +380,6 @@ int jit_convert_to_yuv_420(char **argv) {
   return 0;
 }
 
-
 int jit_convert_to_yuv_444(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
@@ -432,70 +389,30 @@ int jit_convert_to_yuv_444(char **argv) {
   int32_t width = buf_src.get()->width();
   int32_t height = buf_src.get()->height();
 
-  Func fn = convert_to_yuv_444_fn(
+  Pipeline pipe = convert_to_yuv_444_fn(
     wrapFunc(buf_src, "buf_src"),
     _width, _height
   );
 
-  fn.compile_jit(get_jit_target_from_environment());
+  pipe.compile_jit(get_jit_target_from_environment());
 
   int32_t y_width = width;
   int32_t uv_width = width;
   int32_t y_height = height;
   int32_t uv_height = height;
+  int32_t ysize = width * height;
+  int32_t uvsize = width * height;
 
-  printf("realize(uint8_t) %s...\n", fn.name().c_str());
-  Buffer<uint8_t> out = fn.realize({
-    y_width,
-    y_height + uv_height + uv_height,
-    2
-  });
-  uint8_t *yuv = out.data();
+  printf("realize(uint8_t) %s...\n", "convert_to_yuv_444");
+  Buffer<uint8_t> buf_y(y_width, y_height);
+  Buffer<uint8_t> buf_u(uv_width, uv_height);
+  Buffer<uint8_t> buf_v(uv_width, uv_height);
 
-  int32_t ysize = y_width * y_height;
-  int32_t uvsize = uv_width * uv_height;
-  uint8_t *data_y = (uint8_t *) calloc(ysize, sizeof(uint8_t));
-  if(data_y == nullptr) {
-    return 1;
-  }
-  uint8_t *data_u = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
-  if(data_u == nullptr) {
-    return 1;
-  }
-  uint8_t *data_v = (uint8_t *) calloc(uvsize, sizeof(uint8_t));
-  if(data_v == nullptr) {
-    return 1;
-  }
-
-  int i = 0;
-  int ypos = 0;
-  for(int y = 0; y < y_height; y += 1) {
-    for(int x = 0; x < y_width; x += 1) {
-      //data_y[ypos] = yuv[(y * y_height) + x];
-      data_y[ypos] = yuv[i];
-      ypos += 1;
-      i += 1;
-    }
-  }
-  int upos = 0;
-  for(int y = 0; y < uv_height; y += 1) {
-    for(int x = 0; x < uv_width; x += 1) {
-      //data_u[upos] = yuv[(y * y_height) + x];
-      data_u[upos] = yuv[i];
-      upos += 1;
-      i += 1;
-    }
-  }
-  int vpos = 0;
-  for(int y = 0; y < uv_height; y += 1) {
-    for(int x = 0; x < uv_width; x += 1) {
-      //data_v[vpos] = yuv[(y * y_height) + x];
-      data_v[vpos] = yuv[i];
-      vpos += 1;
-      i += 1;
-    }
-  }
-
+  pipe.realize({buf_y, buf_u, buf_v});
+  uint8_t *data_y = buf_y.data();
+  uint8_t *data_u = buf_u.data();
+  uint8_t *data_v = buf_v.data();
+  
   FILE *const y = fopen(argv[3], "wb");
   if(y == nullptr) {
     return 1;

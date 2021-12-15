@@ -900,41 +900,11 @@ Func convert_from_yuv_420_fn(Func in_y, Func in_u, Func in_v, Param<int32_t> wid
   );
 }
 
-Func convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
-  Var x("x"), y("y");
-  Var xo("xo"), xi("xi");
-  Var yo("yo"), yi("yi");
-  Var ti("ti");
-
-  Region src_bounds = {{0, width},{0, height},{0, 3}};
-  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
-
-  Expr y_max_w = width;
-  Expr y_max_h = height;
-  Expr uv_max_h = y_max_h + y_max_h;
-
-  Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
-
-  Func f = Func("convert_to_yuv_444");
-  Expr value = select(
-    y < y_max_h,                  yuv(x, y, 0),
-    y_max_h <= y && y < uv_max_h, yuv(x, (y - y_max_h), 1),
-    uv_max_h <= y,                yuv(x, (y - uv_max_h), 2),
-    likely(float_0)
-  );
-  f(x, y) = cast<uint8_t>(value);
-
-  f.compute_at(in, yo)
-    .split(y, yi, yo, 4)
-    .parallel(yi)
-    .vectorize(x, 16);
-  return f;
-}
-
-Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Pipeline convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
+  Var ti("ti");
 
   Region src_bounds = {{0, width},{0, height},{0, 3}};
   Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
@@ -962,20 +932,77 @@ Func convert_to_yuv_420_fn(Func input, Param<int32_t> width, Param<int32_t> heig
     yuv(kx + 1, ky + 1, ch)
   ) / 4.f;
 
-  Func f = Func("convert_to_yuv_420");
-  Expr value = select(
-    y < y_max_h, yuv(x, y, 0),
-    y_max_h <= y && y < u_max_h && x < uv_width, yuv444to420(x, y - y_max_h, 1),
-    u_max_h <= y && y < v_max_h && x < uv_width, yuv444to420(x, y - u_max_h, 2),
-    likely(float_0)
-  );
-  f(x, y) = cast<uint8_t>(value);
+  Func fn_y = Func("fn_y");
+  Func fn_u = Func("fn_u");
+  Func fn_v = Func("fn_v");
+  fn_y(x, y) = cast<uint8_t>(yuv(x, y, 0));
+  fn_u(x, y) = cast<uint8_t>(yuv444to420(x, y, 1));
+  fn_v(x, y) = cast<uint8_t>(yuv444to420(x, y, 2));
 
-  f.compute_at(in, yo)
-    .split(y, yi, yo, 4)
-    .parallel(yi)
-    .vectorize(x, 8);
-  return f;
+  in.compute_root();
+  fn_y.compute_at(yuv, ti)
+    .store_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  fn_u.compute_at(yuv444to420, ti)
+    .store_at(yuv444to420, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  fn_v.compute_at(yuv444to420, ti)
+    .store_at(yuv444to420, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  return Pipeline({fn_y, fn_u, fn_v});
+}
+
+Pipeline convert_to_yuv_444_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y");
+  Var xo("xo"), xi("xi");
+  Var yo("yo"), yi("yi");
+  Var ti("ti");
+
+  Region src_bounds = {{0, width},{0, height},{0, 3}};
+  Func in = readUI8(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Expr y_max_w = width;
+  Expr y_max_h = height;
+  Expr uv_max_h = y_max_h + y_max_h;
+
+  Func yuv = rgb_to_yuv444(in, "rgb_to_yuv444");
+
+  Func fn_y = Func("fn_y");
+  Func fn_u = Func("fn_u");
+  Func fn_v = Func("fn_v");
+  fn_y(x, y) = cast<uint8_t>(yuv(x, y, 0));
+  fn_u(x, y) = cast<uint8_t>(yuv(x, y, 1));
+  fn_v(x, y) = cast<uint8_t>(yuv(x, y, 2));
+
+  in.compute_root();
+  fn_y.compute_at(yuv, ti)
+    .store_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  fn_u.compute_at(yuv, ti)
+    .store_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  fn_v.compute_at(yuv, ti)
+    .store_at(yuv, ti)
+    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .fuse(xo, yo, ti)
+    .parallel(ti)
+    .vectorize(xi, 32);
+  return Pipeline({fn_y, fn_u, fn_v});
 }
 
 Func rotate0_fn(Func input, Param<int32_t> width, Param<int32_t> height) {

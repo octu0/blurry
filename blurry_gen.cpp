@@ -3,7 +3,7 @@
 #include "blurry.hpp"
 
 void generate_static_link(std::vector<Target::Feature> features, Func fn, std::vector<Argument> args, std::string name) {
-  printf("generate %s\n", fn.name().c_str());
+  printf("generate %s\n", name.c_str());
 
   std::string lib_name = "lib" + name;
   std::string name_linux = lib_name + "_linux";
@@ -28,6 +28,40 @@ void generate_static_link(std::vector<Target::Feature> features, Func fn, std::v
     target.bits = 64;
     target.set_features(features);
     fn.compile_to_static_library(
+      name_linux,
+      args,
+      name,
+      target
+    );
+  }
+}
+
+void generate_static_link(std::vector<Target::Feature> features, Pipeline pipe, std::vector<Argument> args, std::string name) {
+  printf("generate %s\n", name.c_str());
+
+  std::string lib_name = "lib" + name;
+  std::string name_linux = lib_name + "_linux";
+  std::string name_osx = lib_name + "_osx";
+  {
+    Target target;
+    target.os = Target::OSX;
+    target.arch = Target::X86;
+    target.bits = 64;
+    target.set_features(features);
+    pipe.compile_to_static_library(
+      name_osx,
+      args,
+      name,
+      target
+    );
+  }
+  {
+    Target target;
+    target.os = Target::Linux;
+    target.arch = Target::X86;
+    target.bits = 64;
+    target.set_features(features);
+    pipe.compile_to_static_library(
       name_linux,
       args,
       name,
@@ -318,17 +352,15 @@ void generate_convert_to_yuv_420(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = convert_to_yuv_420_fn(
+  Pipeline pipe = convert_to_yuv_420_fn(
     src.in(),
     width, height
   );
 
-  init_output_yuv_420(fn.output_buffer(), width, height);
-
-  generate_static_link(features, fn, {
+  generate_static_link(features, pipe, {
     src,
     width, height
-  }, fn.name());
+  }, "convert_to_yuv_420");
 }
 //
 // }}} convert_to_yuv_420
@@ -345,17 +377,15 @@ void generate_convert_to_yuv_444(std::vector<Target::Feature> features) {
 
   init_input_rgba(src);
 
-  Func fn = convert_to_yuv_444_fn(
+  Pipeline pipe = convert_to_yuv_444_fn(
     src.in(),
     width, height
   );
 
-  init_output_yuv_444(fn.output_buffer(), width, height);
-
-  generate_static_link(features, fn, {
+  generate_static_link(features, pipe, {
     src,
     width, height
-  }, fn.name());
+  }, "convert_to_yuv_444");
 }
 //
 // }}} convert_to_yuv_444

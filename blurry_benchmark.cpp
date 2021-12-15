@@ -233,22 +233,6 @@ int benchmark_convert_from_yuv_444() {
   ), width, height);
 }
 
-int benchmark_convert_to_yuv_444() {
-  Buffer<uint8_t> buf_src = load_and_convert_image("./testdata/src.png");
-  Param<int32_t> _width{"width", buf_src.get()->width()};
-  Param<int32_t> _height{"height", buf_src.get()->height()};
-
-  int32_t y_width = buf_src.get()->width();
-  int32_t uv_width = buf_src.get()->width();
-  int32_t y_height = buf_src.get()->height();
-  int32_t uv_height = buf_src.get()->height();
-
-  return jit_benchmark_bounds(convert_to_yuv_444_fn(
-    wrapFunc(buf_src, "buf_src"),
-    _width, _height
-  ), y_width, y_height + uv_height + uv_height);
-}
-
 int benchmark_convert_to_yuv_420() {
   Buffer<uint8_t> buf_src = load_and_convert_image("./testdata/src.png");
   Param<int32_t> _width{"width", buf_src.get()->width()};
@@ -259,10 +243,49 @@ int benchmark_convert_to_yuv_420() {
   int32_t y_height = buf_src.get()->height();
   int32_t uv_height = buf_src.get()->height() / 2;
 
-  return jit_benchmark_bounds(convert_to_yuv_420_fn(
+  Pipeline pipe = convert_to_yuv_420_fn(
     wrapFunc(buf_src, "buf_src"),
     _width, _height
-  ), y_width, y_height + uv_height + uv_height);
+  );
+  pipe.compile_jit(get_jit_target_from_environment());
+
+  Buffer<uint8_t> buf_y(y_width, y_height);
+  Buffer<uint8_t> buf_u(uv_width, uv_height);
+  Buffer<uint8_t> buf_v(uv_width, uv_height);
+
+  double result = benchmark(100, 10, [&]() {
+    pipe.realize({buf_y, buf_u, buf_v});
+  });
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", "convert_to_yuv_420", result * 1e3);
+  return 0;
+}
+
+int benchmark_convert_to_yuv_444() {
+  Buffer<uint8_t> buf_src = load_and_convert_image("./testdata/src.png");
+  Param<int32_t> _width{"width", buf_src.get()->width()};
+  Param<int32_t> _height{"height", buf_src.get()->height()};
+
+  int32_t y_width = buf_src.get()->width();
+  int32_t uv_width = buf_src.get()->width();
+  int32_t y_height = buf_src.get()->height();
+  int32_t uv_height = buf_src.get()->height();
+
+  Pipeline pipe = convert_to_yuv_444_fn(
+    wrapFunc(buf_src, "buf_src"),
+    _width, _height
+  );
+  pipe.compile_jit(get_jit_target_from_environment());
+
+  Buffer<uint8_t> buf_y(y_width, y_height);
+  Buffer<uint8_t> buf_u(uv_width, uv_height);
+  Buffer<uint8_t> buf_v(uv_width, uv_height);
+
+  double result = benchmark(100, 10, [&]() {
+    pipe.realize({buf_y, buf_u, buf_v});
+  });
+
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", "convert_to_yuv_444", result * 1e3);
+  return 0;
 }
 
 int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {

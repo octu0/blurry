@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int convert_to_yuv_420(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_convert_to_yuv_420_buffer);
+int convert_to_yuv_420(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_fn_y_buffer, struct halide_buffer_t *_fn_u_buffer, struct halide_buffer_t *_fn_v_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int convert_to_yuv_420_argv(void **args);

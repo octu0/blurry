@@ -107,42 +107,76 @@ int libconvert_from_yuv(
 int libconvert_to_yuv420(
   unsigned char *src,
   int32_t width, int32_t height,
-  unsigned char *out
+  unsigned char *out_y,
+  unsigned char *out_u,
+  unsigned char *out_v
 ) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
     return 1;
   }
-  halide_buffer_t *out_yuv420_buf = create_yuv420_buffer(out, width, height);
-  if(out_yuv420_buf == NULL) {
+  halide_buffer_t *out_y_buf = create_uint8_array_buffer(out_y, width, height);
+  if(out_y_buf == NULL){
     free_buf(in_rgba_buf);
     return 1;
   }
+  halide_buffer_t *out_u_buf = create_uint8_array_buffer(out_u, width / 2, height / 2);
+  if(out_u_buf == NULL){
+    free_buf(in_rgba_buf);
+    free_buf(out_y_buf);
+    return 1;
+  }
+  halide_buffer_t *out_v_buf = create_uint8_array_buffer(out_v, width / 2, height / 2);
+  if(out_v_buf == NULL){
+    free_buf(in_rgba_buf);
+    free_buf(out_y_buf);
+    free_buf(out_u_buf);
+    return 1;
+  }
 
-  int ret = convert_to_yuv_420(in_rgba_buf, width, height, out_yuv420_buf);
+  int ret = convert_to_yuv_420(in_rgba_buf, width, height, out_y_buf, out_u_buf, out_v_buf);
   free_buf(in_rgba_buf);
-  free_buf(out_yuv420_buf);
+  free_buf(out_y_buf);
+  free_buf(out_u_buf);
+  free_buf(out_v_buf);
   return ret;
 }
 
 int libconvert_to_yuv444(
   unsigned char *src,
   int32_t width, int32_t height,
-  unsigned char *out
+  unsigned char *out_y,
+  unsigned char *out_u,
+  unsigned char *out_v
 ) {
   halide_buffer_t *in_rgba_buf = create_rgba_buffer(src, width, height);
   if(in_rgba_buf == NULL){
     return 1;
   }
-  halide_buffer_t *out_yuv444_buf = create_yuv444_buffer(out, width, height);
-  if(out_yuv444_buf == NULL) {
+  halide_buffer_t *out_y_buf = create_uint8_array_buffer(out_y, width, height);
+  if(out_y_buf == NULL){
     free_buf(in_rgba_buf);
     return 1;
   }
+  halide_buffer_t *out_u_buf = create_uint8_array_buffer(out_u, width, height);
+  if(out_u_buf == NULL){
+    free_buf(in_rgba_buf);
+    free_buf(out_y_buf);
+    return 1;
+  }
+  halide_buffer_t *out_v_buf = create_uint8_array_buffer(out_v, width, height);
+  if(out_v_buf == NULL){
+    free_buf(in_rgba_buf);
+    free_buf(out_y_buf);
+    free_buf(out_u_buf);
+    return 1;
+  }
 
-  int ret = convert_to_yuv_444(in_rgba_buf, width, height, out_yuv444_buf);
+  int ret = convert_to_yuv_444(in_rgba_buf, width, height, out_y_buf, out_u_buf, out_v_buf);
   free_buf(in_rgba_buf);
-  free_buf(out_yuv444_buf);
+  free_buf(out_y_buf);
+  free_buf(out_u_buf);
+  free_buf(out_v_buf);
   return ret;
 }
 */
@@ -245,43 +279,21 @@ func ConvertToYUV420(img *image.RGBA) (*image.YCbCr, error) {
 	// +-----------------+
 	//           uvWidth
 	//
-	buf := GetByteBuf((height + uvHeight + uvHeight) * width)
-	defer PutByteBuf(buf)
-
-	ret := C.libconvert_to_yuv420(
-		(*C.uchar)(&img.Pix[0]),
-		C.int(width),
-		C.int(height),
-		(*C.uchar)(&buf[0]),
-	)
-	if int(ret) != 0 {
-		return nil, ErrConvertToYUV
-	}
 
 	yBuf := GetByteBuf(ySize)
 	uBuf := GetByteBuf(uSize)
 	vBuf := GetByteBuf(vSize)
 
-	yPlaneSize := width * height
-	uPlaneSize := width * uvHeight
-	vPlaneSize := width * uvHeight
-
-	yPlane := buf[0:yPlaneSize]
-	uPlane := buf[yPlaneSize : yPlaneSize+uPlaneSize]
-	vPlane := buf[yPlaneSize+uPlaneSize : yPlaneSize+uPlaneSize+vPlaneSize]
-
-	copy(yBuf, yPlane)
-
-	for i := 0; i < uvHeight; i += 1 {
-		s := i * uvWidth
-		uRow := uPlane[:width]
-		vRow := vPlane[:width]
-
-		copy(uBuf[s:s+uvWidth], uRow[:uvWidth])
-		copy(vBuf[s:s+uvWidth], vRow[:uvWidth])
-
-		uPlane = uPlane[width:]
-		vPlane = vPlane[width:]
+	ret := C.libconvert_to_yuv420(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&yBuf[0]),
+		(*C.uchar)(&uBuf[0]),
+		(*C.uchar)(&vBuf[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrConvertToYUV
 	}
 
 	out := &image.YCbCr{
@@ -321,30 +333,22 @@ func ConvertToYUV444(img *image.RGBA) (*image.YCbCr, error) {
 	// | V V V V V V V V |
 	// +-----------------+ height
 	//
-	buf := GetByteBuf(ySize + uSize + vSize)
-	defer PutByteBuf(buf)
-
-	ret := C.libconvert_to_yuv444(
-		(*C.uchar)(&img.Pix[0]),
-		C.int(width),
-		C.int(height),
-		(*C.uchar)(&buf[0]),
-	)
-	if int(ret) != 0 {
-		return nil, ErrConvertToYUV
-	}
 
 	yBuf := GetByteBuf(ySize)
 	uBuf := GetByteBuf(uSize)
 	vBuf := GetByteBuf(vSize)
 
-	yPlane := buf[0:ySize]
-	uPlane := buf[ySize : ySize+uSize]
-	vPlane := buf[ySize+uSize : ySize+uSize+vSize]
-
-	copy(yBuf, yPlane)
-	copy(uBuf, uPlane)
-	copy(vBuf, vPlane)
+	ret := C.libconvert_to_yuv444(
+		(*C.uchar)(&img.Pix[0]),
+		C.int(width),
+		C.int(height),
+		(*C.uchar)(&yBuf[0]),
+		(*C.uchar)(&uBuf[0]),
+		(*C.uchar)(&vBuf[0]),
+	)
+	if int(ret) != 0 {
+		return nil, ErrConvertToYUV
+	}
 
 	out := &image.YCbCr{
 		Y:              yBuf,

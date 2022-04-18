@@ -187,7 +187,7 @@ void generate_cloneimg(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "cloneimg");
 }
 //
 // }}} cloneimg
@@ -210,7 +210,7 @@ void generate_convert_from_argb(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "convert_from_argb");
 }
 //
 // }}} convert_from_argb
@@ -233,7 +233,7 @@ void generate_convert_from_abgr(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "convert_from_abgr");
 }
 //
 // }}} convert_from_abgr
@@ -256,7 +256,7 @@ void generate_convert_from_bgra(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "convert_from_bgra");
 }
 //
 // }}} convert_from_bgra
@@ -279,7 +279,7 @@ void generate_convert_from_rabg(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "convert_from_rabg");
 }
 //
 // }}} convert_from_rabg
@@ -307,7 +307,7 @@ void generate_convert_from_yuv_420(std::vector<Target::Feature> features) {
     yuv_u,
     yuv_v,
     width, height,
-  }, fn.name());
+  }, "convert_from_yuv_420");
 }
 //
 // }}} convert_from_yuv_420
@@ -335,7 +335,7 @@ void generate_convert_from_yuv_444(std::vector<Target::Feature> features) {
     yuv_u,
     yuv_v,
     width, height,
-  }, fn.name());
+  }, "convert_from_yuv_444");
 }
 //
 // }}} convert_from_yuv_444
@@ -408,7 +408,7 @@ void generate_rotate0(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height
-  }, fn.name());
+  }, "rotate0");
 }
 //
 // }}} rotate0
@@ -429,7 +429,7 @@ void generate_rotate180(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height }, fn.name());
+  generate_static_link(features, fn, { src, width, height }, "rotate180");
 }
 //
 // }}} rotate180
@@ -450,7 +450,7 @@ void generate_rotate90(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height }, fn.name());
+  generate_static_link(features, fn, { src, width, height }, "rotate90");
 }
 //
 // }}} rotate90
@@ -471,7 +471,7 @@ void generate_rotate270(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height }, fn.name());
+  generate_static_link(features, fn, { src, width, height }, "rotate270");
 }
 //
 // }}} rotate270
@@ -492,7 +492,7 @@ void generate_flipV(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height }, fn.name());
+  generate_static_link(features, fn, { src, width, height }, "flipV");
 }
 //
 // }}} flipV
@@ -513,7 +513,7 @@ void generate_flipH(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height }, fn.name());
+  generate_static_link(features, fn, { src, width, height }, "flipH");
 }
 //
 // }}} flipH
@@ -544,7 +544,7 @@ void generate_crop(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     px, py, crop_width, crop_height
-  }, fn.name());
+  }, "crop");
 }
 //
 // }}} crop
@@ -573,7 +573,7 @@ void generate_scale(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     scale_width, scale_height
-  }, fn.name());
+  }, "scale");
 }
 //
 // }}} scale
@@ -602,7 +602,7 @@ void generate_scale_box(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     scale_width, scale_height
-  }, fn.name());
+  }, "scale_box");
 }
 //
 // }}} scale_box
@@ -631,7 +631,7 @@ void generate_scale_linear(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     scale_width, scale_height
-  }, fn.name());
+  }, "scale_linear");
 }
 //
 // }}} scale_linear
@@ -660,7 +660,7 @@ void generate_scale_gaussian(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     scale_width, scale_height
-  }, fn.name());
+  }, "scale_gaussian");
 }
 //
 // }}} scale_gaussian
@@ -695,7 +695,7 @@ void generate_blend_normal(std::vector<Target::Feature> features) {
     src0, width0, height0,
     src1, width1, height1,
     px, py
-  }, fn.name());
+  }, "blend_normal");
 }
 //
 // }}} blend_normal
@@ -730,7 +730,7 @@ void generate_blend_sub(std::vector<Target::Feature> features) {
     src0, width0, height0,
     src1, width1, height1,
     px, py
-  }, fn.name());
+  }, "blend_sub");
 }
 //
 // }}} blend_sub
@@ -765,7 +765,7 @@ void generate_blend_add(std::vector<Target::Feature> features) {
     src0, width0, height0,
     src1, width1, height1,
     px, py
-  }, fn.name());
+  }, "blend_add");
 }
 //
 // }}} blend_add
@@ -800,7 +800,7 @@ void generate_blend_diff(std::vector<Target::Feature> features) {
     src0, width0, height0,
     src1, width1, height1,
     px, py
-  }, fn.name());
+  }, "blend_diff");
 }
 //
 // }}} blend_diff
@@ -824,7 +824,7 @@ void generate_erosion(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, size,
-  }, fn.name());
+  }, "erosion");
 }
 //
 // }}} erosion
@@ -848,7 +848,7 @@ void generate_dilation(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, size,
-  }, fn.name());
+  }, "dilation");
 }
 //
 // }}} dilation
@@ -870,7 +870,7 @@ void generate_morphology_open(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+  generate_static_link(features, fn, { src, width, height, size }, "morphology_open");
 }
 //
 // }}} morphology_open
@@ -892,7 +892,7 @@ void generate_morphology_close(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+  generate_static_link(features, fn, { src, width, height, size }, "morphology_close");
 }
 //
 // }}} morphology_close
@@ -914,7 +914,7 @@ void generate_morphology_gradient(std::vector<Target::Feature> features) {
 
   init_output_rgba(fn.output_buffer());
 
-  generate_static_link(features, fn, { src, width, height, size }, fn.name());
+  generate_static_link(features, fn, { src, width, height, size }, "morphology_gradient");
 }
 //
 // }}} morphology_gradient
@@ -939,7 +939,7 @@ void generate_grayscale(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "grayscale");
 }
 //
 // }}} grayscale
@@ -964,7 +964,7 @@ void generate_invert(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "invert");
 }
 //
 // }}} invert
@@ -990,7 +990,7 @@ void generate_brightness(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, factor
-  }, fn.name());
+  }, "brightness");
 }
 //
 // }}} brightness
@@ -1016,7 +1016,7 @@ void generate_gammacorrection(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, factor
-  }, fn.name());
+  }, "gammacorrection");
 }
 //
 // }}} gammacorrection
@@ -1042,7 +1042,7 @@ void generate_contrast(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, factor
-  }, fn.name());
+  }, "contrast");
 }
 //
 // }}} contrast
@@ -1068,7 +1068,7 @@ void generate_boxblur(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, size
-  }, fn.name());
+  }, "boxblur");
 }
 //
 // }}} boxblur
@@ -1094,14 +1094,14 @@ void generate_gaussianblur(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, sigma
-  }, fn.name());
+  }, "gaussianblur");
 }
 //
 // }}} gaussianblur
 //
 
 //
-// {{{ edge
+// {{{ edgedetect
 //
 void generate_edge(std::vector<Target::Feature> features) {
   ImageParam src(type_of<uint8_t>(), 3, "src");
@@ -1119,10 +1119,10 @@ void generate_edge(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height
-  }, fn.name());
+  }, "edgedetect");
 }
 //
-// }}} edge
+// }}} edgedetect
 //
 
 //
@@ -1144,7 +1144,7 @@ void generate_sobel(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height
-  }, fn.name());
+  }, "sobel");
 }
 //
 // }}} sobel
@@ -1173,7 +1173,7 @@ void generate_canny(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     threshold_max, threshold_min
-  }, fn.name());
+  }, "canny");
 }
 //
 // }}} canny
@@ -1205,7 +1205,7 @@ void generate_canny_dilate(std::vector<Target::Feature> features) {
     src, width, height,
     threshold_max, threshold_min,
     dilate
-  }, fn.name());
+  }, "canny_dilate");
 }
 //
 // }}} canny_dilate
@@ -1240,7 +1240,7 @@ void generate_canny_morphology_open(std::vector<Target::Feature> features) {
     threshold_max, threshold_min,
     morphology_size,
     dilate
-  }, fn.name());
+  }, "canny_morphology_open");
 }
 //
 // }}} canny_morphology_open
@@ -1275,7 +1275,7 @@ void generate_canny_morphology_close(std::vector<Target::Feature> features) {
     threshold_max, threshold_min,
     morphology_size,
     dilate
-  }, fn.name());
+  }, "canny_morphology_close");
 }
 //
 // }}} canny_morphology_close
@@ -1298,7 +1298,7 @@ void generate_emboss(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "emboss");
 }
 //
 // }}} emboss
@@ -1323,7 +1323,7 @@ void generate_laplacian(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "laplacian");
 }
 //
 // }}} laplacian
@@ -1348,7 +1348,7 @@ void generate_highpass(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "highpass");
 }
 //
 // }}} highpass
@@ -1373,7 +1373,7 @@ void generate_gradient(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height,
-  }, fn.name());
+  }, "gradient");
 }
 //
 // }}} gradient
@@ -1399,7 +1399,7 @@ void generate_blockmozaic(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     src, width, height, block
-  }, fn.name());
+  }, "blockmozaic");
 }
 //
 // }}} blockmozaic
@@ -1430,7 +1430,7 @@ void generate_match_template_sad(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "match_template_sad");
 }
 //
 // }}} match_template_sad
@@ -1461,7 +1461,7 @@ void generate_match_template_ssd(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "match_template_ssd");
 }
 //
 // }}} match_template_ssd
@@ -1492,7 +1492,7 @@ void generate_match_template_ncc(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "match_template_ncc");
 }
 //
 // }}} match_template_ncc
@@ -1513,7 +1513,7 @@ void generate_prepare_ncc_template(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "prepare_ncc_template");
 }
 //
 // }}} prepare_ncc_template
@@ -1548,7 +1548,7 @@ void generate_prepared_match_template_ncc(std::vector<Target::Feature> features)
     src, width, height,
     buf_tpl_val, buf_tpl_sum,
     tpl_width, tpl_height
-  }, fn.name());
+  }, "prepared_match_template_ncc");
 }
 //
 // }}} match_prepared_template_ncc
@@ -1579,7 +1579,7 @@ void generate_match_template_zncc(std::vector<Target::Feature> features) {
   generate_static_link(features, fn, {
     src, width, height,
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "match_template_zncc");
 }
 //
 // }}} match_template_zncc
@@ -1601,7 +1601,7 @@ void generate_prepare_zncc_template(std::vector<Target::Feature> features) {
 
   generate_static_link(features, fn, {
     tpl, tpl_width, tpl_height
-  }, fn.name());
+  }, "prepare_zncc_template");
 }
 //
 // }}} prepare_zncc_template
@@ -1636,7 +1636,7 @@ void generate_prepared_match_template_zncc(std::vector<Target::Feature> features
     src, width, height,
     buf_tpl_val, buf_tpl_stddev,
     tpl_width, tpl_height
-  }, fn.name());
+  }, "prepared_match_template_zncc");
 }
 //
 // }}} match_prepared_template_zncc
@@ -1659,7 +1659,7 @@ void generate_contour(std::vector<Target::Feature> features) {
 
   init_output_array(fn.output_buffer(), width, height);
 
-  generate_static_link(features, fn, { src, width, height, threshold, size }, fn.name());
+  generate_static_link(features, fn, { src, width, height, threshold, size }, "contour");
 }
 //
 // }}} contour
@@ -1671,8 +1671,7 @@ int generate(char **argv){
   std::vector<Target::Feature> features;
   features.push_back(Target::AVX);
   features.push_back(Target::AVX2);
-  //features.push_back(Target::FMA);
-  //features.push_back(Target::FMA4);
+  features.push_back(Target::FMA);
   features.push_back(Target::F16C);
   features.push_back(Target::SSE41);
   features.push_back(Target::EmbedBitcode);

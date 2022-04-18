@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int scale_linear_par_for_in__18_s0_ch(void *__user_context, int32_t _in__18_s0_ch, uint8_t *_closure_arg__80);
+HALIDE_FUNCTION_ATTRS
+int scale_linear_par_for_scale_linear_s0_ch_par_for_scale_linear_s0_x_xo_ti_ti(void *__user_context, int32_t _scale_linear_s0_x_xo_ti_ti, uint8_t *_closure_arg__82);
+HALIDE_FUNCTION_ATTRS
+int scale_linear_par_for_scale_linear_s0_ch_par_for_scale_linear_s0_x_xo_ti_ti__1(void *__user_context, int32_t _scale_linear_s0_x_xo_ti_ti, uint8_t *_closure_arg__83);
+HALIDE_FUNCTION_ATTRS
+int scale_linear_par_for_scale_linear_s0_ch(void *__user_context, int32_t _scale_linear_s0_ch, uint8_t *_closure_arg__81);
+HALIDE_FUNCTION_ATTRS
 int scale_linear(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _scale_width, int32_t _scale_height, struct halide_buffer_t *_scale_linear_buffer);
 
 HALIDE_FUNCTION_ATTRS

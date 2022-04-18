@@ -41,6 +41,10 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int crop_par_for_crop_s0_ch_par_for_crop_s0_x_xo_ti_ti(void *__user_context, int32_t _crop_s0_x_xo_ti_ti, uint8_t *_closure_arg__63);
+HALIDE_FUNCTION_ATTRS
+int crop_par_for_crop_s0_ch(void *__user_context, int32_t _crop_s0_ch, uint8_t *_closure_arg__62);
+HALIDE_FUNCTION_ATTRS
 int crop(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _px, int32_t _py, int32_t _crop_width, int32_t _crop_height, struct halide_buffer_t *_crop_buffer);
 
 HALIDE_FUNCTION_ATTRS

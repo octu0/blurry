@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__221);
+HALIDE_FUNCTION_ATTRS
+int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti__1(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__222);
+HALIDE_FUNCTION_ATTRS
+int laplacian_par_for_laplacian_s0_ch(void *__user_context, int32_t _laplacian_s0_ch, uint8_t *_closure_arg__220);
+HALIDE_FUNCTION_ATTRS
 int laplacian(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_laplacian_buffer);
 
 HALIDE_FUNCTION_ATTRS

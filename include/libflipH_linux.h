@@ -41,6 +41,8 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int flipH_par_for_flipH_s0_ch__1(void *__user_context, int32_t _flipH_s0_ch, uint8_t *_closure_arg__61);
+HALIDE_FUNCTION_ATTRS
 int flipH(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_flipH_buffer);
 
 HALIDE_FUNCTION_ATTRS

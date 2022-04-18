@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int grayscale_par_for_in_20_s0_ch__1(void *__user_context, int32_t _in__20_s0_ch, uint8_t *_closure_arg__124);
+HALIDE_FUNCTION_ATTRS
+int grayscale_par_for_grayscale_s0_ch_par_for_grayscale_s0_x_xo_ti_ti__2(void *__user_context, int32_t _grayscale_s0_x_xo_ti_ti, uint8_t *_closure_arg__126);
+HALIDE_FUNCTION_ATTRS
+int grayscale_par_for_grayscale_s0_ch_par_for_grayscale_s0_x_xo_ti_ti__3(void *__user_context, int32_t _grayscale_s0_x_xo_ti_ti, uint8_t *_closure_arg__127);
+HALIDE_FUNCTION_ATTRS
+int grayscale_par_for_grayscale_s0_ch__1(void *__user_context, int32_t _grayscale_s0_ch, uint8_t *_closure_arg__125);
+HALIDE_FUNCTION_ATTRS
 int grayscale(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_grayscale_buffer);
 
 HALIDE_FUNCTION_ATTRS

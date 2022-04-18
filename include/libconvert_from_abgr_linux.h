@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int convert_from_abgr_par_for_convert_from_abgr_s0_ch_par_for_convert_from_abgr_s0_x_xo_ti_ti__2(void *__user_context, int32_t _convert_from_abgr_s0_x_xo_ti_ti, uint8_t *_closure_arg__12);
+HALIDE_FUNCTION_ATTRS
+int convert_from_abgr_par_for_convert_from_abgr_s0_ch_par_for_convert_from_abgr_s0_x_xo_ti_ti__3(void *__user_context, int32_t _convert_from_abgr_s0_x_xo_ti_ti, uint8_t *_closure_arg__13);
+HALIDE_FUNCTION_ATTRS
+int convert_from_abgr_par_for_convert_from_abgr_s0_ch__1(void *__user_context, int32_t _convert_from_abgr_s0_ch, uint8_t *_closure_arg__11);
+HALIDE_FUNCTION_ATTRS
 int convert_from_abgr(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_convert_from_abgr_buffer);
 
 HALIDE_FUNCTION_ATTRS

@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int emboss_par_for_in__33_s0_ch(void *__user_context, int32_t _in__33_s0_ch, uint8_t *_closure_arg__212);
+HALIDE_FUNCTION_ATTRS
+int emboss_par_for_emboss_s0_ch_par_for_emboss_s0_x_xo_ti_ti(void *__user_context, int32_t _emboss_s0_x_xo_ti_ti, uint8_t *_closure_arg__214);
+HALIDE_FUNCTION_ATTRS
+int emboss_par_for_emboss_s0_ch_par_for_emboss_s0_x_xo_ti_ti__1(void *__user_context, int32_t _emboss_s0_x_xo_ti_ti, uint8_t *_closure_arg__215);
+HALIDE_FUNCTION_ATTRS
+int emboss_par_for_emboss_s0_ch(void *__user_context, int32_t _emboss_s0_ch, uint8_t *_closure_arg__213);
+HALIDE_FUNCTION_ATTRS
 int emboss(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_emboss_buffer);
 
 HALIDE_FUNCTION_ATTRS

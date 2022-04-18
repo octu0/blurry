@@ -5,34 +5,34 @@
 
 #include "blurry.hpp"
 
-int jit_benchmark_bounds(Func fn, int32_t width, int32_t height) {
+int jit_benchmark_bounds(Func fn, int32_t width, int32_t height, std::string name) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(100, 10, [&]() {
     fn.realize({width, height, 4});
   });
-  printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", name.c_str(), result * 1e3);
   return 0;
 }
 
-int jit_benchmark(Func fn, Buffer<uint8_t> buf_src) {
-  return jit_benchmark_bounds(fn, buf_src.get()->width(), buf_src.get()->height());
+int jit_benchmark(Func fn, Buffer<uint8_t> buf_src, std::string name) {
+  return jit_benchmark_bounds(fn, buf_src.get()->width(), buf_src.get()->height(), name);
 }
 
-int jit_benchmark_once(Func fn, Buffer<uint8_t> buf_src) {
+int jit_benchmark_once(Func fn, Buffer<uint8_t> buf_src, std::string name) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(1, 1, [&]() {
     fn.realize({buf_src.get()->width(), buf_src.get()->height(), 4});
   });
-  printf("BenchmarkJIT/%-30s: %-3.5fms\n", fn.name().c_str(), result * 1e3);
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", name.c_str(), result * 1e3);
   return 0;
 }
 
 int benchmark_cloneimg(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(cloneimg_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "cloneimg");
 }
 
 int benchmark_convert_from_argb() {
@@ -49,7 +49,7 @@ int benchmark_convert_from_argb() {
 
   return jit_benchmark(convert_from_argb_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "convert_from_argb");
 }
 
 int benchmark_convert_from_abgr() {
@@ -66,7 +66,7 @@ int benchmark_convert_from_abgr() {
 
   return jit_benchmark(convert_from_abgr_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "convert_from_abgr");
 }
 
 int benchmark_convert_from_bgra() {
@@ -83,7 +83,7 @@ int benchmark_convert_from_bgra() {
 
   return jit_benchmark(convert_from_bgra_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "convert_from_bgra");
 }
 
 int benchmark_convert_from_rabg() {
@@ -100,7 +100,7 @@ int benchmark_convert_from_rabg() {
 
   return jit_benchmark(convert_from_rabg_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "convert_from_rabg");
 }
 
 int benchmark_convert_from_yuv_420() {
@@ -165,7 +165,7 @@ int benchmark_convert_from_yuv_420() {
     wrapFunc_xy(src_u, "src_u"),
     wrapFunc_xy(src_v, "src_v"),
     _width, _height
-  ), width, height);
+  ), width, height, "convert_from_yuv_420");
 }
 
 int benchmark_convert_from_yuv_444() {
@@ -230,7 +230,7 @@ int benchmark_convert_from_yuv_444() {
     wrapFunc_xy(src_u, "src_u"),
     wrapFunc_xy(src_v, "src_v"),
     _width, _height
-  ), width, height);
+  ), width, height, "convert_from_yuv_444");
 }
 
 int benchmark_convert_to_yuv_420() {
@@ -289,19 +289,19 @@ int benchmark_convert_to_yuv_444() {
 }
 
 int benchmark_rotate0(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+  return jit_benchmark(rotate0_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src, "rotate0");
 }
 
 int benchmark_rotate180(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+  return jit_benchmark(rotate180_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src, "rotate180");
 }
 
 int benchmark_rotate90(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+  return jit_benchmark(rotate90_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src, "rotate90");
 }
 
 int benchmark_rotate270(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
-  return jit_benchmark(rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src);
+  return jit_benchmark(rotate270_fn(wrapFunc(buf_src, "buf_src"), width, height), buf_src, "rotate270");
 }
 
 int benchmark_crop(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -312,7 +312,7 @@ int benchmark_crop(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t>
   return jit_benchmark(crop_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     px, py, crop_width, crop_height
-  ), buf_src);
+  ), buf_src, "crop");
 }
 
 int benchmark_scale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -321,7 +321,7 @@ int benchmark_scale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t
   return jit_benchmark(scale_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     scale_width, scale_height
-  ), buf_src);
+  ), buf_src, "scale");
 }
 
 int benchmark_scale_box(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -330,7 +330,7 @@ int benchmark_scale_box(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int
   return jit_benchmark(scale_box_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     scale_width, scale_height
-  ), buf_src);
+  ), buf_src, "scale_box");
 }
 
 int benchmark_scale_linear(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -339,7 +339,7 @@ int benchmark_scale_linear(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<
   return jit_benchmark(scale_linear_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     scale_width, scale_height
-  ), buf_src);
+  ), buf_src, "scale_linear");
 }
 
 int benchmark_scale_gaussian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -348,7 +348,7 @@ int benchmark_scale_gaussian(Buffer<uint8_t> buf_src, Param<int32_t> width, Para
   return jit_benchmark(scale_gaussian_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     scale_width, scale_height
-  ), buf_src);
+  ), buf_src, "scale_gaussian");
 }
 
 int benchmark_blend_normal(
@@ -361,7 +361,7 @@ int benchmark_blend_normal(
     wrapFunc(buf_src0, "buf_src0"), width0, height0,
     wrapFunc(buf_src1, "buf_src1"), width1, height1,
     px, py
-  ), buf_src0);
+  ), buf_src0, "blend_normal");
 }
 
 int benchmark_blend_sub(
@@ -374,7 +374,7 @@ int benchmark_blend_sub(
     wrapFunc(buf_src0, "buf_src0"), width0, height0,
     wrapFunc(buf_src1, "buf_src1"), width1, height1,
     px, py
-  ), buf_src0);
+  ), buf_src0, "blend_sub");
 }
 
 int benchmark_blend_add(
@@ -387,7 +387,7 @@ int benchmark_blend_add(
     wrapFunc(buf_src0, "buf_src0"), width0, height0,
     wrapFunc(buf_src1, "buf_src1"), width1, height1,
     px, py
-  ), buf_src0);
+  ), buf_src0, "blend_add");
 }
 
 int benchmark_blend_diff(
@@ -400,95 +400,95 @@ int benchmark_blend_diff(
     wrapFunc(buf_src0, "buf_src0"), width0, height0,
     wrapFunc(buf_src1, "buf_src1"), width1, height1,
     px, py
-  ), buf_src0);
+  ), buf_src0, "blend_diff");
 }
 
 int benchmark_erosion(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 5};
   return jit_benchmark(erosion_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
+  ), buf_src, "erosion");
 }
 
 int benchmark_dilation(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 5};
   return jit_benchmark(dilation_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
+  ), buf_src, "dilation");
 }
 
 int benchmark_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 3};
-  return jit_benchmark(morphology_open_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+  return jit_benchmark(morphology_open_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src, "morphology_open");
 }
 
 int benchmark_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 3};
-  return jit_benchmark(morphology_close_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+  return jit_benchmark(morphology_close_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src, "morphology_close");
 }
 
 int benchmark_morphology_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> size{"size", 3};
-  return jit_benchmark(morphology_gradient_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src);
+  return jit_benchmark(morphology_gradient_fn(wrapFunc(buf_src, "buf_src"), width, height, size), buf_src, "morphology_gradient");
 }
 
 int benchmark_grayscale(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(grayscale_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "grayscale");
 }
 
 int benchmark_invert(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(invert_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "invert");
 }
 
 int benchmark_brightness(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<float> factor{"factor", 1.5f};
   return jit_benchmark(brightness_fn(
     wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
+  ), buf_src, "brightness");
 }
 
 int benchmark_gammacorrection(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<float> factor{"factor", 1.25f};
   return jit_benchmark(gammacorrection_fn(
     wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
+  ), buf_src, "gammacorrection");
 }
 
 int benchmark_contrast(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<float> factor{"factor", 0.525f};
   return jit_benchmark(contrast_fn(
     wrapFunc(buf_src, "buf_src"), width, height, factor
-  ), buf_src);
+  ), buf_src, "contrast");
 }
 
 int benchmark_boxblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<uint8_t> size{"size", 10};
   return jit_benchmark(boxblur_fn(
     wrapFunc(buf_src, "buf_src"), width, height, size
-  ), buf_src);
+  ), buf_src, "boxblur");
 }
 
 int benchmark_gaussianblur(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<float> sigma{"sigma", 5.0f};
   return jit_benchmark(gaussianblur_fn(
     wrapFunc(buf_src, "buf_src"), width, height, sigma
-  ), buf_src);
+  ), buf_src, "gaussianblur");
 }
 
-int benchmark_edge(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
+int benchmark_edgedetect(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(edge_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "edgedetect");
 }
 
 int benchmark_sobel(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(sobel_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "sobel");
 }
 
 int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -497,7 +497,7 @@ int benchmark_canny(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t
   return jit_benchmark(canny_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min
-  ), buf_src);
+  ), buf_src, "canny");
 }
 
 int benchmark_canny_dilate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -508,7 +508,7 @@ int benchmark_canny_dilate(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<
     wrapFunc(buf_src, "buf_src"), width, height,
     threshold_max, threshold_min,
     dilate
-  ), buf_src);
+  ), buf_src, "canny_dilate");
 }
 
 int benchmark_canny_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -521,7 +521,7 @@ int benchmark_canny_morphology_open(Buffer<uint8_t> buf_src, Param<int32_t> widt
     threshold_max, threshold_min,
     morphology_size,
     dilate
-  ), buf_src);
+  ), buf_src, "canny_morphology_open");
 }
 
 int benchmark_canny_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
@@ -534,38 +534,38 @@ int benchmark_canny_morphology_close(Buffer<uint8_t> buf_src, Param<int32_t> wid
     threshold_max, threshold_min,
     morphology_size,
     dilate
-  ), buf_src);
+  ), buf_src, "canny_morphology_close");
 }
 
 int benchmark_emboss(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(emboss_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "emboss");
 }
 
 int benchmark_laplacian(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(laplacian_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "laplacian");
 }
 
 int benchmark_highpass(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(highpass_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "highpass");
 }
 
 int benchmark_gradient(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   return jit_benchmark(gradient_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src);
+  ), buf_src, "gradient");
 }
 
 int benchmark_blockmozaic(Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height) {
   Param<int32_t> block{"block", 10};
   return jit_benchmark(blockmozaic_fn(
     wrapFunc(buf_src, "buf_src"), width, height, block
-  ), buf_src);
+  ), buf_src, "blockmozaic");
 }
 
 int benchmark_match_template_sad(
@@ -575,7 +575,7 @@ int benchmark_match_template_sad(
   return jit_benchmark(match_template_sad_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "match_template_sad");
 }
 
 int benchmark_match_template_ssd(
@@ -585,7 +585,7 @@ int benchmark_match_template_ssd(
   return jit_benchmark(match_template_ssd_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "match_template_ssd");
 }
 
 int benchmark_match_template_ncc(
@@ -595,7 +595,7 @@ int benchmark_match_template_ncc(
   return jit_benchmark(match_template_ncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "match_template_ncc");
 }
 
 int benchmark_prepared_match_template_ncc(
@@ -611,7 +611,7 @@ int benchmark_prepared_match_template_ncc(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
     tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "prepared_match_template_ncc");
 }
 
 int benchmark_match_template_zncc(
@@ -621,7 +621,7 @@ int benchmark_match_template_zncc(
   return jit_benchmark(match_template_zncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "match_template_zncc");
 }
 
 int benchmark_prepared_match_template_zncc(
@@ -637,7 +637,7 @@ int benchmark_prepared_match_template_zncc(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_stddev, "stddev"),
     tpl_width, tpl_height
-  ), buf_src);
+  ), buf_src, "prepared_match_template_zncc");
 }
 
 int benchmark(char **argv) {
@@ -690,7 +690,7 @@ int benchmark(char **argv) {
   benchmark_laplacian(buf_src, width, height);
   benchmark_highpass(buf_src, width, height);
   benchmark_gradient(buf_src, width, height);
-  benchmark_edge(buf_src, width, height);
+  benchmark_edgedetect(buf_src, width, height);
   benchmark_sobel(buf_src, width, height);
   benchmark_canny(buf_src, width, height);
   benchmark_canny_dilate(buf_src, width, height);

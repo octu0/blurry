@@ -41,6 +41,8 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int prepare_ncc_template_par_for_prepare_ncc_template_s0_x_xo_ti__8(void *__user_context, int32_t _prepare_ncc_template_s0_x_xo_ti, uint8_t *_closure_arg__289);
+HALIDE_FUNCTION_ATTRS
 int prepare_ncc_template(struct halide_buffer_t *_tpl_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_prepare_ncc_template_0_buffer, struct halide_buffer_t *_prepare_ncc_template_1_buffer);
 
 HALIDE_FUNCTION_ATTRS

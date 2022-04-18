@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int boxblur_par_for_blur_x_s0_ch(void *__user_context, int32_t _blur_x_s0_ch, uint8_t *_closure_arg__152);
+HALIDE_FUNCTION_ATTRS
+int boxblur_par_for_boxblur_s0_ch_par_for_boxblur_s0_x_xo_ti_ti(void *__user_context, int32_t _boxblur_s0_x_xo_ti_ti, uint8_t *_closure_arg__154);
+HALIDE_FUNCTION_ATTRS
+int boxblur_par_for_boxblur_s0_ch(void *__user_context, int32_t _boxblur_s0_ch, uint8_t *_closure_arg__153);
+HALIDE_FUNCTION_ATTRS
 int boxblur(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, uint8_t _size, struct halide_buffer_t *_boxblur_buffer);
 
 HALIDE_FUNCTION_ATTRS

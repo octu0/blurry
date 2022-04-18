@@ -26,6 +26,9 @@ clang++ -g \
 # generate
 LD_LIBRARY_PATH=/halide/Halide-Runtime/lib ./generator.out -r halide_runtime_x86 -e object -o . target=host-x86-64
 
+# wait sync docker to disk
+sleep 1;
+
 for h in lib*_linux.a; do
   echo "ar ${h} halide_runtime";
   ar q ${h} halide_runtime_x86.o 

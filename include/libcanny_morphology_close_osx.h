@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int canny_morphology_close_par_for_dilate_tmp__6_s0_y_y(void *__user_context, int32_t _dilate_tmp__6_s0_y_y, uint8_t *_closure_arg__268);
+HALIDE_FUNCTION_ATTRS
+int canny_morphology_close_par_for_erode_tmp_3_s0_y_y__4(void *__user_context, int32_t _erode_tmp__3_s0_y_y, uint8_t *_closure_arg__269);
+HALIDE_FUNCTION_ATTRS
+int canny_morphology_close_par_for_hysteresis__3_s0_x_xo_ti(void *__user_context, int32_t _hysteresis__3_s0_x_xo_ti, uint8_t *_closure_arg__270);
+HALIDE_FUNCTION_ATTRS
+int canny_morphology_close_par_for_canny_morphology_close_s0_ch(void *__user_context, int32_t _canny_morphology_close_s0_ch, uint8_t *_closure_arg__271);
+HALIDE_FUNCTION_ATTRS
 int canny_morphology_close(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _morphology_size, int32_t _dilate, struct halide_buffer_t *_canny_morphology_close_buffer);
 
 HALIDE_FUNCTION_ATTRS

@@ -2560,7 +2560,7 @@ Func linearsum_xy(Func in, Expr size, Expr xfactor, Expr yfactor) {
   Var x("x"), y("y");
 
   RDom rd = RDom(0, size, "rd_linearsum");
-  Func f = Func("linearsum");
+  Func f = Func("linearsum_xy");
   f(x, y) += in(x + (rd * xfactor), y + (rd * yfactor));
   return f;
 }
@@ -2877,28 +2877,36 @@ Func contour_line(Func binary_input, Expr width, Expr height, Expr size) {
 
   next_top.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_top_right.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_right.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_bottom_right.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_bottom.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_bottom_left.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_left.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   next_top_left.compute_at(f, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
 
   nb.compute_at(f, ti)
     .vectorize(y, 8)

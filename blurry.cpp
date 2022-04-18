@@ -608,7 +608,8 @@ Func filter2d_gray(
   );
 
   conv.compute_at(gradient, yi)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
 
   gradient.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -707,7 +708,8 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   gaussian(x, y) += cast<uint8_t>(val / center_val);
 
   sum_kernel.compute_at(gaussian, y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   return gaussian;
 }
 
@@ -781,11 +783,14 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
 
   gauss.compute_at(hy, ti)
     .vectorize(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   gy.compute_at(hy, ti)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   gx.compute_at(hy, ti)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
 
   nms.compute_at(hy, ti)
     .vectorize(x);
@@ -1971,10 +1976,12 @@ Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){
 
   gy.compute_at(sobel, yi)
     .parallel(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
   gx.compute_at(sobel, yi)
     .parallel(y)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
 
   sobel.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
@@ -2119,7 +2126,8 @@ Func emboss_fn(Func input, Param<int32_t> width, Param<int32_t> height){
   );
 
   conv.compute_at(emboss, yi)
-    .vectorize(x);
+    .vectorize(x)
+    .update(0).unscheduled();
 
   emboss.compute_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)

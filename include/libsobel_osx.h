@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__245);
+HALIDE_FUNCTION_ATTRS
+int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti__1(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__246);
+HALIDE_FUNCTION_ATTRS
+int sobel_par_for_sobel_s0_ch__2(void *__user_context, int32_t _sobel_s0_ch, uint8_t *_closure_arg__244);
+HALIDE_FUNCTION_ATTRS
 int sobel(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel_buffer);
 
 HALIDE_FUNCTION_ATTRS

@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int scale_box_par_for_in_17_s0_ch__1(void *__user_context, int32_t _in__17_s0_ch, uint8_t *_closure_arg__76);
+HALIDE_FUNCTION_ATTRS
+int scale_box_par_for_scale_box_s0_ch_par_for_scale_box_s0_x_xo_ti_ti__2(void *__user_context, int32_t _scale_box_s0_x_xo_ti_ti, uint8_t *_closure_arg__78);
+HALIDE_FUNCTION_ATTRS
+int scale_box_par_for_scale_box_s0_ch_par_for_scale_box_s0_x_xo_ti_ti__3(void *__user_context, int32_t _scale_box_s0_x_xo_ti_ti, uint8_t *_closure_arg__79);
+HALIDE_FUNCTION_ATTRS
+int scale_box_par_for_scale_box_s0_ch__1(void *__user_context, int32_t _scale_box_s0_ch, uint8_t *_closure_arg__77);
+HALIDE_FUNCTION_ATTRS
 int scale_box(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _scale_width, int32_t _scale_height, struct halide_buffer_t *_scale_box_buffer);
 
 HALIDE_FUNCTION_ATTRS

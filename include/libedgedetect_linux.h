@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int edgedetect_par_for_edgedetect_s0_ch_par_for_edgedetect_s0_x_xo_ti_ti__2(void *__user_context, int32_t _edgedetect_s0_x_xo_ti_ti, uint8_t *_closure_arg__242);
+HALIDE_FUNCTION_ATTRS
+int edgedetect_par_for_edgedetect_s0_ch_par_for_edgedetect_s0_x_xo_ti_ti__3(void *__user_context, int32_t _edgedetect_s0_x_xo_ti_ti, uint8_t *_closure_arg__243);
+HALIDE_FUNCTION_ATTRS
+int edgedetect_par_for_edgedetect_s0_ch__1(void *__user_context, int32_t _edgedetect_s0_ch, uint8_t *_closure_arg__241);
+HALIDE_FUNCTION_ATTRS
 int edgedetect(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_edgedetect_buffer);
 
 HALIDE_FUNCTION_ATTRS

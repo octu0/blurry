@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int gammacorrection_par_for_in_23_s0_ch__1(void *__user_context, int32_t _in__23_s0_ch, uint8_t *_closure_arg__146);
+HALIDE_FUNCTION_ATTRS
+int gammacorrection_par_for_gammacorrection_s0_ch_par_for_gammacorrection_s0_x_xo_ti_ti__2(void *__user_context, int32_t _gammacorrection_s0_x_xo_ti_ti, uint8_t *_closure_arg__148);
+HALIDE_FUNCTION_ATTRS
+int gammacorrection_par_for_gammacorrection_s0_ch_par_for_gammacorrection_s0_x_xo_ti_ti__3(void *__user_context, int32_t _gammacorrection_s0_x_xo_ti_ti, uint8_t *_closure_arg__149);
+HALIDE_FUNCTION_ATTRS
+int gammacorrection_par_for_gammacorrection_s0_ch__1(void *__user_context, int32_t _gammacorrection_s0_ch, uint8_t *_closure_arg__147);
+HALIDE_FUNCTION_ATTRS
 int gammacorrection(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, float _factor, struct halide_buffer_t *_gammacorrection_buffer);
 
 HALIDE_FUNCTION_ATTRS

@@ -41,6 +41,18 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_in_31_s0_y_rebased__2(void *__user_context, int32_t _in__31_s0_y_rebased, uint8_t *_closure_arg__200);
+HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_dilate_tmp_4_s0_y_y__1(void *__user_context, int32_t _dilate_tmp__4_s0_y_y, uint8_t *_closure_arg__201);
+HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_erode_tmp_1_s0_y_y__1(void *__user_context, int32_t _erode_tmp__1_s0_y_y, uint8_t *_closure_arg__202);
+HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti__2(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__204);
+HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti__3(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__205);
+HALIDE_FUNCTION_ATTRS
+int morphology_close_par_for_morphology_close_s0_ch__5(void *__user_context, int32_t _morphology_close_s0_ch, uint8_t *_closure_arg__203);
+HALIDE_FUNCTION_ATTRS
 int morphology_close(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_close_buffer);
 
 HALIDE_FUNCTION_ATTRS

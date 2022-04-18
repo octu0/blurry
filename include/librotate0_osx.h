@@ -41,6 +41,8 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int rotate0_par_for_rotate0_s0_ch(void *__user_context, int32_t _rotate0_s0_ch, uint8_t *_closure_arg__50);
+HALIDE_FUNCTION_ATTRS
 int rotate0(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_rotate0_buffer);
 
 HALIDE_FUNCTION_ATTRS

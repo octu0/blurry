@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int canny_par_for_in_39_s0_y_rebased__6(void *__user_context, int32_t _in__39_s0_y_rebased, uint8_t *_closure_arg__250);
+HALIDE_FUNCTION_ATTRS
+int canny_par_for_hysteresis_s0_x_xo_ti(void *__user_context, int32_t _hysteresis_s0_x_xo_ti, uint8_t *_closure_arg__251);
+HALIDE_FUNCTION_ATTRS
+int canny_par_for_canny_s0_ch(void *__user_context, int32_t _canny_s0_ch, uint8_t *_closure_arg__252);
+HALIDE_FUNCTION_ATTRS
 int canny(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, struct halide_buffer_t *_canny_buffer);
 
 HALIDE_FUNCTION_ATTRS

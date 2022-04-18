@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int convert_to_yuv_420_par_for_fn_y_s0_x_xo_ti(void *__user_context, int32_t _fn_y_s0_x_xo_ti, uint8_t *_closure_arg__38);
+HALIDE_FUNCTION_ATTRS
+int convert_to_yuv_420_par_for_fn_u_s0_x_xo_ti(void *__user_context, int32_t _fn_u_s0_x_xo_ti, uint8_t *_closure_arg__39);
+HALIDE_FUNCTION_ATTRS
+int convert_to_yuv_420_par_for_fn_v_s0_x_xo_ti(void *__user_context, int32_t _fn_v_s0_x_xo_ti, uint8_t *_closure_arg__40);
+HALIDE_FUNCTION_ATTRS
 int convert_to_yuv_420(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_fn_y_buffer, struct halide_buffer_t *_fn_u_buffer, struct halide_buffer_t *_fn_v_buffer);
 
 HALIDE_FUNCTION_ATTRS

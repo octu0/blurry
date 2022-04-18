@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int invert_par_for_in__21_s0_ch(void *__user_context, int32_t _in__21_s0_ch, uint8_t *_closure_arg__128);
+HALIDE_FUNCTION_ATTRS
+int invert_par_for_invert_s0_ch_par_for_invert_s0_x_xo_ti_ti__4(void *__user_context, int32_t _invert_s0_x_xo_ti_ti, uint8_t *_closure_arg__130);
+HALIDE_FUNCTION_ATTRS
+int invert_par_for_invert_s0_ch_par_for_invert_s0_x_xo_ti_ti__5(void *__user_context, int32_t _invert_s0_x_xo_ti_ti, uint8_t *_closure_arg__131);
+HALIDE_FUNCTION_ATTRS
+int invert_par_for_invert_s0_ch(void *__user_context, int32_t _invert_s0_ch, uint8_t *_closure_arg__129);
+HALIDE_FUNCTION_ATTRS
 int invert(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_invert_buffer);
 
 HALIDE_FUNCTION_ATTRS

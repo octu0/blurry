@@ -41,6 +41,12 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int blend_normal_par_for_blend_normal_s0_ch_par_for_blend_normal_s0_x_xo_ti_ti(void *__user_context, int32_t _blend_normal_s0_x_xo_ti_ti, uint8_t *_closure_arg__97);
+HALIDE_FUNCTION_ATTRS
+int blend_normal_par_for_blend_normal_s0_ch_par_for_blend_normal_s0_x_xo_ti_ti__1(void *__user_context, int32_t _blend_normal_s0_x_xo_ti_ti, uint8_t *_closure_arg__98);
+HALIDE_FUNCTION_ATTRS
+int blend_normal_par_for_blend_normal_s0_ch(void *__user_context, int32_t _blend_normal_s0_ch, uint8_t *_closure_arg__96);
+HALIDE_FUNCTION_ATTRS
 int blend_normal(struct halide_buffer_t *_src0_buffer, int32_t _width0, int32_t _height0, struct halide_buffer_t *_src1_buffer, int32_t _width1, int32_t _height1, int32_t _px, int32_t _py, struct halide_buffer_t *_blend_normal_buffer);
 
 HALIDE_FUNCTION_ATTRS

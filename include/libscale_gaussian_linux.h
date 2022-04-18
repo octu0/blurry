@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int scale_gaussian_par_for_in_19_s0_ch__1(void *__user_context, int32_t _in__19_s0_ch, uint8_t *_closure_arg__92);
+HALIDE_FUNCTION_ATTRS
+int scale_gaussian_par_for_scale_gaussian_s0_ch_par_for_scale_gaussian_s0_x_xo_ti_ti__2(void *__user_context, int32_t _scale_gaussian_s0_x_xo_ti_ti, uint8_t *_closure_arg__94);
+HALIDE_FUNCTION_ATTRS
+int scale_gaussian_par_for_scale_gaussian_s0_ch_par_for_scale_gaussian_s0_x_xo_ti_ti__3(void *__user_context, int32_t _scale_gaussian_s0_x_xo_ti_ti, uint8_t *_closure_arg__95);
+HALIDE_FUNCTION_ATTRS
+int scale_gaussian_par_for_scale_gaussian_s0_ch__1(void *__user_context, int32_t _scale_gaussian_s0_ch, uint8_t *_closure_arg__93);
+HALIDE_FUNCTION_ATTRS
 int scale_gaussian(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _scale_width, int32_t _scale_height, struct halide_buffer_t *_scale_gaussian_buffer);
 
 HALIDE_FUNCTION_ATTRS

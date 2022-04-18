@@ -41,6 +41,8 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
+int match_template_sad_par_for_match_template_sad_s0_x_xo_ti__1(void *__user_context, int32_t _match_template_sad_s0_x_xo_ti, uint8_t *_closure_arg__277);
+HALIDE_FUNCTION_ATTRS
 int match_template_sad(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_tpl_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_match_template_sad_buffer);
 
 HALIDE_FUNCTION_ATTRS

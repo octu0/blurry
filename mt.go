@@ -2,8 +2,24 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmatch_template_sad_osx -lmatch_template_ssd_osx -lmatch_template_ncc_osx -lmatch_template_zncc_osx -lprepare_ncc_template_osx -lprepared_match_template_ncc_osx -lprepare_zncc_template_osx -lprepared_match_template_zncc_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmatch_template_sad_linux -lmatch_template_ssd_linux -lmatch_template_ncc_linux -lmatch_template_zncc_linux -lprepare_ncc_template_linux -lprepared_match_template_ncc_linux -lprepare_zncc_template_linux -lprepared_match_template_zncc_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -lmatch_template_sad_osx
+#cgo darwin LDFLAGS: -lmatch_template_ssd_osx
+#cgo darwin LDFLAGS: -lmatch_template_ncc_osx
+#cgo darwin LDFLAGS: -lmatch_template_zncc_osx
+#cgo darwin LDFLAGS: -lprepare_ncc_template_osx
+#cgo darwin LDFLAGS: -lprepared_match_template_ncc_osx
+#cgo darwin LDFLAGS: -lprepare_zncc_template_osx
+#cgo darwin LDFLAGS: -lprepared_match_template_zncc_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux LDFLAGS: -lmatch_template_sad_linux
+#cgo linux LDFLAGS: -lmatch_template_ssd_linux
+#cgo linux LDFLAGS: -lmatch_template_ncc_linux
+#cgo linux LDFLAGS: -lmatch_template_zncc_linux
+#cgo linux LDFLAGS: -lprepare_ncc_template_linux
+#cgo linux LDFLAGS: -lprepared_match_template_ncc_linux
+#cgo linux LDFLAGS: -lprepare_zncc_template_linux
+#cgo linux LDFLAGS: -lprepared_match_template_zncc_linux
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

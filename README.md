@@ -19,57 +19,58 @@ darwin/amd64 Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz
 
 ```
 src 320x240
-BenchmarkJIT/cloneimg                      : 0.00767ms
-BenchmarkJIT/convert_from_argb             : 0.02328ms
-BenchmarkJIT/convert_from_abgr             : 0.03573ms
-BenchmarkJIT/convert_from_bgra             : 0.02430ms
-BenchmarkJIT/convert_from_rabg             : 0.03159ms
-BenchmarkJIT/convert_from_yuv_420          : 0.02964ms
-BenchmarkJIT/convert_from_yuv_444          : 0.02652ms
-BenchmarkJIT/convert_to_yuv_420            : 0.05654ms
-BenchmarkJIT/convert_to_yuv_444            : 0.07356ms
-BenchmarkJIT/rotate0                       : 0.00828ms
-BenchmarkJIT/rotate90                      : 0.02600ms
-BenchmarkJIT/rotate180                     : 0.00792ms
-BenchmarkJIT/rotate270                     : 0.02560ms
-BenchmarkJIT/crop                          : 0.06128ms
-BenchmarkJIT/scale                         : 0.13941ms
-BenchmarkJIT/scale_box                     : 0.20701ms
-BenchmarkJIT/scale_linear                  : 0.20637ms
-BenchmarkJIT/scale_gaussian                : 0.31937ms
-BenchmarkJIT/blend_normal                  : 0.09480ms
-BenchmarkJIT/blend_sub                     : 0.08381ms
-BenchmarkJIT/blend_add                     : 0.08439ms
-BenchmarkJIT/blend_diff                    : 0.08445ms
-BenchmarkJIT/grayscale                     : 0.03752ms
-BenchmarkJIT/invert                        : 0.03684ms
-BenchmarkJIT/brightness                    : 0.04142ms
-BenchmarkJIT/gammacorrection               : 0.07600ms
-BenchmarkJIT/contrast                      : 0.01532ms
-BenchmarkJIT/boxblur                       : 0.10674ms
-BenchmarkJIT/gaussianblur                  : 0.31972ms
-BenchmarkJIT/blockmozaic                   : 0.27346ms
-BenchmarkJIT/erosion                       : 0.11407ms
-BenchmarkJIT/dilation                      : 0.11997ms
-BenchmarkJIT/morphology_open               : 0.14157ms
-BenchmarkJIT/morphology_close              : 0.10427ms
-BenchmarkJIT/morphology_gradient           : 0.07612ms
-BenchmarkJIT/emboss                        : 0.06083ms
-BenchmarkJIT/laplacian                     : 0.04251ms
-BenchmarkJIT/highpass                      : 0.03843ms
-BenchmarkJIT/gradient                      : 0.03320ms
-BenchmarkJIT/edgedetect                    : 0.02701ms
-BenchmarkJIT/sobel                         : 0.06392ms
-BenchmarkJIT/canny                         : 0.28839ms
-BenchmarkJIT/canny_dilate                  : 0.34880ms
-BenchmarkJIT/canny_morphology_open         : 0.38943ms
-BenchmarkJIT/canny_morphology_close        : 0.39011ms
-BenchmarkJIT/match_template_sad            : 5.69188ms
-BenchmarkJIT/match_template_ssd            : 4.75666ms
-BenchmarkJIT/match_template_ncc            : 8.98426ms
-BenchmarkJIT/prepared_match_template_ncc   : 6.23328ms
-BenchmarkJIT/match_template_zncc           : 12.64066ms
-BenchmarkJIT/prepared_match_template_zncc  : 11.67131ms
+BenchmarkJIT/cloneimg                      : 0.00788ms
+BenchmarkJIT/convert_from_argb             : 0.02375ms
+BenchmarkJIT/convert_from_abgr             : 0.03884ms
+BenchmarkJIT/convert_from_bgra             : 0.02470ms
+BenchmarkJIT/convert_from_rabg             : 0.03655ms
+BenchmarkJIT/convert_from_yuv_420          : 0.03168ms
+BenchmarkJIT/convert_from_yuv_444          : 0.02686ms
+BenchmarkJIT/convert_to_yuv_420            : 0.06742ms
+BenchmarkJIT/convert_to_yuv_444            : 0.07209ms
+BenchmarkJIT/rotate0                       : 0.00774ms
+BenchmarkJIT/rotate90                      : 0.02599ms
+BenchmarkJIT/rotate180                     : 0.00802ms
+BenchmarkJIT/rotate270                     : 0.02582ms
+BenchmarkJIT/crop                          : 0.06126ms
+BenchmarkJIT/scale                         : 0.14009ms
+BenchmarkJIT/scale_box                     : 0.20598ms
+BenchmarkJIT/scale_linear                  : 0.20440ms
+BenchmarkJIT/scale_gaussian                : 0.31444ms
+BenchmarkJIT/blend_normal                  : 0.08443ms
+BenchmarkJIT/blend_sub                     : 0.08398ms
+BenchmarkJIT/blend_add                     : 0.08364ms
+BenchmarkJIT/blend_diff                    : 0.08453ms
+BenchmarkJIT/grayscale                     : 0.03687ms
+BenchmarkJIT/invert                        : 0.03730ms
+BenchmarkJIT/brightness                    : 0.04703ms
+BenchmarkJIT/gammacorrection               : 0.08013ms
+BenchmarkJIT/contrast                      : 0.01549ms
+BenchmarkJIT/boxblur                       : 0.11211ms
+BenchmarkJIT/gaussianblur                  : 0.33058ms
+BenchmarkJIT/blockmozaic                   : 0.27455ms
+BenchmarkJIT/erosion                       : 0.11934ms
+BenchmarkJIT/dilation                      : 0.12013ms
+BenchmarkJIT/morphology_open               : 0.10370ms
+BenchmarkJIT/morphology_close              : 0.10435ms
+BenchmarkJIT/morphology_gradient           : 0.07684ms
+BenchmarkJIT/emboss                        : 0.04402ms
+BenchmarkJIT/laplacian                     : 0.03192ms
+BenchmarkJIT/highpass                      : 0.03847ms
+BenchmarkJIT/gradient                      : 0.03322ms
+BenchmarkJIT/edgedetect                    : 0.02705ms
+BenchmarkJIT/sobel                         : 0.06276ms
+BenchmarkJIT/canny                         : 0.29922ms
+BenchmarkJIT/canny_dilate                  : 0.35114ms
+BenchmarkJIT/canny_morphology_open         : 0.44488ms
+BenchmarkJIT/canny_morphology_close        : 0.40522ms
+BenchmarkJIT/match_template_sad            : 5.75482ms
+BenchmarkJIT/match_template_ssd            : 4.48363ms
+BenchmarkJIT/match_template_ncc            : 8.32420ms
+BenchmarkJIT/prepared_match_template_ncc   : 6.22423ms
+BenchmarkJIT/match_template_zncc           : 12.73780ms
+BenchmarkJIT/prepared_match_template_zncc  : 11.38906ms
+BenchmarkJIT/pcm16_decibel                 : 0.00257ms
 ```
 
 ## AOT benchmarks
@@ -619,6 +620,20 @@ ycbcr, err := blurry.ConvertToYUV444(rgba)
 | :----------: | :-----------------------------------: |
 | 420          | `blurry.ConvertToYUV420(*image.RGBA)` |
 | 444          | `blurry.ConvertToYUV444(*image.RGBA)` |
+
+#### PCM16 Decibel
+
+Gets the decibel of given PCM16.
+
+```go
+var data []byte
+decibel, err := blurry.PCM16Decibel(data, length)
+
+or
+
+var input []int16
+decibel, err := blurry.PCM16DecibelFromInt16(input)
+```
 
 ## CLI usage
 

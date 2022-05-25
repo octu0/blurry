@@ -2,8 +2,14 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lmorphology_open_osx -lmorphology_close_osx -lmorphology_gradient_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lmorphology_open_linux -lmorphology_close_linux -lmorphology_gradient_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -lmorphology_open_osx
+#cgo darwin LDFLAGS: -lmorphology_close_osx
+#cgo darwin LDFLAGS: -lmorphology_gradient_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -lmorphology_open_linux
+#cgo linux  LDFLAGS: -lmorphology_close_linux
+#cgo linux  LDFLAGS: -lmorphology_gradient_linux
 #include <stdlib.h>
 #include <string.h>
 

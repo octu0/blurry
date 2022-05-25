@@ -215,6 +215,40 @@ halide_buffer_t *create_double_array_buffer(unsigned char *data, int32_t width, 
   return buffer;
 }
 
+halide_buffer_t *create_pcm16_buffer(unsigned char *data, int32_t length) {
+  int32_t dimensions = 1;
+  halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));
+  if(buffer == NULL) {
+    return NULL;
+  }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
+  halide_dimension_t *dim = (halide_dimension_t *) malloc(dimensions * sizeof(halide_dimension_t));
+  if(dim == NULL) {
+    free_buf(buffer);
+    return NULL;
+  }
+  memset(dim, 0, dimensions * sizeof(halide_dimension_t));
+
+  init_1darray_dim(dim, length);
+  init_int16_buf(buffer, dim, data, dimensions);
+
+  return buffer;
+}
+
+halide_buffer_t *create_pcm16_decibel_buffer(unsigned char *data, int32_t length) {
+  int32_t dimensions = 0;
+  halide_buffer_t *buffer = (halide_buffer_t *) malloc(sizeof(halide_buffer_t));
+  if(buffer == NULL) {
+    return NULL;
+  }
+  memset(buffer, 0, sizeof(halide_buffer_t));
+
+  init_float_buf(buffer, NULL, data, dimensions);
+
+  return buffer;
+}
+
 void init_rgba_dim(halide_dimension_t *dim, int32_t width, int32_t height) {
   // width
   dim[0].min = 0;
@@ -263,6 +297,13 @@ void init_array_dim(halide_dimension_t *dim, int32_t width, int32_t height) {
   dim[1].flags = 0;
 }
 
+void init_1darray_dim(halide_dimension_t *dim, int32_t length) {
+  dim[0].min = 0;
+  dim[0].extent = length;
+  dim[0].stride = 1;
+  dim[0].flags = 0;
+}
+
 void init_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
   buffer->dimensions = dimensions;
   buffer->dim = dim;
@@ -280,6 +321,11 @@ void init_uint8_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned c
 void init_uint16_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
   init_buf(buffer, dim, data, dimensions);
   buffer->type = halide_uint16_t;
+}
+
+void init_int16_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {
+  init_buf(buffer, dim, data, dimensions);
+  buffer->type = halide_int16_t;
 }
 
 void init_int32_buf(halide_buffer_t *buffer, halide_dimension_t *dim, unsigned char *data, int32_t dimensions) {

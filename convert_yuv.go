@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_yuv_420_osx -lconvert_from_yuv_444_osx -lconvert_to_yuv_420_osx -lconvert_to_yuv_444_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_yuv_420_linux -lconvert_from_yuv_444_linux -lconvert_to_yuv_420_linux -lconvert_to_yuv_444_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -lconvert_from_yuv_420_osx
+#cgo darwin LDFLAGS: -lconvert_from_yuv_444_osx
+#cgo darwin LDFLAGS: -lconvert_to_yuv_420_osx
+#cgo darwin LDFLAGS: -lconvert_to_yuv_444_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -lconvert_from_yuv_420_linux
+#cgo linux  LDFLAGS: -lconvert_from_yuv_444_linux
+#cgo linux  LDFLAGS: -lconvert_to_yuv_420_linux
+#cgo linux  LDFLAGS: -lconvert_to_yuv_444_linux
 #include <stdlib.h>
 
 #ifdef __APPLE__

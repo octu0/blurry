@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lconvert_from_abgr_osx -lconvert_from_argb_osx -lconvert_from_bgra_osx -lconvert_from_rabg_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lconvert_from_abgr_linux -lconvert_from_argb_linux -lconvert_from_bgra_linux -lconvert_from_rabg_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -lconvert_from_abgr_osx
+#cgo darwin LDFLAGS: -lconvert_from_argb_osx
+#cgo darwin LDFLAGS: -lconvert_from_bgra_osx
+#cgo darwin LDFLAGS: -lconvert_from_rabg_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -lconvert_from_abgr_linux
+#cgo linux  LDFLAGS: -lconvert_from_argb_linux
+#cgo linux  LDFLAGS: -lconvert_from_bgra_linux
+#cgo linux  LDFLAGS: -lconvert_from_rabg_linux
 #include <stdlib.h>
 
 #ifdef __APPLE__

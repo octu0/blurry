@@ -33,6 +33,14 @@ Func wrapFunc_xy(Buffer<float> buf, const char* name);
 
 Func wrapFunc_xy(Buffer<double> buf, const char* name);
 
+Func wrapFunc_x(Buffer<uint8_t> buf, const char* name);
+
+Func wrapFunc_x(Buffer<int16_t> buf, const char* name);
+
+Func wrapFunc_x(Buffer<float> buf, const char* name);
+
+Func wrapFunc_x(Buffer<double> buf, const char* name);
+
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func convert_from_abgr_fn(Func input, Param<int32_t> width, Param<int32_t> height);
@@ -225,4 +233,7 @@ Func contour_fn(
   Param<uint8_t> threshold, Param<uint8_t> size
 );
 
+Func pcm16_decibel_fn(
+  Func input, Param<int32_t> length
+);
 #endif // BLURRY_H_

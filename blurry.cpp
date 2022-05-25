@@ -22,6 +22,8 @@ const Expr degree0 = cast<uint8_t>(0);
 const Expr degree45 = cast<uint8_t>(45);
 const Expr degree90 = cast<uint8_t>(90);
 const Expr degree135 = cast<uint8_t>(135);
+const Expr pcm16_max = cast<float>(32768.0f); // 2^15
+const Expr ln10 = cast<float>(2.30258509299404568401799145468436420760110148862877297603332790f); // https://oeis.org/A002392
 
 const Func kernel_sobel_x = kernel_sobel3x3_x();
 const Func kernel_sobel_y = kernel_sobel3x3_y();
@@ -142,6 +144,34 @@ Func wrapFunc_xy(Buffer<double> buf, const char* name) {
   Var x("x"), y("y");
   Func f = Func(name);
   f(x, y) = buf(x, y);
+  return f;
+}
+
+Func wrapFunc_x(Buffer<uint8_t> buf, const char* name) {
+  Var x("x");
+  Func f = Func(name);
+  f(x) = buf(x);
+  return f;
+}
+
+Func wrapFunc_x(Buffer<int16_t> buf, const char* name) {
+  Var x("x");
+  Func f = Func(name);
+  f(x) = buf(x);
+  return f;
+}
+
+Func wrapFunc_x(Buffer<float> buf, const char* name) {
+  Var x("x");
+  Func f = Func(name);
+  f(x) = buf(x);
+  return f;
+}
+
+Func wrapFunc_x(Buffer<double> buf, const char* name) {
+  Var x("x");
+  Func f = Func(name);
+  f(x) = buf(x);
   return f;
 }
 
@@ -2981,4 +3011,41 @@ Func contour_fn(
   Expr value = c(x, y);
   f(x, y) = value;
   return f;
+}
+
+Expr log10(Expr v) {
+  return fast_log(v) / ln10;
+}
+
+Func pcm16_decibel_fn(
+  Func input, Param<int32_t> length
+) {
+  Var x("x");
+
+  Func normalize = Func("pcm16_normalize");
+  Expr in = cast<int16_t>(input(x));
+  normalize(x) = cast<float>(in) / pcm16_max; // -1.0 .. x .. 1.0
+
+  Func sq = Func("square");
+  sq(x) = fast_pow(normalize(x), 2);
+
+  RDom rd = RDom(0, length, "length");
+  Func rms = Func("root_mean_square");
+  Expr sum_values = sum(sq(rd));
+  Expr mean = sum_values / cast<float>(length);
+  rms(_) = sqrt(mean);
+
+  Func decibel = Func("pcm16_decibel");
+  decibel(_) = 20 * (log10(rms(_)));
+
+  // schedule
+  
+  normalize.compute_at(sq, x)
+    .store_root()
+    .vectorize(x, 64);
+  sq.compute_root()
+    .store_root()
+    .vectorize(x, 64);
+
+  return decibel;
 }

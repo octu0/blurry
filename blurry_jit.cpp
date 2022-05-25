@@ -49,6 +49,14 @@ Buffer<double> jit_realize_double_bounds(Func fn, int32_t width, int32_t height)
   return fn.realize({width, height, 4});
 }
 
+Buffer<float> jit_realize_pcm16_float_bounds(Func fn, int32_t length) {
+  fn.compile_jit(get_jit_target_from_environment());
+
+  printf("realize(float) %s...\n", fn.name().c_str());
+  
+  return fn.realize({length});
+}
+
 Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {
   return jit_realize_uint8_bounds(fn, src.get()->width(), src.get()->height());
 }
@@ -63,6 +71,10 @@ Buffer<int32_t> jit_realize_int32(Func fn, Buffer<uint8_t> src) {
 
 Buffer<double> jit_realize_double(Func fn, Buffer<uint8_t> src) {
   return jit_realize_double_bounds(fn, src.get()->width(), src.get()->height());
+}
+
+Buffer<float> jit_realize_pcm16_float(Func fn, Buffer<int16_t> src) {
+  return jit_realize_pcm16_float_bounds(fn, src.get()->width());
 }
 
 int jit_cloneimg(char **argv) {
@@ -1437,6 +1449,31 @@ int jit_contour(char **argv) {
   return 0;
 }
 
+int jit_pcm16_decibel(char **argv) {
+  FILE *const f = fopen(argv[2], "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  int32_t length = (int32_t) std::stoi(argv[3]);
+  int16_t *data = (int16_t *) calloc(length, sizeof(int16_t));
+  fread(data, sizeof(int16_t), length, f);
+  fclose(f);
+
+  Buffer<int16_t> buf_src = Buffer<int16_t>::make_interleaved(data, length, 0, 1);
+  buf_src.raw_buffer()->dimensions = 1;
+  buf_src.raw_buffer()->dim[0].extent = length;
+  buf_src.raw_buffer()->dim[0].stride = 1;
+  Param<int32_t> _length{"length", length};
+
+  Buffer<float> out = jit_realize_pcm16_float(pcm16_decibel_fn(
+    wrapFunc_x(buf_src, "buf_src"), _length
+  ), buf_src);
+
+  float *decibels = out.data();
+  printf("decibel:%3.4fdB\n", decibels[0]);
+  return 0;
+}
+
 int jit_run(char **argv) {
   if(strcmp(argv[1], "cloneimg") == 0) {
     return jit_cloneimg(argv);
@@ -1599,6 +1636,9 @@ int jit_run(char **argv) {
   }
   if(strcmp(argv[1], "contour") == 0) {
     return jit_contour(argv);
+  }
+  if(strcmp(argv[1], "pcm16_decibel") == 0) {
+    return jit_pcm16_decibel(argv);
   }
 
   printf("unknown command: %s\n", argv[1]);

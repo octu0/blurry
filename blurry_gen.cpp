@@ -134,6 +134,11 @@ void init_input_yuv_444(ImageParam in_y, ImageParam in_u, ImageParam in_v, Param
   in_v.dim(1).set_stride(width);
 }
 
+void init_input_array(ImageParam in, Param<int32_t> size) {
+  in.dim(0).set_stride(1);
+  in.dim(1).set_stride(size);
+}
+
 void init_input_array(ImageParam in, Param<int32_t> width, Param<int32_t> height) {
   in.dim(0).set_stride(1);
   in.dim(1).set_stride(width);
@@ -153,6 +158,11 @@ void init_output_yuv_420(OutputImageParam out, Param<int32_t> width, Param<int32
 void init_output_yuv_444(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
   out.dim(0).set_stride(1);
   out.dim(1).set_stride(width);
+}
+
+void init_output_array(OutputImageParam out, Param<int32_t> size) {
+  out.dim(0).set_stride(1);
+  out.dim(1).set_stride(size);
 }
 
 void init_output_array(OutputImageParam out, Param<int32_t> width, Param<int32_t> height) {
@@ -1665,6 +1675,22 @@ void generate_contour(std::vector<Target::Feature> features) {
 // }}} contour
 //
 
+//
+// {{{ pcm16_decibel
+//
+void generate_pcm16_decibel(std::vector<Target::Feature> features) {
+  ImageParam src(type_of<int16_t>(), 1, "src");
+
+  Param<int32_t> length{"length", 1024};
+
+  Func fn = pcm16_decibel_fn(src.in(), length);
+
+  generate_static_link(features, fn, { src, length }, "pcm16_decibel");
+}
+//
+// }}} pcm16_decibel
+//
+
 int generate(char **argv){
   printf("generate...\n");
 
@@ -1735,6 +1761,7 @@ int generate(char **argv){
   generate_prepare_zncc_template(features);
   generate_prepared_match_template_zncc(features);
   generate_contour(features);
+  generate_pcm16_decibel(features);
 
   return 0;
 }

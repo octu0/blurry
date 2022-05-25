@@ -15,6 +15,16 @@ int jit_benchmark_bounds(Func fn, int32_t width, int32_t height, std::string nam
   return 0;
 }
 
+int jit_benchmark_pcm16_bounds(Func fn, int32_t length, std::string name) {
+  fn.compile_jit(get_jit_target_from_environment());
+
+  double result = benchmark(100, 10, [&]() {
+    fn.realize({length});
+  });
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", name.c_str(), result * 1e3);
+  return 0;
+}
+
 int jit_benchmark(Func fn, Buffer<uint8_t> buf_src, std::string name) {
   return jit_benchmark_bounds(fn, buf_src.get()->width(), buf_src.get()->height(), name);
 }
@@ -640,6 +650,27 @@ int benchmark_prepared_match_template_zncc(
   ), buf_src, "prepared_match_template_zncc");
 }
 
+int benchmark_pcm16_decibel(){
+  FILE *const f = fopen("./testdata/pcm16_1.data", "rb");
+  if(f == nullptr) {
+    return 1;
+  }
+  int32_t length = 1024;
+  int16_t *data = (int16_t *) calloc(length, sizeof(int16_t));
+  fread(data, sizeof(int16_t), length, f);
+  fclose(f);
+
+  Buffer<int16_t> buf_src = Buffer<int16_t>::make_interleaved(data, length, 0, 1);
+  buf_src.raw_buffer()->dimensions = 1;
+  buf_src.raw_buffer()->dim[0].extent = length;
+  buf_src.raw_buffer()->dim[0].stride = 1;
+  Param<int32_t> _length{"length", length};
+
+  return jit_benchmark_pcm16_bounds(pcm16_decibel_fn(
+    wrapFunc_x(buf_src, "buf_src"), _length
+  ), length, "pcm16_decibel");
+}
+
 int benchmark(char **argv) {
   printf("benchmark...\n");
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
@@ -702,6 +733,7 @@ int benchmark(char **argv) {
   benchmark_prepared_match_template_ncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
   benchmark_prepared_match_template_zncc(buf_src, width, height, buf_tpl, tpl_width, tpl_height);
+  benchmark_pcm16_decibel();
   return 0;
 }
 

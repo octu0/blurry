@@ -1211,7 +1211,7 @@ Func scale(
   Var ti("ti");
 
   Region src_bounds = {{0, width},{0, height},{0, 4}};
-  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+  Func in = BoundaryConditions::constant_exterior(readFloat(input, "in"), 0, src_bounds);
 
   Expr dx = cast<float>(width) / cast<float>(scale_width);
   Expr dy = cast<float>(height) / cast<float>(scale_height);
@@ -1220,23 +1220,28 @@ Func scale(
   scale(x, y, ch) = in(cast<int>((x + f05) * dx), cast<int>((y + f05) * dy), ch);
 
   Func f = Func("scale");
-  Expr value = select(
+  f(x, y, ch) = cast<uint8_t>(select(
     ch < 3, scale(x, y, ch),
     likely(float_255)
-  );
-  f(x, y, ch) = cast<uint8_t>(value);
+  ));
+  f(x, y, 0) = cast<uint8_t>(scale(x, y, 0));
+  f(x, y, 1) = cast<uint8_t>(scale(x, y, 1));
+  f(x, y, 2) = cast<uint8_t>(scale(x, y, 2));
+  f(x, y, 3) = ui8_255;
 
-  scale.compute_at(f, ti)
-    .parallel(ch)
-    .vectorize(y, 8)
-    .vectorize(x, 8);
-
-  f.compute_root()
+  scale.compute_root()
+    .parallel(y, 8)
+    .vectorize(x, 32);
+  f.compute_at(scale, ti)
+    .store_at(scale, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
-    .parallel(ch)
-    .parallel(ti)
+    .parallel(ti, 8)
     .vectorize(xi, 32);
+  f.update(0).unscheduled();
+  f.update(1).unscheduled();
+  f.update(2).unscheduled();
+  f.update(3).unscheduled();
   return f;
 }
 
@@ -1853,21 +1858,25 @@ Func boxblur(Func input, Expr width, Expr height, Expr size) {
 
   blur_x.compute_root()
     .parallel(ch)
-    .vectorize(x, 32);
+    .vectorize(x, 64);
   blur_y.compute_at(f, yi)
+    .store_at(f, yi)
     .parallel(ch)
-    .vectorize(x, 32);
+    .vectorize(x);
 
   f.compute_at(in, ti)
-    .tile(x, y, xo, yo, xi, yi, 32, 32)
+    .bound(ch, 0, 4).unroll(ch)
+    .bound(x, 0, width)
+    .bound(y, 0, height)
+    .store_root()
+    .tile(x, y, xo, yo, xi, yi, 64, 64)
     .fuse(xo, yo, ti)
-    .parallel(ch)
     .parallel(ti, 8)
-    .vectorize(xi, 32);
+    .vectorize(xi, 64);
 
   in.compute_at(blur_x, y)
     .parallel(ch)
-    .vectorize(x, 32);
+    .vectorize(x, 64);
   return f;
 }
 

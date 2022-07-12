@@ -41,11 +41,11 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int erosion_par_for_in__28_s0_ch(void *__user_context, int32_t _in__28_s0_ch, uint8_t *_closure_arg__170);
+int erosion_par_for_in__28_s0_ch(void *__user_context, int32_t _in__28_s0_ch, uint8_t *_closure_arg__174);
 HALIDE_FUNCTION_ATTRS
-int erosion_par_for_erosion_s0_ch_par_for_erosion_s0_x_xo_ti_ti(void *__user_context, int32_t _erosion_s0_x_xo_ti_ti, uint8_t *_closure_arg__172);
+int erosion_par_for_erosion_s0_ch_par_for_erosion_s0_x_xo_ti_ti(void *__user_context, int32_t _erosion_s0_x_xo_ti_ti, uint8_t *_closure_arg__176);
 HALIDE_FUNCTION_ATTRS
-int erosion_par_for_erosion_s0_ch(void *__user_context, int32_t _erosion_s0_ch, uint8_t *_closure_arg__171);
+int erosion_par_for_erosion_s0_ch(void *__user_context, int32_t _erosion_s0_ch, uint8_t *_closure_arg__175);
 HALIDE_FUNCTION_ATTRS
 int erosion(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_erosion_buffer);
 

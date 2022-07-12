@@ -41,11 +41,11 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti__2(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__248);
+int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti__6(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__252);
 HALIDE_FUNCTION_ATTRS
-int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti__3(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__249);
+int sobel_par_for_sobel_s0_ch_par_for_sobel_s0_x_xo_ti_ti__7(void *__user_context, int32_t _sobel_s0_x_xo_ti_ti, uint8_t *_closure_arg__253);
 HALIDE_FUNCTION_ATTRS
-int sobel_par_for_sobel_s0_ch__3(void *__user_context, int32_t _sobel_s0_ch, uint8_t *_closure_arg__247);
+int sobel_par_for_sobel_s0_ch__3(void *__user_context, int32_t _sobel_s0_ch, uint8_t *_closure_arg__251);
 HALIDE_FUNCTION_ATTRS
 int sobel(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_sobel_buffer);
 

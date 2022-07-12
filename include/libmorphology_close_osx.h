@@ -41,17 +41,17 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_in_31_s0_y_rebased__1(void *__user_context, int32_t _in__31_s0_y_rebased, uint8_t *_closure_arg__194);
+int morphology_close_par_for_in__31_s0_y_rebased(void *__user_context, int32_t _in__31_s0_y_rebased, uint8_t *_closure_arg__198);
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_dilate_tmp__4_s0_y_y(void *__user_context, int32_t _dilate_tmp__4_s0_y_y, uint8_t *_closure_arg__195);
+int morphology_close_par_for_dilate_tmp__1_s0_y_y(void *__user_context, int32_t _dilate_tmp__1_s0_y_y, uint8_t *_closure_arg__199);
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_erode_tmp__1_s0_y_y(void *__user_context, int32_t _erode_tmp__1_s0_y_y, uint8_t *_closure_arg__196);
+int morphology_close_par_for_erode_tmp__1_s0_y_y(void *__user_context, int32_t _erode_tmp__1_s0_y_y, uint8_t *_closure_arg__200);
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__198);
+int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__202);
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti__1(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__199);
+int morphology_close_par_for_morphology_close_s0_ch_par_for_morphology_close_s0_x_xo_ti_ti__1(void *__user_context, int32_t _morphology_close_s0_x_xo_ti_ti, uint8_t *_closure_arg__203);
 HALIDE_FUNCTION_ATTRS
-int morphology_close_par_for_morphology_close_s0_ch__4(void *__user_context, int32_t _morphology_close_s0_ch, uint8_t *_closure_arg__197);
+int morphology_close_par_for_morphology_close_s0_ch(void *__user_context, int32_t _morphology_close_s0_ch, uint8_t *_closure_arg__201);
 HALIDE_FUNCTION_ATTRS
 int morphology_close(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_close_buffer);
 

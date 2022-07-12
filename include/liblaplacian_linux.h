@@ -41,11 +41,11 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti__2(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__224);
+int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti__2(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__228);
 HALIDE_FUNCTION_ATTRS
-int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti__3(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__225);
+int laplacian_par_for_laplacian_s0_ch_par_for_laplacian_s0_x_xo_ti_ti__3(void *__user_context, int32_t _laplacian_s0_x_xo_ti_ti, uint8_t *_closure_arg__229);
 HALIDE_FUNCTION_ATTRS
-int laplacian_par_for_laplacian_s0_ch__1(void *__user_context, int32_t _laplacian_s0_ch, uint8_t *_closure_arg__223);
+int laplacian_par_for_laplacian_s0_ch__1(void *__user_context, int32_t _laplacian_s0_ch, uint8_t *_closure_arg__227);
 HALIDE_FUNCTION_ATTRS
 int laplacian(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_laplacian_buffer);
 

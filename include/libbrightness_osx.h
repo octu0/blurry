@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int brightness_par_for_in__22_s0_ch(void *__user_context, int32_t _in__22_s0_ch, uint8_t *_closure_arg__136);
+int brightness_par_for_in_22_s0_ch__4(void *__user_context, int32_t _in__22_s0_ch, uint8_t *_closure_arg__136);
 HALIDE_FUNCTION_ATTRS
 int brightness_par_for_brightness_s0_ch_par_for_brightness_s0_x_xo_ti_ti(void *__user_context, int32_t _brightness_s0_x_xo_ti_ti, uint8_t *_closure_arg__138);
 HALIDE_FUNCTION_ATTRS

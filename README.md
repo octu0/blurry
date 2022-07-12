@@ -33,7 +33,7 @@ BenchmarkJIT/rotate90                      : 0.02599ms
 BenchmarkJIT/rotate180                     : 0.00802ms
 BenchmarkJIT/rotate270                     : 0.02582ms
 BenchmarkJIT/crop                          : 0.06126ms
-BenchmarkJIT/scale                         : 0.14009ms
+BenchmarkJIT/scale                         : 0.13889ms
 BenchmarkJIT/scale_box                     : 0.20598ms
 BenchmarkJIT/scale_linear                  : 0.20440ms
 BenchmarkJIT/scale_gaussian                : 0.31444ms
@@ -621,7 +621,7 @@ ycbcr, err := blurry.ConvertToYUV444(rgba)
 | 420          | `blurry.ConvertToYUV420(*image.RGBA)` |
 | 444          | `blurry.ConvertToYUV444(*image.RGBA)` |
 
-#### PCM16 Decibel
+### PCM16 Decibel
 
 Gets the decibel of given PCM16.
 
@@ -662,7 +662,7 @@ USAGE:
    blurry [global options] command [command options] [arguments...]
 
 VERSION:
-   1.19.0
+   1.20.1
 
 COMMANDS:
      blend             
@@ -691,6 +691,7 @@ COMMANDS:
      laplacian         
      morphology        
      match_template    
+     pcm16             
      rotate            
      scale             
      sobel             

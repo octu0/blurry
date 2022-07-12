@@ -41,9 +41,9 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int contour_par_for_sobel__5_s0_x_xo_ti_ti(void *__user_context, int32_t _sobel__5_s0_x_xo_ti_ti, uint8_t *_closure_arg__300);
+int contour_par_for_sobel__5_s0_x_xo_ti_ti(void *__user_context, int32_t _sobel__5_s0_x_xo_ti_ti, uint8_t *_closure_arg__325);
 HALIDE_FUNCTION_ATTRS
-int contour_par_for_countor_line_s0_x_xo_ti(void *__user_context, int32_t _countor_line_s0_x_xo_ti, uint8_t *_closure_arg__301);
+int contour_par_for_countor_line_s0_x_xo_ti(void *__user_context, int32_t _countor_line_s0_x_xo_ti, uint8_t *_closure_arg__326);
 HALIDE_FUNCTION_ATTRS
 int contour(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, uint8_t _threshold, uint8_t _size, struct halide_buffer_t *_contour_buffer);
 

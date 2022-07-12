@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int blend_diff_par_for_blend_diff_3_s0_ch_par_for_blend_diff_3_s0_x_xo_ti_ti__6(void *__user_context, int32_t _blend_diff__3_s0_x_xo_ti_ti, uint8_t *_closure_arg__118);
+int blend_diff_par_for_blend_diff_s0_ch_par_for_blend_diff_s0_x_xo_ti_ti__2(void *__user_context, int32_t _blend_diff_s0_x_xo_ti_ti, uint8_t *_closure_arg__118);
 HALIDE_FUNCTION_ATTRS
-int blend_diff_par_for_blend_diff_3_s0_ch_par_for_blend_diff_3_s0_x_xo_ti_ti__7(void *__user_context, int32_t _blend_diff__3_s0_x_xo_ti_ti, uint8_t *_closure_arg__119);
+int blend_diff_par_for_blend_diff_s0_ch_par_for_blend_diff_s0_x_xo_ti_ti__3(void *__user_context, int32_t _blend_diff_s0_x_xo_ti_ti, uint8_t *_closure_arg__119);
 HALIDE_FUNCTION_ATTRS
-int blend_diff_par_for_blend_diff_3_s0_ch__1(void *__user_context, int32_t _blend_diff__3_s0_ch, uint8_t *_closure_arg__117);
+int blend_diff_par_for_blend_diff_s0_ch__1(void *__user_context, int32_t _blend_diff_s0_ch, uint8_t *_closure_arg__117);
 HALIDE_FUNCTION_ATTRS
-int blend_diff(struct halide_buffer_t *_src0_buffer, int32_t _width0, int32_t _height0, struct halide_buffer_t *_src1_buffer, int32_t _width1, int32_t _height1, int32_t _px, int32_t _py, struct halide_buffer_t *_blend_diff__3_buffer);
+int blend_diff(struct halide_buffer_t *_src0_buffer, int32_t _width0, int32_t _height0, struct halide_buffer_t *_src1_buffer, int32_t _width1, int32_t _height1, int32_t _px, int32_t _py, struct halide_buffer_t *_blend_diff_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int blend_diff_argv(void **args);

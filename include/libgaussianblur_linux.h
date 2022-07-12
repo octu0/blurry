@@ -41,9 +41,9 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int gaussianblur_par_for_gaussianblur_s0_ch_par_for_gaussianblur_s0_x_xo_ti_ti__1(void *__user_context, int32_t _gaussianblur_s0_x_xo_ti_ti, uint8_t *_closure_arg__161);
+int gaussianblur_par_for_gaussianblur_s0_ch_par_for_gaussianblur_s0_x_xo_ti_ti__1(void *__user_context, int32_t _gaussianblur_s0_x_xo_ti_ti, uint8_t *_closure_arg__165);
 HALIDE_FUNCTION_ATTRS
-int gaussianblur_par_for_gaussianblur_s0_ch__65(void *__user_context, int32_t _gaussianblur_s0_ch, uint8_t *_closure_arg__160);
+int gaussianblur_par_for_gaussianblur_s0_ch__6(void *__user_context, int32_t _gaussianblur_s0_ch, uint8_t *_closure_arg__164);
 HALIDE_FUNCTION_ATTRS
 int gaussianblur(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, float _sigma, struct halide_buffer_t *_gaussianblur_buffer);
 

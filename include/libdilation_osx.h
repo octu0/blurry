@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int dilation_par_for_in__29_s0_ch(void *__user_context, int32_t _in__29_s0_ch, uint8_t *_closure_arg__176);
+int dilation_par_for_in_29_s0_ch__4(void *__user_context, int32_t _in__29_s0_ch, uint8_t *_closure_arg__180);
 HALIDE_FUNCTION_ATTRS
-int dilation_par_for_dilation__3_s0_ch_par_for_dilation__3_s0_x_xo_ti_ti(void *__user_context, int32_t _dilation__3_s0_x_xo_ti_ti, uint8_t *_closure_arg__178);
+int dilation_par_for_dilation_s0_ch_par_for_dilation_s0_x_xo_ti_ti(void *__user_context, int32_t _dilation_s0_x_xo_ti_ti, uint8_t *_closure_arg__182);
 HALIDE_FUNCTION_ATTRS
-int dilation_par_for_dilation__3_s0_ch(void *__user_context, int32_t _dilation__3_s0_ch, uint8_t *_closure_arg__177);
+int dilation_par_for_dilation_s0_ch(void *__user_context, int32_t _dilation_s0_ch, uint8_t *_closure_arg__181);
 HALIDE_FUNCTION_ATTRS
-int dilation(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_dilation__3_buffer);
+int dilation(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_dilation_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int dilation_argv(void **args);

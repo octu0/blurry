@@ -41,9 +41,9 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int canny_dilate_par_for_hysteresis__1_s0_x_xo_ti(void *__user_context, int32_t _hysteresis__1_s0_x_xo_ti, uint8_t *_closure_arg__256);
+int canny_dilate_par_for_hysteresis__1_s0_x_xo_ti(void *__user_context, int32_t _hysteresis__1_s0_x_xo_ti, uint8_t *_closure_arg__260);
 HALIDE_FUNCTION_ATTRS
-int canny_dilate_par_for_canny_dilate_s0_ch(void *__user_context, int32_t _canny_dilate_s0_ch, uint8_t *_closure_arg__257);
+int canny_dilate_par_for_canny_dilate_s0_ch(void *__user_context, int32_t _canny_dilate_s0_ch, uint8_t *_closure_arg__261);
 HALIDE_FUNCTION_ATTRS
 int canny_dilate(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _threshold_max, int32_t _threshold_min, int32_t _dilate, struct halide_buffer_t *_canny_dilate_buffer);
 

@@ -41,13 +41,13 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int morphology_gradient_par_for_in__32_s0_y_rebased(void *__user_context, int32_t _in__32_s0_y_rebased, uint8_t *_closure_arg__206);
+int morphology_gradient_par_for_in__32_s0_y_rebased(void *__user_context, int32_t _in__32_s0_y_rebased, uint8_t *_closure_arg__210);
 HALIDE_FUNCTION_ATTRS
-int morphology_gradient_par_for_morphology_gradient_s0_ch_par_for_morphology_gradient_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_gradient_s0_x_xo_ti_ti, uint8_t *_closure_arg__208);
+int morphology_gradient_par_for_morphology_gradient__4_s0_ch_par_for_morphology_gradient__4_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_gradient__4_s0_x_xo_ti_ti, uint8_t *_closure_arg__212);
 HALIDE_FUNCTION_ATTRS
-int morphology_gradient_par_for_morphology_gradient_s0_ch(void *__user_context, int32_t _morphology_gradient_s0_ch, uint8_t *_closure_arg__207);
+int morphology_gradient_par_for_morphology_gradient__4_s0_ch(void *__user_context, int32_t _morphology_gradient__4_s0_ch, uint8_t *_closure_arg__211);
 HALIDE_FUNCTION_ATTRS
-int morphology_gradient(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_gradient_buffer);
+int morphology_gradient(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_gradient__4_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int morphology_gradient_argv(void **args);

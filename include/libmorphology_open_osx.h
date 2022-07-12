@@ -41,17 +41,17 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_in__30_s0_y_rebased(void *__user_context, int32_t _in__30_s0_y_rebased, uint8_t *_closure_arg__182);
+int morphology_open_par_for_in__30_s0_y_rebased(void *__user_context, int32_t _in__30_s0_y_rebased, uint8_t *_closure_arg__186);
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_erode_tmp_s0_y_y(void *__user_context, int32_t _erode_tmp_s0_y_y, uint8_t *_closure_arg__183);
+int morphology_open_par_for_erode_tmp_s0_y_y(void *__user_context, int32_t _erode_tmp_s0_y_y, uint8_t *_closure_arg__187);
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_dilate_tmp__3_s0_y_y(void *__user_context, int32_t _dilate_tmp__3_s0_y_y, uint8_t *_closure_arg__184);
+int morphology_open_par_for_dilate_tmp_s0_y_y(void *__user_context, int32_t _dilate_tmp_s0_y_y, uint8_t *_closure_arg__188);
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_morphology_open_s0_ch_par_for_morphology_open_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_open_s0_x_xo_ti_ti, uint8_t *_closure_arg__186);
+int morphology_open_par_for_morphology_open_s0_ch_par_for_morphology_open_s0_x_xo_ti_ti(void *__user_context, int32_t _morphology_open_s0_x_xo_ti_ti, uint8_t *_closure_arg__190);
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_morphology_open_s0_ch_par_for_morphology_open_s0_x_xo_ti_ti__1(void *__user_context, int32_t _morphology_open_s0_x_xo_ti_ti, uint8_t *_closure_arg__187);
+int morphology_open_par_for_morphology_open_s0_ch_par_for_morphology_open_s0_x_xo_ti_ti__1(void *__user_context, int32_t _morphology_open_s0_x_xo_ti_ti, uint8_t *_closure_arg__191);
 HALIDE_FUNCTION_ATTRS
-int morphology_open_par_for_morphology_open_s0_ch(void *__user_context, int32_t _morphology_open_s0_ch, uint8_t *_closure_arg__185);
+int morphology_open_par_for_morphology_open_s0_ch(void *__user_context, int32_t _morphology_open_s0_ch, uint8_t *_closure_arg__189);
 HALIDE_FUNCTION_ATTRS
 int morphology_open(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, int32_t _size, struct halide_buffer_t *_morphology_open_buffer);
 

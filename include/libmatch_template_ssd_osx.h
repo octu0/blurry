@@ -41,9 +41,9 @@ extern "C" {
 #endif
 
 HALIDE_FUNCTION_ATTRS
-int match_template_ssd_par_for_match_template_ssd_4_s0_x_xo_ti__2(void *__user_context, int32_t _match_template_ssd__4_s0_x_xo_ti, uint8_t *_closure_arg__278);
+int match_template_ssd_par_for_match_template_ssd_s0_x_xo_ti(void *__user_context, int32_t _match_template_ssd_s0_x_xo_ti, uint8_t *_closure_arg__303);
 HALIDE_FUNCTION_ATTRS
-int match_template_ssd(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_tpl_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_match_template_ssd__4_buffer);
+int match_template_ssd(struct halide_buffer_t *_src_buffer, int32_t _width, int32_t _height, struct halide_buffer_t *_tpl_buffer, int32_t _tpl_width, int32_t _tpl_height, struct halide_buffer_t *_match_template_ssd_buffer);
 
 HALIDE_FUNCTION_ATTRS
 int match_template_ssd_argv(void **args);

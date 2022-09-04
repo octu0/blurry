@@ -57,6 +57,8 @@ func generate(runtimePath, blurryPath, target string) (string, error) {
 		"-I" + runtimePath + "/share/Halide/tools",
 		"-L" + runtimePath + "/lib",
 		libpngFlags,
+		"-L/usr/local/opt/jpeg/lib",
+		"-I/usr/local/opt/jpeg/include",
 		"-ljpeg",
 		"-lHalide",
 		"-lpthread",

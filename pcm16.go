@@ -34,8 +34,6 @@ int libpcm16_decibel(unsigned char *src, int32_t length, unsigned char *out) {
 */
 import "C"
 import (
-	"bytes"
-	"encoding/binary"
 	"math"
 	"unsafe"
 

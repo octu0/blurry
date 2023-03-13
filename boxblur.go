@@ -33,8 +33,10 @@ int libboxblur(unsigned char *src, int32_t width, int32_t height, uint8_t size, 
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -46,14 +48,15 @@ func Boxblur(img *image.RGBA, size uint8) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libboxblur(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.uchar(size),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrBoxblur
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrBoxblur)
 	}
 	return out, nil
 }

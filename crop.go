@@ -38,8 +38,10 @@ int libcrop(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -51,17 +53,18 @@ func Crop(img *image.RGBA, pt image.Point, cropWidth, cropHeight int) (*image.RG
 	out := GetRGBA(cropWidth, cropHeight)
 
 	ret := C.libcrop(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.int(pt.X),
 		C.int(pt.Y),
 		C.int(cropWidth),
 		C.int(cropHeight),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrCrop
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrCrop)
 	}
 	return out, nil
 }

@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lblend_normal_osx -lblend_sub_osx -lblend_add_osx -lblend_diff_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lblend_normal_linux -lblend_sub_linux -lblend_add_linux -lblend_diff_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lblend_normal_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lblend_sub_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lblend_add_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lblend_diff_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lblend_normal_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lblend_sub_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lblend_add_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lblend_diff_linux
 #include <stdlib.h>
 
 #ifdef __APPLE__
@@ -82,8 +90,10 @@ int libblend(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type BlendMode uint8
@@ -105,19 +115,20 @@ func Blend(src0 *image.RGBA, src1 *image.RGBA, pt image.Point, mode BlendMode) (
 	out := GetRGBA(width0, height0)
 
 	ret := C.libblend(
-		(*C.uchar)(&src0.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&src0.Pix[0])),
 		C.int(width0),
 		C.int(height0),
-		(*C.uchar)(&src1.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&src1.Pix[0])),
 		C.int(width1),
 		C.int(height1),
 		C.int(pt.X),
 		C.int(pt.Y),
 		C.uchar(mode),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrBlend
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrBlend)
 	}
 	return out, nil
 }

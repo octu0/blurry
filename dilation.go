@@ -34,8 +34,10 @@ int libdilation(unsigned char *src, int32_t width, int32_t height, int32_t size,
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -47,14 +49,15 @@ func Dilation(img *image.RGBA, size int) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libdilation(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.int(size),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrDilation
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrDilation)
 	}
 	return out, nil
 }

@@ -34,8 +34,10 @@ int libbrightness(unsigned char *src, int32_t width, int32_t height, float facto
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -47,14 +49,15 @@ func Brightness(img *image.RGBA, factor float64) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libbrightness(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.float(factor),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrBrightness
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrBrightness)
 	}
 	return out, nil
 }

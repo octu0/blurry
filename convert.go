@@ -73,8 +73,10 @@ int libconvert_from_rgba(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -86,14 +88,15 @@ func ConvertFrom(img *image.RGBA, model ColorModel) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libconvert_from_rgba(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.uchar(model),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrConvertFromRGBA
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrConvertFromRGBA)
 	}
 	return out, nil
 }

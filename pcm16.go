@@ -36,9 +36,11 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"math"
 	"unsafe"
+
+	"github.com/octu0/cgobytepool"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -50,27 +52,19 @@ var (
 )
 
 func PCM16DecibelFromInt16(data []int16) (float32, error) {
-	b := GetByteBuf(len(data) * 2) // int16 -> uint8
-	defer PutByteBuf(b)
-
-	buf := bytes.NewBuffer(b)
-	for i := 0; i < len(data); i += 1 {
-		if err := binary.Write(buf, binary.LittleEndian, data[i]); err != nil {
-			return 0.0, err
-		}
-	}
+	b := cgobytepool.ReflectGoBytes(unsafe.Pointer(&data[0]), len(data), cap(data))
 	return PCM16Decibel(b, len(data))
 }
 
 func PCM16Decibel(data []byte, length int) (float32, error) {
 	out := make([]byte, 4) // float
 	ret := C.libpcm16_decibel(
-		(*C.uchar)(&data[0]),
+		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(length),
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return 0.0, ErrPCM16Decibel
+		return 0.0, errors.WithStack(ErrPCM16Decibel)
 	}
 	return *(*float32)(unsafe.Pointer(&out[0])), nil
 }

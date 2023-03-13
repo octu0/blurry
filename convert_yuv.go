@@ -190,8 +190,10 @@ int libconvert_to_yuv444(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -206,58 +208,58 @@ func ConvertFromYUV(img *image.YCbCr, chrs ChromaSubsampling) (*image.RGBA, erro
 	out := GetRGBA(width, height)
 
 	ret := C.libconvert_from_yuv(
-		(*C.uchar)(&img.Y[0]),
-		(*C.uchar)(&img.Cb[0]),
-		(*C.uchar)(&img.Cr[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Y[0])),
+		(*C.uchar)(unsafe.Pointer(&img.Cb[0])),
+		(*C.uchar)(unsafe.Pointer(&img.Cr[0])),
 		C.int(img.YStride),
 		C.int(img.CStride),
 		C.int(img.CStride),
 		C.int(width),
 		C.int(height),
 		C.uchar(chrs),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrConvertFromYUV
+		return nil, errors.WithStack(ErrConvertFromYUV)
 	}
 	return out, nil
 }
 
 func ConvertFromYUV420(img *image.YCbCr) (*image.RGBA, error) {
 	if img.SubsampleRatio != image.YCbCrSubsampleRatio420 {
-		return nil, ErrYUVSubsampleRateMustI420
+		return nil, errors.WithStack(ErrYUVSubsampleRateMustI420)
 	}
 	return ConvertFromYUV(img, ChromaSubsampling420)
 }
 
 func ConvertFromYUV444(img *image.YCbCr) (*image.RGBA, error) {
 	if img.SubsampleRatio != image.YCbCrSubsampleRatio444 {
-		return nil, ErrYUVSubsampleRateMustI444
+		return nil, errors.WithStack(ErrYUVSubsampleRateMustI444)
 	}
 	return ConvertFromYUV(img, ChromaSubsampling444)
 }
 
-func ConvertFromYUV420Plane(y, u, v []byte, y_stride, u_stride, v_stride int, width, height int) (*image.RGBA, error) {
+func ConvertFromYUV420Plane(y, u, v []byte, strideY, strideU, strideV int, width, height int) (*image.RGBA, error) {
 	img := &image.YCbCr{
 		Y:              y,
 		Cb:             u,
 		Cr:             v,
 		Rect:           image.Rect(0, 0, width, height),
-		YStride:        y_stride,
-		CStride:        u_stride,
+		YStride:        strideY,
+		CStride:        strideU,
 		SubsampleRatio: image.YCbCrSubsampleRatio420,
 	}
 	return ConvertFromYUV(img, ChromaSubsampling420)
 }
 
-func ConvertFromYUV444Plane(y, u, v []byte, y_stride, u_stride, v_stride int, width, height int) (*image.RGBA, error) {
+func ConvertFromYUV444Plane(y, u, v []byte, strideY, strideU, strideV int, width, height int) (*image.RGBA, error) {
 	img := &image.YCbCr{
 		Y:              y,
 		Cb:             u,
 		Cr:             v,
 		Rect:           image.Rect(0, 0, width, height),
-		YStride:        y_stride,
-		CStride:        u_stride,
+		YStride:        strideY,
+		CStride:        strideU,
 		SubsampleRatio: image.YCbCrSubsampleRatio444,
 	}
 	return ConvertFromYUV(img, ChromaSubsampling444)
@@ -293,15 +295,18 @@ func ConvertToYUV420(img *image.RGBA) (*image.YCbCr, error) {
 	vBuf := GetByteBuf(vSize)
 
 	ret := C.libconvert_to_yuv420(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&yBuf[0]),
-		(*C.uchar)(&uBuf[0]),
-		(*C.uchar)(&vBuf[0]),
+		(*C.uchar)(unsafe.Pointer(&yBuf[0])),
+		(*C.uchar)(unsafe.Pointer(&uBuf[0])),
+		(*C.uchar)(unsafe.Pointer(&vBuf[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrConvertToYUV
+		PutByteBuf(yBuf)
+		PutByteBuf(uBuf)
+		PutByteBuf(vBuf)
+		return nil, errors.WithStack(ErrConvertToYUV)
 	}
 
 	out := &image.YCbCr{
@@ -347,15 +352,18 @@ func ConvertToYUV444(img *image.RGBA) (*image.YCbCr, error) {
 	vBuf := GetByteBuf(vSize)
 
 	ret := C.libconvert_to_yuv444(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&yBuf[0]),
-		(*C.uchar)(&uBuf[0]),
-		(*C.uchar)(&vBuf[0]),
+		(*C.uchar)(unsafe.Pointer(&yBuf[0])),
+		(*C.uchar)(unsafe.Pointer(&uBuf[0])),
+		(*C.uchar)(unsafe.Pointer(&vBuf[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrConvertToYUV
+		PutByteBuf(yBuf)
+		PutByteBuf(uBuf)
+		PutByteBuf(vBuf)
+		return nil, errors.WithStack(ErrConvertToYUV)
 	}
 
 	out := &image.YCbCr{

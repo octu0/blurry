@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lcanny_osx -lcanny_dilate_osx -lcanny_morphology_open_osx -lcanny_morphology_close_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lcanny_linux -lcanny_dilate_linux -lcanny_morphology_open_linux -lcanny_morphology_close_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lcanny_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lcanny_dilate_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lcanny_morphology_open_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lcanny_morphology_close_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lcanny_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lcanny_dilate_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lcanny_morphology_open_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lcanny_morphology_close_linux
 #include <stdlib.h>
 
 #ifdef __APPLE__
@@ -75,8 +83,10 @@ int libcanny(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type CannyMorphologyMode uint8
@@ -114,7 +124,7 @@ func MorphologyCannyWithDilate(
 	out := GetRGBA(width, height)
 
 	ret := C.libcanny(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.int(thresholdMax),
@@ -122,10 +132,11 @@ func MorphologyCannyWithDilate(
 		C.uchar(mode),
 		C.int(morphSize),
 		C.int(dilateSize),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrCanny
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrCanny)
 	}
 	return out, nil
 }

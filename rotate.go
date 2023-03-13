@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lrotate0_osx -lrotate90_osx -lrotate180_osx -lrotate270_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lrotate0_linux -lrotate90_linux -lrotate180_linux -lrotate270_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lrotate0_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lrotate90_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lrotate180_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lrotate270_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lrotate0_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lrotate90_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lrotate180_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lrotate270_linux
 #include <stdlib.h>
 
 #ifdef __APPLE__
@@ -66,8 +74,10 @@ int librotate(unsigned char *src, int32_t width, int32_t height, int16_t rotatio
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type RotationMode int16
@@ -96,14 +106,15 @@ func Rotate(img *image.RGBA, mode RotationMode) (*image.RGBA, error) {
 	}
 
 	ret := C.librotate(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.short(mode),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrRotate
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrRotate)
 	}
 	return out, nil
 }

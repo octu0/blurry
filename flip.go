@@ -57,8 +57,10 @@ int libflip(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type FlipMode uint8
@@ -77,14 +79,15 @@ func Flip(img *image.RGBA, mode FlipMode) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libflip(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.uchar(mode),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrFlip
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrFlip)
 	}
 	return out, nil
 }

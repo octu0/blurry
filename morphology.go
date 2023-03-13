@@ -93,8 +93,10 @@ int libmorphology(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type MorphologyMode uint8
@@ -114,16 +116,17 @@ func Morphology(img *image.RGBA, mode MorphologyMode, size int, count int) (*ima
 	out := GetRGBA(width, height)
 
 	ret := C.libmorphology(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.uchar(mode),
 		C.int(size),
 		C.int(count),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMorphology
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrMorphology)
 	}
 	return out, nil
 }

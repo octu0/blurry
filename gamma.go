@@ -33,8 +33,10 @@ int libgammacorrection(unsigned char *src, int32_t width, int32_t height, float 
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -46,14 +48,15 @@ func Gamma(img *image.RGBA, factor float64) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libgammacorrection(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.float(factor),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrGamma
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrGamma)
 	}
 	return out, nil
 }

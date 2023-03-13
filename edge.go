@@ -34,8 +34,10 @@ int libedge(unsigned char *src, int32_t width, int32_t height, unsigned char *ou
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -47,13 +49,14 @@ func Edge(img *image.RGBA) (*image.RGBA, error) {
 	out := GetRGBA(width, height)
 
 	ret := C.libedge(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrEdge
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrEdge)
 	}
 	return out, nil
 }

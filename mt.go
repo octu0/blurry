@@ -29,9 +29,11 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"image"
 	"math"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -75,8 +77,7 @@ func readUint16(data []byte) uint32 {
 
 func readInt32(data []byte) uint32 {
 	var score int32
-	buf := bytes.NewBuffer(data)
-	if err := binary.Read(buf, binary.LittleEndian, &score); err != nil {
+	if err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &score); err != nil {
 		return math.MaxUint32
 	}
 	return uint32(score)
@@ -84,8 +85,7 @@ func readInt32(data []byte) uint32 {
 
 func readFloat32(data []byte) float64 {
 	var score float64
-	buf := bytes.NewBuffer(data)
-	if err := binary.Read(buf, binary.LittleEndian, &score); err != nil {
+	if err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &score); err != nil {
 		return -1.0
 	}
 	return score
@@ -156,16 +156,16 @@ func MatchTemplateSAD(img *image.RGBA, tpl *image.RGBA, threshold uint16) ([]Mat
 	defer PutByteBuf(out)
 
 	ret := C.libmtsad(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		C.int(tplWidth),
 		C.int(tplHeight),
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMatchTemplateSAD
+		return nil, errors.WithStack(ErrMatchTemplateSAD)
 	}
 	return makeScoresUint16(out, width, height, threshold, C.sizeof_uint16_t), nil
 }
@@ -178,16 +178,16 @@ func MatchTemplateSSD(img *image.RGBA, tpl *image.RGBA, threshold uint32) ([]Mat
 	defer PutByteBuf(out)
 
 	ret := C.libmtssd(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		C.int(tplWidth),
 		C.int(tplHeight),
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMatchTemplateSSD
+		return nil, errors.WithStack(ErrMatchTemplateSSD)
 	}
 	return makeScoresInt32(out, width, height, threshold, C.sizeof_int32_t), nil
 }
@@ -200,16 +200,16 @@ func MatchTemplateNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]Ma
 	defer PutByteBuf(out)
 
 	ret := C.libmtncc(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		C.int(tplWidth),
 		C.int(tplHeight),
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMatchTemplateNCC
+		return nil, errors.WithStack(ErrMatchTemplateNCC)
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }
@@ -219,15 +219,15 @@ func PrepareNCCTemplate(tpl *image.RGBA) (*PreparedNCCTpl, error) {
 
 	p := C.create_prepare_ncc_template(C.int(tplWidth), C.int(tplHeight))
 	if p == nil {
-		return nil, ErrCreatePrepareNCCTemplate
+		return nil, errors.WithStack(ErrCreatePrepareNCCTemplate)
 	}
 
 	ret := C.libprepare_ncc_tpl(
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		p,
 	)
 	if ret != 0 {
-		return nil, ErrPrepareNCCTemplate
+		return nil, errors.WithStack(ErrPrepareNCCTemplate)
 	}
 	return &PreparedNCCTpl{prepared: p}, nil
 }
@@ -237,15 +237,15 @@ func PrepareZNCCTemplate(tpl *image.RGBA) (*PreparedZNCCTpl, error) {
 
 	p := C.create_prepare_zncc_template(C.int(tplWidth), C.int(tplHeight))
 	if p == nil {
-		return nil, ErrCreatePrepareZNCCTemplate
+		return nil, errors.WithStack(ErrCreatePrepareZNCCTemplate)
 	}
 
 	ret := C.libprepare_zncc_tpl(
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		p,
 	)
 	if ret != 0 {
-		return nil, ErrPrepareZNCCTemplate
+		return nil, errors.WithStack(ErrPrepareZNCCTemplate)
 	}
 	return &PreparedZNCCTpl{prepared: p}, nil
 }
@@ -265,14 +265,14 @@ func PreparedMatchTemplateNCC(img *image.RGBA, ptpl *PreparedNCCTpl, threshold f
 	defer PutByteBuf(out)
 
 	ret := C.libprepared_mtncc(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		ptpl.prepared,
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrPrepareNCCTemplate
+		return nil, errors.WithStack(ErrPrepareNCCTemplate)
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }
@@ -285,16 +285,16 @@ func MatchTemplateZNCC(img *image.RGBA, tpl *image.RGBA, threshold float64) ([]M
 	defer PutByteBuf(out)
 
 	ret := C.libmtzncc(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
-		(*C.uchar)(&tpl.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&tpl.Pix[0])),
 		C.int(tplWidth),
 		C.int(tplHeight),
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrMatchTemplateZNCC
+		return nil, errors.WithStack(ErrMatchTemplateZNCC)
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }
@@ -306,14 +306,14 @@ func PreparedMatchTemplateZNCC(img *image.RGBA, ptpl *PreparedZNCCTpl, threshold
 	defer PutByteBuf(out)
 
 	ret := C.libprepared_mtzncc(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		ptpl.prepared,
-		(*C.uchar)(&out[0]),
+		(*C.uchar)(unsafe.Pointer(&out[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrPrepareZNCCTemplate
+		return nil, errors.WithStack(ErrPrepareZNCCTemplate)
 	}
 	return makeScoresFloat32(out, width, height, threshold, C.sizeof_double), nil
 }

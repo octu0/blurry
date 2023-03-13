@@ -34,8 +34,10 @@ int libcontour(unsigned char *src, int32_t width, int32_t height, uint8_t thresh
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -48,15 +50,15 @@ func Contour(img *image.RGBA, threshold uint8, size uint8) ([]image.Point, error
 	defer PutByteBuf(buf)
 
 	ret := C.libcontour(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.uchar(threshold),
 		C.uchar(size),
-		(*C.uchar)(&buf[0]),
+		(*C.uchar)(unsafe.Pointer(&buf[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrContour
+		return nil, errors.WithStack(ErrContour)
 	}
 
 	points := make([]image.Point, 0, width*height)

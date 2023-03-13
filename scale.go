@@ -2,8 +2,16 @@ package blurry
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
-#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -lscale_osx -lscale_box_osx -lscale_linear_osx -lscale_gaussian_osx -ldl -lm
-#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -lscale_linux -lscale_box_linux -lscale_linear_linux -lscale_gaussian_linux -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lruntime_osx -ldl -lm
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lscale_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lscale_box_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lscale_linear_osx
+#cgo darwin LDFLAGS: -L${SRCDIR}/lib -lscale_gaussian_osx
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lruntime_linux -ldl -lm
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lscale_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lscale_box_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lscale_linear_linux
+#cgo linux  LDFLAGS: -L${SRCDIR}/lib -lscale_gaussian_linux
 #include <stdlib.h>
 #include <string.h>
 
@@ -67,8 +75,10 @@ int libscale(
 */
 import "C"
 import (
-	"errors"
 	"image"
+	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type ScaleFilter uint8
@@ -89,16 +99,17 @@ func Scale(img *image.RGBA, scaleWidth, scaleHeight int, mode ScaleFilter) (*ima
 	out := GetRGBA(scaleWidth, scaleHeight)
 
 	ret := C.libscale(
-		(*C.uchar)(&img.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&img.Pix[0])),
 		C.int(width),
 		C.int(height),
 		C.int(scaleWidth),
 		C.int(scaleHeight),
 		C.uchar(mode),
-		(*C.uchar)(&out.Pix[0]),
+		(*C.uchar)(unsafe.Pointer(&out.Pix[0])),
 	)
 	if int(ret) != 0 {
-		return nil, ErrCrop
+		PutRGBA(out)
+		return nil, errors.WithStack(ErrScale)
 	}
 	return out, nil
 }

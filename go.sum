@@ -1,8 +1,13 @@
 github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c h1:bzYQ6WpR+t35/y19HUkolcg7SYeWZ15IclC9Z4naGHI=
 github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c/go.mod h1:1WwgAwMKQLYG5I2FBhpVx94YTOAuB2W59IZ7REjSE6Y=
+github.com/octu0/bp v1.2.1 h1:a6RSKa/8qNvIIpyLp68D/9bBT8SeHPm8qvpXVpYw/zI=
+github.com/octu0/bp v1.2.1/go.mod h1:huHnVr3Ssh9Xp4N8iQ1onACFAXBd9uralLv36eboCec=
 github.com/octu0/cgobytepool v1.0.2 h1:idmChfWiHi+2o+9y0bW061fXM4sq/hooMTUg0WCGoN4=
 github.com/octu0/cgobytepool v1.0.2/go.mod h1:KPeuUFdSk/a+8PNsCzCs1/NA0MgCBFF4hJPt80YgUeE=
+github.com/octu0/chanque v1.0.15/go.mod h1:EVqq9Fy4sUzxxugDmrXpn0Ai7ZxDaizwxcH5S1uOSv8=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+golang.org/x/sys v0.1.0 h1:kunALQeHf1/185U1i0GOB/fy1IPRDDpuoOOqRReG57U=
+golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 gopkg.in/urfave/cli.v1 v1.20.0 h1:NdAVW6RYxDif9DhDHaAortIu956m2c0v+09AZBPTbE0=
 gopkg.in/urfave/cli.v1 v1.20.0/go.mod h1:vuBzUtMdQeixQj8LVd+/98pzhxNGQoyuPBlsXHOQNO0=

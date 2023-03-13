@@ -2,8 +2,9 @@ package blurry
 
 import (
 	"image"
-	"sync"
 	"sync/atomic"
+
+	"github.com/octu0/bp"
 )
 
 type ColorModel uint8
@@ -27,8 +28,23 @@ const (
 )
 
 var (
-	pools   = new(sync.Map)
 	usePool = int32(1)
+	Pool    = bp.NewMultiBytePool(
+		bp.MultiBytePoolSize(100, rgbaSize(160, 120)),
+		bp.MultiBytePoolSize(100, rgbaSize(320, 240)),
+		bp.MultiBytePoolSize(100, rgbaSize(480, 320)),
+		bp.MultiBytePoolSize(100, rgbaSize(640, 480)),
+		bp.MultiBytePoolSize(100, rgbaSize(800, 600)),
+		bp.MultiBytePoolSize(100, rgbaSize(1024, 768)),
+		bp.MultiBytePoolSize(100, rgbaSize(1280, 720)),
+		bp.MultiBytePoolSize(100, rgbaSize(1280, 768)),
+		bp.MultiBytePoolSize(100, rgbaSize(1280, 960)),
+		bp.MultiBytePoolSize(100, rgbaSize(1280, 1024)),
+		bp.MultiBytePoolSize(100, rgbaSize(1600, 1200)),
+		bp.MultiBytePoolSize(100, rgbaSize(1920, 1080)),
+		bp.MultiBytePoolSize(100, rgbaSize(2560, 1440)),
+		bp.MultiBytePoolSize(100, rgbaSize(3840, 2160)),
+	)
 )
 
 func EnablePool() {
@@ -61,15 +77,7 @@ func GetByteBuf(size int) []byte {
 	if atomic.LoadInt32(&usePool) == 0 {
 		return make([]byte, size)
 	}
-
-	key := uint64(size)
-	pool, ok := pools.Load(key)
-	if ok != true {
-		pool = &sync.Pool{New: poolNewFunc(size)}
-		pools.Store(key, pool)
-	}
-	sp := pool.(*sync.Pool)
-	return sp.Get().([]byte)
+	return Pool.Get(size)
 }
 
 func PutByteBuf(data []byte) {
@@ -77,12 +85,7 @@ func PutByteBuf(data []byte) {
 		return // discard
 	}
 
-	key := uint64(cap(data))
-	pool, ok := pools.Load(key)
-	if ok != true {
-		return // discard
-	}
-	pool.(*sync.Pool).Put(data)
+	Pool.Put(data)
 }
 
 func GetRGBAByteBuf(width, height int) []byte {
@@ -103,10 +106,4 @@ func GetRGBA(width, height int) *image.RGBA {
 
 func PutRGBA(img *image.RGBA) {
 	PutRGBAByteBuf(img.Pix)
-}
-
-func poolNewFunc(size int) func() interface{} {
-	return func() interface{} {
-		return make([]byte, size)
-	}
 }

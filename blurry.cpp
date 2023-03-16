@@ -23,6 +23,7 @@ const Expr degree45 = cast<uint8_t>(45);
 const Expr degree90 = cast<uint8_t>(90);
 const Expr degree135 = cast<uint8_t>(135);
 const Expr pcm16_max = cast<float>(32768.0f); // 2^15
+const Expr sqrt2 = cast<float>(1.41421356f); // sqrt(2)
 const Expr ln10 = cast<float>(2.30258509299404568401799145468436420760110148862877297603332790f); // https://oeis.org/A002392
 
 const Func kernel_sobel_x = kernel_sobel3x3_x();
@@ -515,6 +516,16 @@ Func gray_xy_uint8(Func in, const char *name) {
   return gray;
 }
 
+Func gray_xy_float(Func in, const char *name) {
+  Var x("x"), y("y");
+
+  Func gray = Func(name);
+  gray(x, y) = cast<float>(in(x, y, 0)); // rgba(r) for grayscale
+
+  gray.compute_root();
+  return gray;
+}
+
 Func rotate90(Func in, Expr width, Expr height, const char *name) {
   Var x("x"), y("y"), ch("ch");
   Func read = Func(name);
@@ -613,6 +624,38 @@ Func convolve_xy(Func in, Func kernel, RDom rd_kernel) {
   convolve(x, y) += in_val * k_val;
 
   return convolve;
+}
+
+Func haar_x(Func in) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func high = Func("haar_x_high");
+  high(x, y) = (in(2 * x, y) + in((2 * x) + 1, y)) / sqrt2;
+
+  Func low = Func("haar_x_low");
+  low(x, y) = (in(2 * x, y) - in((2 * x) + 1, y)) / sqrt2;
+
+  Func haar = Func("haar_x_highlow");
+  haar(x, y, ch) = undef<float>();
+  haar(x, y, 0) = high(x, y);
+  haar(x, y, 1) = low(x, y);
+  return haar;
+}
+
+Func haar_y(Func in) {
+  Var x("x"), y("y"), ch("ch");
+
+  Func high = Func("haar_y_high");
+  high(x, y) = (in(x, 2 * y) + in(x, (2 * y) + 1)) / sqrt2;
+
+  Func low = Func("haar_y_low");
+  low(x, y) = (in(x, 2 * y) - in(x, (2 * y) + 1)) / sqrt2;
+
+  Func haar = Func("haar_y_highlow");
+  haar(x, y, ch) = undef<float>();
+  haar(x, y, 0) = high(x, y);
+  haar(x, y, 1) = low(x, y);
+  return haar;
 }
 
 Func filter2d_gray(
@@ -743,7 +786,7 @@ Func gaussian(Func in, Expr sigma, RDom rd, const char *name) {
   return gaussian;
 }
 
-Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) {
+Func canny(Func in, Expr threshold_max, Expr threshold_min) {
   Var x("x"), y("y"), ch("ch");
   Var xo("xo"), xi("xi");
   Var yo("yo"), yi("yi");
@@ -836,6 +879,12 @@ Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) 
     .vectorize(xi, 32);
 
   return hy;
+}
+
+Func canny(Func in, Param<int32_t> threshold_max, Param<int32_t> threshold_min) {
+  Expr th_max = threshold_max;
+  Expr th_min = threshold_min;
+  return canny(in, th_max, th_min);
 }
 
 Func cloneimg_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
@@ -1983,6 +2032,76 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height){
     .vectorize(xi, 32);
 
   return edge;
+}
+
+Func haar_x_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Func in_r = Func("in_r");
+  Func in_g = Func("in_g");
+  Func in_b = Func("in_b");
+  in_r(x, y) = in(x, y, 0);
+  in_g(x, y) = in(x, y, 1);
+  in_b(x, y) = in(x, y, 2);
+
+  Func wavelet_r = haar_x(in_r);
+  Func wavelet_g = haar_x(in_g);
+  Func wavelet_b = haar_x(in_b);
+
+  Expr half_x = width / 2;
+  Expr high_r = wavelet_r(x, y * 2, 0);
+  Expr high_g = wavelet_g(x, y * 2, 0);
+  Expr high_b = wavelet_b(x, y * 2, 0);
+  Expr low_r = wavelet_r(x - half_x, y * 2, 1);
+  Expr low_g = wavelet_g(x - half_x, y * 2, 1);
+  Expr low_b = wavelet_b(x - half_x, y * 2, 1);
+
+  Func haar = Func("haar_x");
+  Expr value = select(
+    ch == 0, select(x < half_x, high_r, low_r),
+    ch == 1, select(x < half_x, high_g, low_g),
+    ch == 2, select(x < half_x, high_b, low_b),
+    likely(float_255)
+  );
+  haar(x, y, ch) = cast<uint8_t>(clamp(value, 0, 255));
+  return haar;
+}
+
+Func haar_edge_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Func in_r = Func("in_r");
+  Func in_g = Func("in_g");
+  Func in_b = Func("in_b");
+  in_r(x, y) = in(x, y, 0);
+  in_g(x, y) = in(x, y, 1);
+  in_b(x, y) = in(x, y, 2);
+
+  Func wavelet_r = haar_x(in_r);
+  Func wavelet_g = haar_x(in_g);
+  Func wavelet_b = haar_x(in_b);
+
+  Expr half_x = width / 2;
+  Expr low_r = wavelet_r(x, y * 2, 1);
+  Expr low_g = wavelet_g(x, y * 2, 1);
+  Expr low_b = wavelet_b(x, y * 2, 1);
+
+  Func haarlow = Func("haar_edge");
+  Expr value = select(
+    ch == 0, select(x < half_x, low_r, float_0),
+    ch == 1, select(x < half_x, low_g, float_0),
+    ch == 2, select(x < half_x, low_b, float_0),
+    likely(float_255)
+  );
+  haarlow(x, y, ch) = cast<uint8_t>(clamp(value, 0, 255));
+
+  return haarlow;
 }
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height){

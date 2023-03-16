@@ -2052,6 +2052,7 @@ Func haar_x_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Func wavelet_b = haar_x(in_b);
 
   Expr half_x = width / 2;
+  Expr half_y = height / 2;
   Expr high_r = wavelet_r(x, y * 2, 0);
   Expr high_g = wavelet_g(x, y * 2, 0);
   Expr high_b = wavelet_b(x, y * 2, 0);
@@ -2070,7 +2071,43 @@ Func haar_x_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   return haar;
 }
 
-Func haar_edge_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+Func haar_y_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
+  Var x("x"), y("y"), ch("ch");
+
+  Region src_bounds = {{0, width},{0, height},{0, 4}};
+  Func in = readFloat(BoundaryConditions::constant_exterior(input, 0, src_bounds), "in");
+
+  Func in_r = Func("in_r");
+  Func in_g = Func("in_g");
+  Func in_b = Func("in_b");
+  in_r(x, y) = in(x, y, 0);
+  in_g(x, y) = in(x, y, 1);
+  in_b(x, y) = in(x, y, 2);
+
+  Func wavelet_r = haar_y(in_r);
+  Func wavelet_g = haar_y(in_g);
+  Func wavelet_b = haar_y(in_b);
+
+  Expr half_y = height / 2;
+  Expr high_r = wavelet_r(x * 2, y, 0);
+  Expr high_g = wavelet_g(x * 2, y, 0);
+  Expr high_b = wavelet_b(x * 2, y, 0);
+  Expr low_r = wavelet_r(x * 2, y - half_y, 1);
+  Expr low_g = wavelet_g(x * 2, y - half_y, 1);
+  Expr low_b = wavelet_b(x * 2, y - half_y, 1);
+
+  Func haar = Func("haar_y");
+  Expr value = select(
+    ch == 0, select(y < half_y, high_r, low_r),
+    ch == 1, select(y < half_y, high_g, low_g),
+    ch == 2, select(y < half_y, high_b, low_b),
+    likely(float_255)
+  );
+  haar(x, y, ch) = cast<uint8_t>(clamp(value, 0, 255));
+  return haar;
+}
+
+Func haar_x_edge_fn(Func input, Param<int32_t> width, Param<int32_t> height) {
   Var x("x"), y("y"), ch("ch");
 
   Region src_bounds = {{0, width},{0, height},{0, 4}};

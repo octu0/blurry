@@ -392,6 +392,20 @@ img, err := blurry.Edge(input)
 
 ![example](testdata/edge.png)
 
+### Haar
+
+```go
+img, err := blurry.HaarX(input)
+```
+
+![example](testdata/haar_x.png)
+
+```go
+img, err := blurry.HaarY(input)
+```
+
+![example](testdata/haar_y.png)
+
 ### Sobel
 
 ```go

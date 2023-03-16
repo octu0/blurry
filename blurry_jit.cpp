@@ -975,15 +975,15 @@ int jit_haar_x(char **argv) {
   return 0;
 }
 
-int jit_haar_edge(char **argv) {
+int jit_haar_y(char **argv) {
   Buffer<uint8_t> buf_src = load_and_convert_image(argv[2]);
 
   Param<int32_t> width{"width", buf_src.get()->width()};
   Param<int32_t> height{"height", buf_src.get()->height()};
 
-  Buffer<uint8_t> out = jit_realize_uint8_bounds(haar_edge_fn(
+  Buffer<uint8_t> out = jit_realize_uint8_bounds(haar_y_fn(
     wrapFunc(buf_src, "buf_src"), width, height
-  ), buf_src.get()->width() / 2, buf_src.get()->height() / 2);
+  ), buf_src.get()->width() / 2, buf_src.get()->height());
 
   printf("save to %s\n", argv[3]);
   save_image(out, argv[3]);
@@ -1619,8 +1619,8 @@ int jit_run(char **argv) {
   if(strcmp(argv[1], "haar_x") == 0) {
     return jit_haar_x(argv);
   }
-  if(strcmp(argv[1], "haar_edge") == 0) {
-    return jit_haar_edge(argv);
+  if(strcmp(argv[1], "haar_y") == 0) {
+    return jit_haar_y(argv);
   }
   if(strcmp(argv[1], "sobel") == 0) {
     return jit_sobel(argv);

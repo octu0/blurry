@@ -153,7 +153,7 @@ Func edge_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func haar_x_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
-Func haar_edge_fn(Func input, Param<int32_t> width, Param<int32_t> height);
+Func haar_y_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 
 Func sobel_fn(Func input, Param<int32_t> width, Param<int32_t> height);
 

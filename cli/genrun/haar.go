@@ -1,6 +1,8 @@
 package genrun
 
 import (
+	"fmt"
+
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -11,7 +13,8 @@ func haarAction(c *cli.Context) error {
 		return err
 	}
 
-	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), "haar_x", nil); err != nil {
+	cmd := fmt.Sprintf("haar_%s", c.String("o"))
+	if err := runLocal(runtimePath, generateOutFilePath, c.String("input"), cmd, nil); err != nil {
 		return err
 	}
 
@@ -37,6 +40,11 @@ func init() {
 				Name:  "f,file",
 				Usage: "/path/to/blurry.cpp path",
 				Value: "./blurry.cpp",
+			},
+			cli.StringFlag{
+				Name:  "o,order",
+				Usage: "x or y",
+				Value: "x",
 			},
 		},
 	})

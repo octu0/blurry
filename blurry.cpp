@@ -2436,9 +2436,11 @@ Func match_template_sad_fn(
     .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
   t.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
     .vectorize(x, 32);
   return match;
@@ -2475,11 +2477,13 @@ Func match_template_ssd_fn(
     .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   t.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   return match;
 }
 
@@ -2578,11 +2582,13 @@ Func match_template_ncc_fn(
     .parallel(ti)
     .vectorize(xi, 32);
   in.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   t.compute_at(match, ti)
+    .store_at(match, ti)
     .unroll(y, 4)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   return match;
 }
 
@@ -2721,6 +2727,7 @@ Func match_template_zncc_fn(
   match(x, y) = cast<double>(v);
 
   match.compute_at(in, ti)
+    .store_at(in, ti)
     .tile(x, y, xo, yo, xi, yi, 32, 32)
     .fuse(xo, yo, ti)
     .parallel(ti)
@@ -2735,10 +2742,10 @@ Func match_template_zncc_fn(
   tpl_stddev.compute_root();
   in.compute_root()
     .unroll(y, 8)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   t.compute_root()
     .unroll(y, 8)
-    .vectorize(x, 16);
+    .vectorize(x, 32);
   return match;
 }
 

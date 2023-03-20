@@ -19,7 +19,7 @@ int jit_benchmark_pcm16_bounds(Func fn, int32_t length, std::string name) {
   fn.compile_jit(get_jit_target_from_environment());
 
   double result = benchmark(100, 10, [&]() {
-    fn.realize({length});
+    fn.realize();
   });
   printf("BenchmarkJIT/%-30s: %-3.5fms\n", name.c_str(), result * 1e3);
   return 0;

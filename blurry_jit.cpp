@@ -54,7 +54,7 @@ Buffer<float> jit_realize_pcm16_float_bounds(Func fn, int32_t length) {
 
   printf("realize(float) %s...\n", fn.name().c_str());
   
-  return fn.realize({length});
+  return fn.realize();
 }
 
 Buffer<uint8_t> jit_realize_uint8(Func fn, Buffer<uint8_t> src) {

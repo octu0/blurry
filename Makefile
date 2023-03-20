@@ -29,10 +29,10 @@ setup-halide-runtime_linux:
 ifeq ($(shell [ -d detector/Halide-Runtime ] && echo "1"),1)
 	@echo "detector/Halide-Runtime exists"
 else
-	curl -O -sSL https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-linux-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
-	tar xzf Halide-14.0.0-x86-64-linux-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
-	mv Halide-14.0.0-x86-64-linux ./Halide-Runtime
-	rm Halide-14.0.0-x86-64-linux-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
+	curl -O -sSL https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-linux-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
+	tar xzf Halide-15.0.0-x86-64-linux-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
+	mv Halide-15.0.0-x86-64-linux ./Halide-Runtime
+	rm Halide-15.0.0-x86-64-linux-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
 endif
 
 .PHONY: setup-halide-runtime_darwin
@@ -40,10 +40,10 @@ setup-halide-runtime_darwin:
 ifeq ($(shell [ -d detector/Halide-Runtime ] && echo "1"),1)
 	@echo "detector/Halide-Runtime exists"
 else
-	curl -O -sSL https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-osx-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
-	tar xzf Halide-14.0.0-x86-64-osx-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
-	mv Halide-14.0.0-x86-64-osx ./Halide-Runtime
-	rm Halide-14.0.0-x86-64-osx-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz
+	curl -O -sSL https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
+	tar xzf Halide-15.0.0-x86-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
+	mv Halide-15.0.0-x86-64-osx ./Halide-Runtime
+	rm Halide-15.0.0-x86-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz
 endif
 
 .PHONY: setup-halide-runtime

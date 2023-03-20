@@ -25,6 +25,18 @@ int jit_benchmark_pcm16_bounds(Func fn, int32_t length, std::string name) {
   return 0;
 }
 
+int jit_benchmark_match_template(Func fn, Buffer<uint8_t> buf_src, std::string name) {
+  int32_t width = buf_src.get()->width();
+  int32_t height = buf_src.get()->height();
+  fn.compile_jit(get_jit_target_from_environment());
+
+  double result = benchmark(100, 10, [&]() {
+    fn.realize({width, height});
+  });
+  printf("BenchmarkJIT/%-30s: %-3.5fms\n", name.c_str(), result * 1e3);
+  return 0;
+}
+
 int jit_benchmark(Func fn, Buffer<uint8_t> buf_src, std::string name) {
   return jit_benchmark_bounds(fn, buf_src.get()->width(), buf_src.get()->height(), name);
 }
@@ -582,7 +594,7 @@ int benchmark_match_template_sad(
   Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
-  return jit_benchmark(match_template_sad_fn(
+  return jit_benchmark_match_template(match_template_sad_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
   ), buf_src, "match_template_sad");
@@ -592,7 +604,7 @@ int benchmark_match_template_ssd(
   Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ) {
-  return jit_benchmark(match_template_ssd_fn(
+  return jit_benchmark_match_template(match_template_ssd_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
   ), buf_src, "match_template_ssd");
@@ -602,7 +614,7 @@ int benchmark_match_template_ncc(
   Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
-  return jit_benchmark(match_template_ncc_fn(
+  return jit_benchmark_match_template(match_template_ncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
   ), buf_src, "match_template_ncc");
@@ -613,11 +625,11 @@ int benchmark_prepared_match_template_ncc(
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
   Func fn = prepare_ncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height()});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_sum = r[1];
 
-  return jit_benchmark(prepared_match_template_ncc_fn(
+  return jit_benchmark_match_template(prepared_match_template_ncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_sum, "sum"),
     tpl_width, tpl_height
@@ -628,7 +640,7 @@ int benchmark_match_template_zncc(
   Buffer<uint8_t> buf_src, Param<int32_t> width, Param<int32_t> height,
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
-  return jit_benchmark(match_template_zncc_fn(
+  return jit_benchmark_match_template(match_template_zncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc(buf_tpl, "buf_tpl"), tpl_width, tpl_height
   ), buf_src, "match_template_zncc");
@@ -639,11 +651,11 @@ int benchmark_prepared_match_template_zncc(
   Buffer<uint8_t> buf_tpl, Param<int32_t> tpl_width, Param<int32_t> tpl_height
 ){
   Func fn = prepare_zncc_template_fn(wrapFunc(buf_tpl, "tpl"), tpl_width, tpl_height);
-  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height(), 4});
+  Realization r = fn.realize({buf_tpl.get()->width(), buf_tpl.get()->height()});
   Buffer<float> buf_tpl_val = r[0];
   Buffer<float> buf_tpl_stddev = r[1];
 
-  return jit_benchmark(prepared_match_template_zncc_fn(
+  return jit_benchmark_match_template(prepared_match_template_zncc_fn(
     wrapFunc(buf_src, "buf_src"), width, height,
     wrapFunc_xy(buf_tpl_val, "val"), wrapFunc_xy(buf_tpl_stddev, "stddev"),
     tpl_width, tpl_height

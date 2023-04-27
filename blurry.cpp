@@ -629,32 +629,30 @@ Func convolve_xy(Func in, Func kernel, RDom rd_kernel) {
 Func haar_x(Func in) {
   Var x("x"), y("y"), ch("ch");
 
-  Func high = Func("haar_x_high");
-  high(x, y) = (in(2 * x, y) + in((2 * x) + 1, y)) / sqrt2;
-
   Func low = Func("haar_x_low");
-  low(x, y) = (in(2 * x, y) - in((2 * x) + 1, y)) / sqrt2;
+  Func high = Func("haar_x_high");
+  low(x, y) = (in(2 * x, y) + in((2 * x) + 1, y)) / sqrt2;
+  high(x, y) = (in(2 * x, y) - in((2 * x) + 1, y)) / sqrt2;
 
   Func haar = Func("haar_x_highlow");
   haar(x, y, ch) = undef<float>();
-  haar(x, y, 0) = high(x, y);
-  haar(x, y, 1) = low(x, y);
+  haar(x, y, 0) = low(x, y);
+  haar(x, y, 1) = high(x, y);
   return haar;
 }
 
 Func haar_y(Func in) {
   Var x("x"), y("y"), ch("ch");
 
-  Func high = Func("haar_y_high");
-  high(x, y) = (in(x, 2 * y) + in(x, (2 * y) + 1)) / sqrt2;
-
   Func low = Func("haar_y_low");
-  low(x, y) = (in(x, 2 * y) - in(x, (2 * y) + 1)) / sqrt2;
+  Func high = Func("haar_y_high");
+  low(x, y) = (in(x, 2 * y) + in(x, (2 * y) + 1)) / sqrt2;
+  high(x, y) = (in(x, 2 * y) - in(x, (2 * y) + 1)) / sqrt2;
 
   Func haar = Func("haar_y_highlow");
   haar(x, y, ch) = undef<float>();
-  haar(x, y, 0) = high(x, y);
-  haar(x, y, 1) = low(x, y);
+  haar(x, y, 0) = low(x, y);
+  haar(x, y, 1) = high(x, y);
   return haar;
 }
 

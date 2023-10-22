@@ -19,7 +19,9 @@ setup-halide:
 ifeq ($(shell uname),Linux)
 	sudo apt install libpng-dev libjpeg-dev clang g++ binutils
 else
-	brew install halide
+	brew install libpng
+	brew install jpeg
+	brew install pkg-config
 endif
 
 .PHONY: setup-halide-runtime_linux
